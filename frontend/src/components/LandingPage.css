@@ -1,0 +1,188 @@
+/* Enhanced Landing Page Styles */
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;700&display=swap');
+
+.landing-page {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #6a11cb 0%, #2575fc 100%);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    opacity: 1;
+    transition: opacity 1s ease-out;
+    z-index: 9999;
+    text-align: center;
+    padding: 2rem;
+    box-sizing: border-box;
+    font-family: 'Poppins', sans-serif;
+}
+
+.landing-page.fade-out {
+    opacity: 0;
+    pointer-events: none;
+}
+
+.landing-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    max-width: 800px;
+    width: 100%;
+}
+
+.university-name {
+    font-size: 3rem;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 0.5rem;
+    animation: slide-in 1s forwards;
+    text-shadow: 0 4px 6px rgba(0,0,0,0.2);
+    letter-spacing: -1px;
+}
+
+.portal-name {
+    font-size: 2rem;
+    font-weight: 500;
+    color: rgba(255,255,255,0.9);
+    margin-bottom: 2rem;
+    animation: slide-in 1s forwards 0.5s;
+    opacity: 0;
+}
+
+.quote-container {
+    background-color: rgba(255,255,255,0.95);
+    border-radius: 16px;
+    padding: 2.5rem;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
+    max-width: 650px;
+    width: 100%;
+    opacity: 0;
+    animation: fade-in 1s forwards 1.5s;
+    position: relative;
+    border: 2px solid rgba(37, 117, 252, 0.2);
+}
+
+.quote {
+    font-size: 1.6rem;
+    font-style: italic;
+    color: #2c3e50;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    font-weight: 300;
+}
+
+.quote-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+}
+
+.quote-author {
+    font-size: 1.1rem;
+    color: #7f8c8d;
+    flex-grow: 1;
+    text-align: left;
+    font-weight: 500;
+}
+
+.quote-refresh-btn {
+    background-color: #2575fc;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+}
+
+.quote-refresh-btn:hover {
+    background-color: #1a5af7;
+    transform: scale(1.05);
+}
+
+.loading-indicator {
+    margin-top: 2rem;
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.loading-dots {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.loading-dots span {
+    width: 12px;
+    height: 12px;
+    background-color: #2575fc;
+    border-radius: 50%;
+    animation: dot-pulse 1.5s infinite ease-in-out;
+}
+
+.loading-dots span:nth-child(2) {
+    animation-delay: 0.5s;
+}
+
+.loading-dots span:nth-child(3) {
+    animation-delay: 1s;
+}
+
+@keyframes slide-in {
+    from {
+        transform: translateY(50px);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@keyframes fade-in {
+    from {
+        opacity: 0;
+    }
+    to {
+        opacity: 1;
+    }
+}
+
+@keyframes dot-pulse {
+    0%, 100% {
+        transform: scale(0.7);
+        opacity: 0.6;
+    }
+    50% {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@media (max-width: 768px) {
+    .university-name {
+        font-size: 2.5rem;
+    }
+
+    .portal-name {
+        font-size: 1.8rem;
+    }
+
+    .quote-container {
+        padding: 1.5rem;
+    }
+
+    .quote {
+        font-size: 1.4rem;
+    }
+}
