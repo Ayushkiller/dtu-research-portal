@@ -4,7 +4,7 @@ const morgan = require('morgan');
 const cors = require('cors');
 require('dotenv').config();
 const { authenticate, authorize } = require('./middleware/auth');
-const authRouter = require('./routes/auth'); // Import the auth router
+const authRouter = require('./routes/auth').router; // Import the auth router correctly
 
 const app = express();
 
