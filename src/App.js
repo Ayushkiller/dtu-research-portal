@@ -3,10 +3,7 @@ import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
 import SignIn from './components/signin/SignIn';
 import SignUp from './components/signup/SignUp';
 import LandingPage from './components/LandingPage';
-import StudentDashboard from './studentdashboard/StudentDashboard';
-import FacultyDashboard from './components/FacultyDashboard';
-import CommitteeDashboard from './components/CommitteeDashboard';
-import DeanDashboard from './components/DeanDashboard';
+import Dashboard from './dashboard/Dashboard';
 
 const AuthContext = createContext();
 
@@ -44,10 +41,7 @@ function App() {
                     <Route path="/" element={<SignIn />} />
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/signin" element={<SignIn />} />
-                    <Route path="/student-dashboard" element={<StudentDashboard />} />
-                    <Route path="/faculty-dashboard" element={<FacultyDashboard />} />
-                    <Route path="/committee-dashboard" element={<CommitteeDashboard />} />
-                    <Route path="/dean-dashboard" element={<DeanDashboard />} />
+                    <Route path="/dashboard" element={<Dashboard />} />
                   </Routes>
                 </div>
               </div>

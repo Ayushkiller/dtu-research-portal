@@ -97,24 +97,7 @@ export default function SignIn(props) {
       localStorage.setItem("token", token); // Save token
       alert("Login successful!");
       login(user);
-      switch (userType) {
-        case 'faculty':
-          navigate('/faculty-dashboard');
-          break;
-        case 'student':
-        case 'researchScholar':
-          navigate('/student-dashboard');
-          break;
-        case 'committeeMember':
-          navigate('/committee-dashboard');
-          break;
-        case 'competentAuthority':
-          navigate('/dean-dashboard');
-          break;
-        default:
-          navigate('/');
-          break;
-      }
+      navigate('/dashboard');
     } catch (error) {
       console.error("Login error:", error);
     }
