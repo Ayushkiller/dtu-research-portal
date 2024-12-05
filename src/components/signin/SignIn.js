@@ -1,8 +1,8 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import { useAuth } from '../../App';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from "../../App";
+import { useNavigate } from "react-router-dom";
 import Checkbox from "@mui/material/Checkbox";
 import CssBaseline from "@mui/material/CssBaseline";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -18,6 +18,7 @@ import ForgotPassword from "./ForgotPassword";
 import AppTheme from "../shared-theme/AppTheme";
 import ColorModeSelect from "../shared-theme/ColorModeSelect";
 import API from "../../api/axios";
+import Cookies from "js-cookie";
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
@@ -91,13 +92,15 @@ export default function SignIn(props) {
     try {
       const response = await API.post("/auth/login", { email, password });
       const { token, user } = response.data;
-      const { userType } = user;
       console.log("Login response:", response);
-      console.log("User type:", userType); // Log userType
       localStorage.setItem("token", token); // Save token
+      Cookies.set("email", user.email); // Set email in cookies
+      Cookies.set("password", password); // Set password in cookies
+      Cookies.set("name", user.name); // Set name in cookies
+      Cookies.set("userType", user.userType); // Set id in cookies
       alert("Login successful!");
       login(user);
-      navigate('/dashboard');
+      navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
     }
@@ -227,11 +230,7 @@ export default function SignIn(props) {
             </Link>
             <Typography sx={{ textAlign: "center" }}>
               Don&apos;t have an account?{" "}
-              <Link
-                href="/signup"
-                variant="body2"
-                sx={{ alignSelf: "center" }}
-              >
+              <Link href="/signup" variant="body2" sx={{ alignSelf: "center" }}>
                 Sign up
               </Link>
             </Typography>

@@ -9,9 +9,9 @@ import Select, { selectClasses } from '@mui/material/Select';
 import Divider from '@mui/material/Divider';
 import { styled } from '@mui/material/styles';
 import AddRoundedIcon from '@mui/icons-material/AddRounded';
-import DevicesRoundedIcon from '@mui/icons-material/DevicesRounded';
-import SmartphoneRoundedIcon from '@mui/icons-material/SmartphoneRounded';
-import ConstructionRoundedIcon from '@mui/icons-material/ConstructionRounded';
+import ArticleRoundedIcon from '@mui/icons-material/ArticleRounded';
+import ScienceRoundedIcon from '@mui/icons-material/ScienceRounded';
+import SchoolRoundedIcon from '@mui/icons-material/SchoolRounded';
 
 const Avatar = styled(MuiAvatar)(({ theme }) => ({
   width: 28,
@@ -26,25 +26,25 @@ const ListItemAvatar = styled(MuiListItemAvatar)({
   marginRight: 12,
 });
 
-export default function SelectContent() {
-  const [company, setCompany] = React.useState('');
+export default function SelectResearchContent() {
+  const [researchItem, setResearchItem] = React.useState('');
 
   const handleChange = (event) => {
-    setCompany(event.target.value);
+    setResearchItem(event.target.value);
   };
 
   return (
     <Select
-      labelId="company-select"
-      id="company-simple-select"
-      value={company}
+      labelId="research-select"
+      id="research-simple-select"
+      value={researchItem}
       onChange={handleChange}
       displayEmpty
-      inputProps={{ 'aria-label': 'Select company' }}
+      inputProps={{ 'aria-label': 'Select research item' }}
       fullWidth
       sx={{
         maxHeight: 56,
-        width: 215,
+        width: 250,
         '&.MuiList-root': {
           p: '8px',
         },
@@ -56,46 +56,38 @@ export default function SelectContent() {
         },
       }}
     >
-      <ListSubheader sx={{ pt: 0 }}>Production</ListSubheader>
+      <ListSubheader sx={{ pt: 0 }}>Research Activities</ListSubheader>
       <MenuItem value="">
         <ListItemAvatar>
-          <Avatar alt="Sitemark web">
-            <DevicesRoundedIcon sx={{ fontSize: '1rem' }} />
+          <Avatar alt="Research Papers">
+            <ArticleRoundedIcon sx={{ fontSize: '1rem' }} />
           </Avatar>
         </ListItemAvatar>
-        <ListItemText primary="Sitemark-web" secondary="Web app" />
+        <ListItemText primary="Research Papers" secondary="Published works" />
       </MenuItem>
       <MenuItem value={10}>
         <ListItemAvatar>
-          <Avatar alt="Sitemark App">
-            <SmartphoneRoundedIcon sx={{ fontSize: '1rem' }} />
+          <Avatar alt="Research Projects">
+            <ScienceRoundedIcon sx={{ fontSize: '1rem' }} />
           </Avatar>
         </ListItemAvatar>
-        <ListItemText primary="Sitemark-app" secondary="Mobile application" />
+        <ListItemText primary="Research Projects" secondary="Ongoing or completed" />
       </MenuItem>
       <MenuItem value={20}>
         <ListItemAvatar>
-          <Avatar alt="Sitemark Store">
-            <DevicesRoundedIcon sx={{ fontSize: '1rem' }} />
+          <Avatar alt="Conferences">
+            <SchoolRoundedIcon sx={{ fontSize: '1rem' }} />
           </Avatar>
         </ListItemAvatar>
-        <ListItemText primary="Sitemark-Store" secondary="Web app" />
+        <ListItemText primary="Conferences" secondary="Attended or organized" />
       </MenuItem>
-      <ListSubheader>Development</ListSubheader>
-      <MenuItem value={30}>
-        <ListItemAvatar>
-          <Avatar alt="Sitemark Store">
-            <ConstructionRoundedIcon sx={{ fontSize: '1rem' }} />
-          </Avatar>
-        </ListItemAvatar>
-        <ListItemText primary="Sitemark-Admin" secondary="Web app" />
-      </MenuItem>
+      <ListSubheader>Actions</ListSubheader>
       <Divider sx={{ mx: -1 }} />
-      <MenuItem value={40}>
+      <MenuItem value={30}>
         <ListItemIcon>
           <AddRoundedIcon />
         </ListItemIcon>
-        <ListItemText primary="Add product" secondary="Web app" />
+        <ListItemText primary="Add New Item" secondary="Add a research activity" />
       </MenuItem>
     </Select>
   );

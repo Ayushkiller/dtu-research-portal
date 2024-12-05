@@ -10,8 +10,8 @@ import SelectContent from './SelectContent';
 import MenuContent from './MenuContent';
 import CardAlert from './CardAlert';
 import OptionsMenu from './OptionsMenu';
-
-const drawerWidth = 240;
+import Cookies from 'js-cookie';
+const drawerWidth = 320;
 
 const Drawer = styled(MuiDrawer)({
   width: drawerWidth,
@@ -24,6 +24,9 @@ const Drawer = styled(MuiDrawer)({
   },
 });
 
+const name = Cookies.get('name') || 'Default Name';
+const email = Cookies.get('email') || 'default@email.com';
+
 export default function SideMenu() {
   return (
     <Drawer
@@ -32,7 +35,7 @@ export default function SideMenu() {
         display: { xs: 'none', md: 'block' },
         [`& .${drawerClasses.paper}`]: {
           backgroundColor: 'background.paper',
-        },
+        }, width: drawerWidth,
       }}
     >
       <Box
@@ -65,10 +68,10 @@ export default function SideMenu() {
         />
         <Box sx={{ mr: 'auto' }}>
           <Typography variant="body2" sx={{ fontWeight: 500, lineHeight: '16px' }}>
-            Riley Carter
+          {name}
           </Typography>
           <Typography variant="caption" sx={{ color: 'text.secondary' }}>
-            riley@email.com
+          {email}
           </Typography>
         </Box>
         <OptionsMenu />

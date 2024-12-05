@@ -48,8 +48,8 @@ function renderSparklineCell(params) {
 
 function renderStatus(status) {
   const colors = {
-    Online: 'success',
-    Offline: 'default',
+    Approved: 'success',
+    Rejected: 'failure',
   };
 
   return <Chip label={status} color={colors[status]} size="small" />;
@@ -85,7 +85,7 @@ export const columns = [
   },
   {
     field: 'users',
-    headerName: 'Users',
+    headerName: 'Impact Factor',
     headerAlign: 'right',
     align: 'right',
     flex: 1,
@@ -101,7 +101,7 @@ export const columns = [
   },
   {
     field: 'viewsPerUser',
-    headerName: 'Views per User',
+    headerName: 'Impact Factor',
     headerAlign: 'right',
     align: 'right',
     flex: 1,
@@ -128,7 +128,7 @@ export const rows = [
   {
     id: 1,
     pageTitle: 'Homepage Overview',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 8345,
     users: 212423,
     viewsPerUser: 18.5,
@@ -143,7 +143,7 @@ export const rows = [
   {
     id: 2,
     pageTitle: 'Product Details - Gadgets',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 5653,
     users: 172240,
     viewsPerUser: 9.7,
@@ -156,7 +156,7 @@ export const rows = [
   {
     id: 3,
     pageTitle: 'Checkout Process - Step 1',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 3455,
     users: 58240,
     viewsPerUser: 15.2,
@@ -171,7 +171,7 @@ export const rows = [
   {
     id: 4,
     pageTitle: 'User Profile Dashboard',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 112543,
     users: 96240,
     viewsPerUser: 4.5,
@@ -186,7 +186,7 @@ export const rows = [
   {
     id: 5,
     pageTitle: 'Article Listing - Tech News',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 3653,
     users: 142240,
     viewsPerUser: 3.1,
@@ -201,7 +201,7 @@ export const rows = [
   {
     id: 6,
     pageTitle: 'FAQs - Customer Support',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 106543,
     users: 15240,
     viewsPerUser: 7.2,
@@ -215,7 +215,7 @@ export const rows = [
   {
     id: 7,
     pageTitle: 'Product Comparison - Laptops',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 7853,
     users: 32240,
     viewsPerUser: 6.5,
@@ -229,7 +229,7 @@ export const rows = [
   {
     id: 8,
     pageTitle: 'Shopping Cart - Electronics',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 8563,
     users: 48240,
     viewsPerUser: 4.3,
@@ -244,7 +244,7 @@ export const rows = [
   {
     id: 9,
     pageTitle: 'Payment Confirmation - Bank Transfer',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 4563,
     users: 18240,
     viewsPerUser: 2.7,
@@ -258,7 +258,7 @@ export const rows = [
   {
     id: 10,
     pageTitle: 'Product Reviews - Smartphones',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 9863,
     users: 28240,
     viewsPerUser: 5.1,
@@ -273,7 +273,7 @@ export const rows = [
   {
     id: 11,
     pageTitle: 'Subscription Management - Services',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 6563,
     users: 24240,
     viewsPerUser: 4.8,
@@ -288,7 +288,7 @@ export const rows = [
   {
     id: 12,
     pageTitle: 'Order Tracking - Shipments',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 12353,
     users: 38240,
     viewsPerUser: 3.5,
@@ -303,7 +303,7 @@ export const rows = [
   {
     id: 13,
     pageTitle: 'Customer Feedback - Surveys',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 5863,
     users: 13240,
     viewsPerUser: 2.3,
@@ -317,7 +317,7 @@ export const rows = [
   {
     id: 14,
     pageTitle: 'Account Settings - Preferences',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 7853,
     users: 18240,
     viewsPerUser: 3.2,
@@ -331,7 +331,7 @@ export const rows = [
   {
     id: 15,
     pageTitle: 'Login Page - Authentication',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 9563,
     users: 24240,
     viewsPerUser: 2.5,
@@ -346,7 +346,7 @@ export const rows = [
   {
     id: 16,
     pageTitle: 'Promotions - Seasonal Sales',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 13423,
     users: 54230,
     viewsPerUser: 7.8,
@@ -360,7 +360,7 @@ export const rows = [
   {
     id: 17,
     pageTitle: 'Tutorials - How to Guides',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 4234,
     users: 19342,
     viewsPerUser: 5.2,
@@ -374,7 +374,7 @@ export const rows = [
   {
     id: 18,
     pageTitle: 'Blog Posts - Tech Insights',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 8567,
     users: 34234,
     viewsPerUser: 6.3,
@@ -388,7 +388,7 @@ export const rows = [
   {
     id: 19,
     pageTitle: 'Events - Webinars',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 3456,
     users: 19234,
     viewsPerUser: 4.5,
@@ -402,7 +402,7 @@ export const rows = [
   {
     id: 20,
     pageTitle: 'Support - Contact Us',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 6734,
     users: 27645,
     viewsPerUser: 3.9,
@@ -416,7 +416,7 @@ export const rows = [
   {
     id: 21,
     pageTitle: 'Case Studies - Success Stories',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 4567,
     users: 19345,
     viewsPerUser: 6.1,
@@ -430,7 +430,7 @@ export const rows = [
   {
     id: 22,
     pageTitle: 'News - Industry Updates',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 7856,
     users: 34567,
     viewsPerUser: 5.7,
@@ -444,7 +444,7 @@ export const rows = [
   {
     id: 23,
     pageTitle: 'Forum - User Discussions',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 5678,
     users: 23456,
     viewsPerUser: 4.2,
@@ -458,7 +458,7 @@ export const rows = [
   {
     id: 24,
     pageTitle: 'Documentation - API Reference',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 6789,
     users: 27689,
     viewsPerUser: 5.0,
@@ -472,7 +472,7 @@ export const rows = [
   {
     id: 25,
     pageTitle: 'Services - Consulting',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 4563,
     users: 19240,
     viewsPerUser: 6.4,
@@ -486,7 +486,7 @@ export const rows = [
   {
     id: 26,
     pageTitle: 'Feedback - User Reviews',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 8564,
     users: 34240,
     viewsPerUser: 6.2,
@@ -500,7 +500,7 @@ export const rows = [
   {
     id: 27,
     pageTitle: 'Profiles - Team Members',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 5634,
     users: 23423,
     viewsPerUser: 5.5,
@@ -514,7 +514,7 @@ export const rows = [
   {
     id: 28,
     pageTitle: 'Notifications - Alerts',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 6745,
     users: 27654,
     viewsPerUser: 4.9,
@@ -529,7 +529,7 @@ export const rows = [
   {
     id: 29,
     pageTitle: 'Dashboard - Metrics',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 5678,
     users: 23456,
     viewsPerUser: 6.3,
@@ -544,7 +544,7 @@ export const rows = [
   {
     id: 30,
     pageTitle: 'Reports - Monthly Analysis',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 7890,
     users: 34567,
     viewsPerUser: 5.9,
@@ -559,7 +559,7 @@ export const rows = [
   {
     id: 31,
     pageTitle: 'Training - Employee Onboarding',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 3456,
     users: 19234,
     viewsPerUser: 6.1,
@@ -574,7 +574,7 @@ export const rows = [
   {
     id: 32,
     pageTitle: 'Resources - Knowledge Base',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 5678,
     users: 23456,
     viewsPerUser: 4.7,
@@ -589,7 +589,7 @@ export const rows = [
   {
     id: 33,
     pageTitle: 'Settings - Privacy Controls',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 6789,
     users: 27689,
     viewsPerUser: 5.8,
@@ -604,7 +604,7 @@ export const rows = [
   {
     id: 34,
     pageTitle: 'Integrations - Third-Party Services',
-    status: 'Online',
+    status: 'Approved',
     eventCount: 4567,
     users: 19345,
     viewsPerUser: 4.4,
@@ -618,7 +618,7 @@ export const rows = [
   {
     id: 35,
     pageTitle: 'Account - Billing Information',
-    status: 'Offline',
+    status: 'Rejected',
     eventCount: 7890,
     users: 34567,
     viewsPerUser: 5.4,

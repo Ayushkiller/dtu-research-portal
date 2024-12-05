@@ -10,43 +10,42 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import LinearProgress, { linearProgressClasses } from '@mui/material/LinearProgress';
 
-import {
-  IndiaFlag,
-  UsaFlag,
-  BrazilFlag,
-  GlobeFlag,
-} from '../internals/components/CustomIcons';
+// Custom icons for B.Tech departments (using emoji placeholders)
+const ComputerScienceIcon = () => <span>💻</span>;
+const ElectricalIcon = () => <span>⚡</span>;
+const MechanicalIcon = () => <span>🔧</span>;
+const ElectronicsIcon = () => <span>📡</span>;
 
 const data = [
-  { label: 'India', value: 50000 },
-  { label: 'USA', value: 35000 },
-  { label: 'Brazil', value: 10000 },
-  { label: 'Other', value: 5000 },
+  { label: 'Computer Science', value: 35000 },
+  { label: 'Electrical Engineering', value: 25000 },
+  { label: 'Mechanical Engineering', value: 20000 },
+  { label: 'Electronics & Communication', value: 20000 },
 ];
 
-const countries = [
+const departments = [
   {
-    name: 'India',
-    value: 50,
-    flag: <IndiaFlag />,
+    name: 'Computer Science',
+    value: 35,
+    icon: <ComputerScienceIcon />,
     color: 'hsl(220, 25%, 65%)',
   },
   {
-    name: 'USA',
-    value: 35,
-    flag: <UsaFlag />,
+    name: 'Electrical Engineering',
+    value: 25,
+    icon: <ElectricalIcon />,
     color: 'hsl(220, 25%, 45%)',
   },
   {
-    name: 'Brazil',
-    value: 10,
-    flag: <BrazilFlag />,
+    name: 'Mechanical Engineering',
+    value: 20,
+    icon: <MechanicalIcon />,
     color: 'hsl(220, 25%, 30%)',
   },
   {
-    name: 'Other',
-    value: 5,
-    flag: <GlobeFlag />,
+    name: 'Electronics & Communication',
+    value: 20,
+    icon: <ElectronicsIcon />,
     color: 'hsl(220, 25%, 20%)',
   },
 ];
@@ -118,7 +117,9 @@ const colors = [
   'hsl(220, 20%, 25%)',
 ];
 
-export default function ChartUserByCountry() {
+export default function BTechDepartmentResearch() {
+  const totalPapers = data.reduce((sum, item) => sum + item.value, 0);
+
   return (
     <Card
       variant="outlined"
@@ -126,7 +127,7 @@ export default function ChartUserByCountry() {
     >
       <CardContent>
         <Typography component="h2" variant="subtitle2">
-          Users by country
+          B.Tech Department Research Papers
         </Typography>
         <Box sx={{ display: 'flex', alignItems: 'center' }}>
           <PieChart
@@ -152,16 +153,16 @@ export default function ChartUserByCountry() {
               legend: { hidden: true },
             }}
           >
-            <PieCenterLabel primaryText="98.5K" secondaryText="Total" />
+            <PieCenterLabel primaryText={`${totalPapers}`} secondaryText="Total Papers" />
           </PieChart>
         </Box>
-        {countries.map((country, index) => (
+        {departments.map((department, index) => (
           <Stack
             key={index}
             direction="row"
             sx={{ alignItems: 'center', gap: 2, pb: 2 }}
           >
-            {country.flag}
+            {department.icon}
             <Stack sx={{ gap: 1, flexGrow: 1 }}>
               <Stack
                 direction="row"
@@ -172,19 +173,19 @@ export default function ChartUserByCountry() {
                 }}
               >
                 <Typography variant="body2" sx={{ fontWeight: '500' }}>
-                  {country.name}
+                  {department.name}
                 </Typography>
                 <Typography variant="body2" sx={{ color: 'text.secondary' }}>
-                  {country.value}%
+                  {department.value}%
                 </Typography>
               </Stack>
               <LinearProgress
                 variant="determinate"
-                aria-label="Number of users by country"
-                value={country.value}
+                aria-label="Percentage of research papers by B.Tech department"
+                value={department.value}
                 sx={{
                   [`& .${linearProgressClasses.bar}`]: {
-                    backgroundColor: country.color,
+                    backgroundColor: department.color,
                   },
                 }}
               />

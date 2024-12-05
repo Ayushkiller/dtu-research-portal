@@ -3,7 +3,6 @@ const mongoose = require('mongoose');
 const morgan = require('morgan');
 const cors = require('cors');
 require('dotenv').config();
-const { authenticate, authorize } = require('./middleware/auth');
 const authRouter = require('./routes/auth').router; // Import the auth router correctly
 
 const app = express();
@@ -41,9 +40,5 @@ app.get('/', (req, res) => {
   res.send('DTU Research Portal Backend Running');
 });
 
-// Protected Route Example
-app.get('/protected', authenticate, (req, res) => {
-  res.send('This is a protected route');
-});
 
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
