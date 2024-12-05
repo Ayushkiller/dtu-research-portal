@@ -1,6 +1,8 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
+import { useAuth } from '../../App';
+import { useNavigate } from 'react-router-dom';
 import Checkbox from "@mui/material/Checkbox";
 import CssBaseline from "@mui/material/CssBaseline";
 import FormControlLabel from "@mui/material/FormControlLabel";
@@ -16,7 +18,6 @@ import ForgotPassword from "./ForgotPassword";
 import AppTheme from "../shared-theme/AppTheme";
 import ColorModeSelect from "../shared-theme/ColorModeSelect";
 import API from "../../api/axios";
-import { useNavigate } from 'react-router-dom';
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
@@ -66,7 +67,8 @@ export default function SignIn(props) {
   const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
   const [open, setOpen] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
-
+  const navigate = useNavigate();
+  const { login } = useAuth();
   const handleShowPasswordChange = () => {
     setShowPassword(!showPassword);
   };
@@ -77,8 +79,6 @@ export default function SignIn(props) {
   const handleClose = () => {
     setOpen(false);
   };
-  const navigate = useNavigate();
-
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (emailError || passwordError) {
@@ -87,29 +87,36 @@ export default function SignIn(props) {
     const data = new FormData(event.currentTarget);
     const email = data.get("email");
     const password = data.get("password");
-
+  
     try {
       const response = await API.post("/auth/login", { email, password });
-      const { token, userType} = response.data;
-
+      const { token, user } = response.data;
+      const { userType } = user;
+      console.log("Login response:", response);
+      console.log("User type:", userType); // Log userType
       localStorage.setItem("token", token); // Save token
       alert("Login successful!");
-
-      // Redirect based on user role
-      if (userType=== 'faculty') {
-        navigate('/faculty-dashboard');
-      } else if (userType=== 'student'|| userType=== 'researchScholar') {
-        navigate('/student-dashboard');
-      } else if (userType=== 'committeeMember') {
-        navigate('/committee-dashboard');
-      } else if (userType=== 'competentAuthority') {
-        navigate('/dean-dashboard');
-      } else {
-        navigate('/'); // Default redirect
+      login(user);
+      switch (userType) {
+        case 'faculty':
+          navigate('/faculty-dashboard');
+          break;
+        case 'student':
+        case 'researchScholar':
+          navigate('/student-dashboard');
+          break;
+        case 'committeeMember':
+          navigate('/committee-dashboard');
+          break;
+        case 'competentAuthority':
+          navigate('/dean-dashboard');
+          break;
+        default:
+          navigate('/');
+          break;
       }
     } catch (error) {
       console.error("Login error:", error);
-      alert("Invalid credentials.");
     }
   };
   const validateInputs = () => {

@@ -29,7 +29,7 @@ router.post('/login', async (req, res) => {
 
     if (user.password !== password) return res.status(401).send({ error: 'Invalid password.' });
 
-    res.status(200).send({ message: 'Login successful', user: { id: user._id, role: user.userType } });
+    res.status(200).send({ message: 'Login successful', user: { id: user._id, userType: user.userType } });
   } catch (error) {
     res.status(500).send({ error: error.message });
   }

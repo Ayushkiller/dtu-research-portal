@@ -4,8 +4,7 @@ import { useAuth } from '../App';
 const FacultyDashboard = () => {
   const { user, logout } = useAuth();
   const [papers, setPapers] = useState([]);
-  
-  // Simulate fetching faculty papers from an API or database
+
   useEffect(() => {
     if (user) {
       // Mock data (replace with actual API call)
