@@ -1,0 +1,15 @@
+{
+    "schemaVersion": 2,
+    "captainVersion": "1",
+    "appName": "vyvsai-website",
+    "dockerfileLines": [
+      "FROM node:14",
+      "WORKDIR /usr/src/app",
+      "COPY package*.json ./",
+      "RUN npm install",
+      "COPY . .",
+      "RUN npm run build",
+      "EXPOSE 80",
+      "CMD [\"npx\", \"serve\", \"-s\", \"build\"]"
+    ]
+  }
