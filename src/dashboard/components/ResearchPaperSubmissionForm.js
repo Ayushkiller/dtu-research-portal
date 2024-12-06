@@ -170,34 +170,47 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
             ))}
           </TextField>
         </Grid>
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Applicant Photograph"
-            name="photograph"
-            type="file"
-            onChange={handleFileChange}
-            variant="outlined"
-            InputLabelProps={{ shrink: true }}
-            inputProps={{ accept: 'image/*' }}
-          />
-        </Grid>
-        <Grid item xs={12} sm={6}>
-          {preview && (
-            <Box
-              component="img"
-              src={preview}
-              alt="Applicant Photograph"
-              sx={{
-                width: 100,
-                height: 100,
-                objectFit: 'cover',
-                borderRadius: 1,
-                boxShadow: 1,
-              }}
+         {/* Photograph Section with Expanded Grid */}
+         <Grid item xs={12} sm={6} container alignItems="center" justifyContent="center">
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Applicant Photograph"
+              name="photograph"
+              type="file"
+              onChange={handleFileChange}
+              variant="outlined"
+              InputLabelProps={{ shrink: true }}
+              inputProps={{ accept: 'image/*' }}
             />
+          </Grid>
+          {preview && (
+            <Grid item xs={12} 
+              sx={{ 
+                display: 'flex', 
+                justifyContent: 'center', 
+                alignItems: 'center', 
+                height: '100%', 
+                padding: 2 
+              }}
+            >
+              <Box
+                component="img"
+                src={preview}
+                alt="Applicant Photograph"
+                sx={{
+                  width: 100,
+                  height: 100,
+                  objectFit: 'cover',
+                  borderRadius: 1,
+                  boxShadow: 1,
+                  border: '1px solid rgba(0,0,0,0.23)'
+                }}
+              />
+            </Grid>
           )}
         </Grid>
+
 
         {/* Paper Details */}
         <Grid item xs={12}>
