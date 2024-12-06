@@ -34,7 +34,9 @@ mongoose
 
 // Routes
 app.use('/auth', authRouter); // Use the auth router
-
+app.post("/research-paper-submission", (req, res) => {
+  res.status(200).json({success : true ,message:"Succesfully Recieved request for submission"})
+})
 // Test Route
 app.get('/', (req, res) => {
   res.send('DTU Research Portal Backend Running');

@@ -1,7 +1,9 @@
 import React, { useState } from "react";
-import { TextField, Button, Grid, MenuItem, Box } from "@mui/material";
+import { TextField, Button, Grid, MenuItem, Box, Dialog, DialogTitle,DialogContent, DialogActions,DialogContentText } from "@mui/material";
 import { calculateAuthorShares } from "./awardDistributionUtils";
 import { useFileUpload } from "../hooks/useFileUpload";
+import axios from "axios";
+
 export default function ResearchPaperSubmissionForm({ onSubmit }) {
   const { file, preview, handleFileChange } = useFileUpload();
   const [formData, setFormData] = useState({
@@ -44,6 +46,22 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
     ],
   });
 
+  const [openDialog, setOpenDialog] = useState(false);
+  const [newAuthor, setNewAuthor] = useState({
+    name: "",
+    email: "",
+    mobileNo: "",
+    isExternal: false,
+    bankDetails: {
+      bankName: "",
+      branch: "",
+      accountNo: "",
+      ifscCode: "",
+    },
+    shareValue: 0,
+  });
+  
+
   const handleChange = (e) => {
     const { name, value, files } = e.target;
     setFormData((prev) => ({
@@ -52,40 +70,46 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
     }));
   };
 
-  const handleAuthorChange = (index, field, value) => {
-    setFormData((prev) => ({
-      ...prev,
-      authors: prev.authors.map((author, i) =>
-        i === index ? { ...author, [field]: value } : author
-      ),
-    }));
-  };
-
   const handleAddAuthor = () => {
     setFormData((prev) => ({
       ...prev,
-      authors: [
-        ...prev.authors,
-        {
-          name: "",
-          email: "",
-          mobileNo: "",
-          isExternal: false,
-          bankDetails: {
-            bankName: "",
-            branch: "",
-            accountNo: "",
-            ifscCode: "",
-          },
-          shareValue: 0,
-        },
-      ],
+      authors: [...prev.authors, newAuthor],
     }));
+    
+    // Reset the newAuthor state
+    setNewAuthor({
+      name: "",
+      email: "",
+      mobileNo: "",
+      isExternal: false,
+      bankDetails: {
+        bankName: "",
+        branch: "",
+        accountNo: "",
+        ifscCode: "",
+      },
+      shareValue: 0,
+    });
+    
+    handleCloseDialog();
   };
+  
 
-  const handleSubmit = (event) => {
+  const handleSubmit = async(event) => {
     event.preventDefault();
     onSubmit(formData);
+    const res = await axios.post("http://localhost:5000/research-paper-submission", formData)
+    if (res.data.success) {
+      // abhi mai ja rha hu , iske aage dekh lena :> , nahi to fir raat ko karta hu
+    }
+  };
+
+  const handleOpenDialog = () => {
+    setOpenDialog(true);
+  };
+
+  const handleCloseDialog = () => {
+    setOpenDialog(false);
   };
 
   const applicantTypeOptions = [
@@ -170,7 +194,7 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
             ))}
           </TextField>
         </Grid>
-        <Grid container item xs={12} spacing={6} alignItems="center">
+        <Grid container item xs={12} spacing={2} alignItems="center">
           <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
@@ -320,21 +344,126 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
             variant="outlined"
           />
         </Grid>
-            <Grid item xs={12} sm={6}>
-                  <TextField
-                    fullWidth
-                    label="Total Award Amount"
-                    name="totalAwardAmount"
-                    type="number"
-                    value={totalAwardAmount}
-                    disabled
-                    variant="outlined"
-                  />
-                </Grid>
-              </Grid>
-              <Button type="submit" variant="contained" color="primary">
-                Submit
-              </Button>
-            </form>
-          );
-        }
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Total Award Amount"
+            name="totalAwardAmount"
+            type="number"
+            value={totalAwardAmount}
+            disabled
+            variant="outlined"
+          />
+        </Grid>
+      </Grid>
+      <Grid item xs={12}>
+        <Button variant="contained" color="primary" onClick={handleOpenDialog}>
+          Add Author
+        </Button>
+      </Grid>
+
+<Dialog open={openDialog} onClose={handleCloseDialog}>
+  <DialogTitle>Add New Author</DialogTitle>
+  <DialogContent>
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Author Name"
+          value={newAuthor.name}
+          onChange={(e) => setNewAuthor({...newAuthor, name: e.target.value})}
+          required
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Email"
+          type="email"
+          value={newAuthor.email}
+          onChange={(e) => setNewAuthor({...newAuthor, email: e.target.value})}
+          required
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Mobile Number"
+          value={newAuthor.mobileNo}
+          onChange={(e) => setNewAuthor({...newAuthor, mobileNo: e.target.value})}
+          required
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Bank Name"
+          value={newAuthor.bankDetails.bankName}
+          onChange={(e) => setNewAuthor({
+            ...newAuthor, 
+            bankDetails: {...newAuthor.bankDetails, bankName: e.target.value}
+          })}
+          required
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Branch"
+          value={newAuthor.bankDetails.branch}
+          onChange={(e) => setNewAuthor({
+            ...newAuthor, 
+            bankDetails: {...newAuthor.bankDetails, branch: e.target.value}
+          })}
+          required
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="Account Number"
+          value={newAuthor.bankDetails.accountNo}
+          onChange={(e) => setNewAuthor({
+            ...newAuthor, 
+            bankDetails: {...newAuthor.bankDetails, accountNo: e.target.value}
+          })}
+          required
+        />
+      </Grid>
+      <Grid item xs={12}>
+        <TextField
+          fullWidth
+          label="IFSC Code"
+          value={newAuthor.bankDetails.ifscCode}
+          onChange={(e) => setNewAuthor({
+            ...newAuthor, 
+            bankDetails: {...newAuthor.bankDetails, ifscCode: e.target.value}
+          })}
+          required
+        />
+      </Grid>
+    </Grid>
+  </DialogContent>
+  <DialogActions>
+    <Button onClick={handleCloseDialog}>Cancel</Button>
+    <Button 
+      onClick={() => {
+        setNewAuthor({...newAuthor, isExternal: true});
+        handleAddAuthor();
+      }}
+    >
+      Add as External Author
+    </Button>
+    <Button 
+      onClick={() => {
+        setNewAuthor({...newAuthor, isExternal: false});
+        handleAddAuthor();
+      }}
+    >
+      Add as Internal Author
+    </Button>
+  </DialogActions>
+</Dialog>
+    </form>
+  );
+}
