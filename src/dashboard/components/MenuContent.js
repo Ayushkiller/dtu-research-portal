@@ -17,7 +17,7 @@ const mainListItems = [
   { text: 'Home', icon: <HomeRoundedIcon /> },
   { text: 'My Submissions ', icon: <AnalyticsRoundedIcon /> },
   { text: 'Peers', icon: <PeopleRoundedIcon /> },
-  { text: 'Tasks', icon: <AssignmentRoundedIcon /> },
+  { text: 'Eligibility and Awards', icon: <AssignmentRoundedIcon /> },
 ];
 
 const secondaryListItems = [

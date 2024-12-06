@@ -2,19 +2,9 @@ import * as React from 'react';
 import { useTheme } from '@mui/material/styles';
 import { Card, CardContent, Button, Typography, Divider, List, ListItem, ListItemIcon, ListItemText, Stack } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import ResearchPaperSubmissionForm from './ResearchPaperSubmissionForm';
 
-export default function ResearchPaperSubmissionCard() {
+export default function SubmissionButton({ onShowForm }) {
   const theme = useTheme();
-  const [open, setOpen] = React.useState(false);
-
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
 
   return (
     <Card variant="outlined" sx={{ width: '100%' }}>
@@ -80,7 +70,7 @@ export default function ResearchPaperSubmissionCard() {
           <Button
             variant="contained"
             color="primary"
-            onClick={handleOpen}
+            onClick={onShowForm}
             sx={{
               textTransform: 'none',
               padding: theme.spacing(1.5),
@@ -91,7 +81,6 @@ export default function ResearchPaperSubmissionCard() {
           </Button>
         </Stack>
       </CardContent>
-      <ResearchPaperSubmissionForm open={open} onClose={handleClose} />
     </Card>
   );
 }
