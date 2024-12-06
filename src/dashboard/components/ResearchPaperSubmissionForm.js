@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
-import { TextField, Button, Grid, MenuItem } from '@mui/material';
-
+import { TextField, Button, Grid, MenuItem, Box } from '@mui/material';
+import { calculateAuthorShares } from './awardDistributionUtils';
+import { useFileUpload } from '../hooks/useFileUpload';
 export default function ResearchPaperSubmissionForm({ onSubmit }) {
+  const { file, preview, handleFileChange } = useFileUpload();
   const [formData, setFormData] = useState({
     applicantName: '',
     email: '',
@@ -24,19 +26,22 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
     doi: '',
     externalAuthors: '',
     internalAuthors: '',
-    awardShareValue: '',
-    totalAwardAmount: '',
-    firstAuthorAmount: '',
-    coAuthor1Amount: '',
-    coAuthor2Amount: '',
-    coAuthor3Amount: '',
-    coAuthor4Amount: '',
-    firstAuthorBankDetails: '',
-    coAuthor1BankDetails: '',
-    coAuthor2BankDetails: '',
-    coAuthor3BankDetails: '',
-    coAuthor4BankDetails: '',
-    hasMorePapers: ''
+    totalAwardAmount: 500000,
+    authors: [
+      {
+        name: '',
+        email: '',
+        mobileNo: '',
+        isExternal: false,
+        bankDetails: {
+          bankName: '',
+          branch: '',
+          accountNo: '',
+          ifscCode: ''
+        },
+        shareValue: 0
+      }
+    ]
   });
 
   const handleChange = (e) => {
@@ -44,6 +49,37 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
     setFormData(prev => ({
       ...prev,
       [name]: files ? files[0] : value
+    }));
+  };
+
+  const handleAuthorChange = (index, field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      authors: prev.authors.map((author, i) =>
+        i === index ? { ...author, [field]: value } : author
+      )
+    }));
+  };
+
+  const handleAddAuthor = () => {
+    setFormData(prev => ({
+      ...prev,
+      authors: [
+        ...prev.authors,
+        {
+          name: '',
+          email: '',
+          mobileNo: '',
+          isExternal: false,
+          bankDetails: {
+            bankName: '',
+            branch: '',
+            accountNo: '',
+            ifscCode: ''
+          },
+          shareValue: 0
+        }
+      ]
     }));
   };
 
@@ -62,6 +98,9 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
     { value: 'yes', label: 'Yes' },
     { value: 'no', label: 'No' }
   ];
+
+  const { authors, totalAwardAmount } = formData;
+  const authorShares = calculateAuthorShares(authors, totalAwardAmount);
 
   return (
     <form onSubmit={handleSubmit}>
@@ -137,12 +176,27 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
             label="Applicant Photograph"
             name="photograph"
             type="file"
-            onChange={handleChange}
-            required
+            onChange={handleFileChange}
             variant="outlined"
             InputLabelProps={{ shrink: true }}
             inputProps={{ accept: 'image/*' }}
           />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          {preview && (
+            <Box
+              component="img"
+              src={preview}
+              alt="Applicant Photograph"
+              sx={{
+                width: 100,
+                height: 100,
+                objectFit: 'cover',
+                borderRadius: 1,
+                boxShadow: 1,
+              }}
+            />
+          )}
         </Grid>
 
         {/* Paper Details */}
@@ -196,7 +250,6 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
             {[
               { value: 'first', label: 'First Author' },
               { value: 'corresponding', label: 'Corresponding Author' },
-              { value: 'both', label: 'Both' }
             ].map((option) => (
               <MenuItem key={option.value} value={option.value}>
                 {option.label}
@@ -221,7 +274,19 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
-            label="Indexing"
+            label="Research Paper Link"
+            name="researchPaperLink"
+            type="url"
+            value={formData.researchPaperLink}
+            onChange={handleChange}
+            required
+            variant="outlined"
+          />
+        </Grid>
+         <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Indexing(SCI/SCIE)"
             name="indexing"
             value={formData.indexing}
             onChange={handleChange}
@@ -242,68 +307,90 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
             variant="outlined"
           />
         </Grid>
-
-        {/* Financial and Additional Details */}
-        <Grid item xs={12} sm={6}>
-          <TextField
-            fullWidth
-            label="Award Share Value (Z)"
-            name="awardShareValue"
-            type="number"
-            inputProps={{ step: "0.1", max: "1" }}
-            value={formData.awardShareValue}
-            onChange={handleChange}
-            required
-            variant="outlined"
-            helperText="Z <= 1, refer to award distribution formula"
-          />
-        </Grid>
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
             label="Total Award Amount"
             name="totalAwardAmount"
             type="number"
-            value={formData.totalAwardAmount}
-            onChange={handleChange}
-            required
+            value={totalAwardAmount}
+            disabled
             variant="outlined"
-            helperText="After subtracting external authors"
           />
         </Grid>
 
-        {/* Bank Details */}
-        <Grid item xs={12}>
-          <TextField
-            fullWidth
-            label="Bank Details (First/Corresponding Author)"
-            name="firstAuthorBankDetails"
-            value={formData.firstAuthorBankDetails}
-            onChange={handleChange}
-            required
-            variant="outlined"
-            helperText="Name of Bank, Branch, Account Number, IFSC Code"
-          />
-        </Grid>
+        {authorShares.map((author, index) => (
+          <React.Fragment key={index}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label={`Author ${index + 1} Name`}
+                value={author.name}
+                onChange={e => handleAuthorChange(index, 'name', e.target.value)}
+                required
+                variant="outlined"
+              />
+            </Grid>
+            {author.isExternal && (
+              <>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label={`Author ${index + 1} Bank Name`}
+                    value={author.bankDetails.bankName}
+                    onChange={e => handleAuthorChange(index, 'bankDetails.bankName', e.target.value)}
+                    required
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label={`Author ${index + 1} Bank Branch`}
+                    value={author.bankDetails.branch}
+                    onChange={e => handleAuthorChange(index, 'bankDetails.branch', e.target.value)}
+                    required
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label={`Author ${index + 1} Account No.`}
+                    value={author.bankDetails.accountNo}
+                    onChange={e => handleAuthorChange(index, 'bankDetails.accountNo', e.target.value)}
+                    required
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    label={`Author ${index + 1} IFSC Code`}
+                    value={author.bankDetails.ifscCode}
+                    onChange={e => handleAuthorChange(index, 'bankDetails.ifscCode', e.target.value)}
+                    required
+                    variant="outlined"
+                  />
+                </Grid>
+              </>
+            )}
+            <Grid item xs={12}>
+              <TextField
+                fullWidth
+                label={`Author ${index + 1} Award Amount`}
+                value={author.amount}
+                disabled
+                variant="outlined"
+              />
+            </Grid>
+          </React.Fragment>
+        ))}
 
-        {/* Additional Submission Question */}
         <Grid item xs={12}>
-          <TextField
-            select
-            fullWidth
-            label="Do you have more papers?"
-            name="hasMorePapers"
-            value={formData.hasMorePapers}
-            onChange={handleChange}
-            required
-            variant="outlined"
-          >
-            {yesNoOptions.map((option) => (
-              <MenuItem key={option.value} value={option.value}>
-                {option.label}
-              </MenuItem>
-            ))}
-          </TextField>
+          <Button onClick={handleAddAuthor} color="primary" variant="contained">
+            Add Author
+          </Button>
         </Grid>
       </Grid>
       <Button type="submit" color="primary" variant="contained">
