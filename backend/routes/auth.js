@@ -1,7 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const router = express.Router();
-
+const jwt = require('jsonwebtoken');
 // Register User
 router.post('/register', async (req, res) => {
   try {
@@ -19,37 +19,23 @@ router.post('/register', async (req, res) => {
   }
 });
 
-
+const JWT_SECRET = 'sdgzgdzsfdjhgzjufygjuzasyfgjuzsyjfgsjzymgjfzmjayushkillesyoumany';
 // Login User
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
     const user = await User.findOne({ email });
     if (!user) return res.status(404).send({ error: 'User not found.' });
-
     if (user.password !== password) return res.status(401).send({ error: 'Invalid password.' });
 
-    res.status(200).send({ message: 'Login successful', user: { id: user._id,email: user.email, name: user.name, userType: user.userType } });
+    // Generate JWT token
+    const token = jwt.sign({ id: user._id, email: user.email, userType: user.userType, name: user.name, department: user.department, mobileNumber: user.mobileNumber, employeeId: user.employeeId}, JWT_SECRET, { expiresIn: '1h' });
+
+    res.status(200).send({ message: 'Login successful', token });
   } catch (error) {
     res.status(500).send({ error: error.message });
   }
 });
 
-// Middleware to Protect Routes
-const authenticate = async (req, res, next) => {
-  const userId = req.header('User-Id');
-  if (!userId) return res.status(401).send({ error: 'No user ID provided.' });
-
-  try {
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).send({ error: 'User not found.' });
-
-    req.user = user; // Attach user info to request
-    next();
-  } catch (error) {
-    res.status(401).send({ error: 'Invalid user ID.' });
-  }
-};
-
-module.exports = { router, authenticate };
+module.exports = { router};
 

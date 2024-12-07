@@ -1,11 +1,11 @@
 import React, { useState } from "react";
-import { TextField, Button, Grid, MenuItem, Box, Dialog, DialogTitle,DialogContent, DialogActions,DialogContentText } from "@mui/material";
+import { TextField, Button, Grid, MenuItem, Box, Dialog, DialogTitle, DialogContent, DialogActions, Typography } from "@mui/material";
 import { calculateAuthorShares } from "./awardDistributionUtils";
 import { useFileUpload } from "../hooks/useFileUpload";
 import axios from "axios";
 
 export default function ResearchPaperSubmissionForm({ onSubmit }) {
-  const { file, preview, handleFileChange } = useFileUpload();
+  const { preview, handleFileChange } = useFileUpload();
   const [formData, setFormData] = useState({
     applicantName: "",
     email: "",
@@ -361,6 +361,49 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
           Add Author
         </Button>
       </Grid>
+      <Grid container spacing={2} sx={{ mt: 2 }}>
+  {formData.authors.map((author, index) => (
+    <Grid item xs={12} key={index}>
+      <Box
+        sx={{
+          p: 2,
+          border: '1px solid',
+          borderColor: 'divider',
+          borderRadius: 1,
+          mb: 1
+        }}
+      >
+        <Grid container spacing={2}>
+          <Grid item xs={12} sm={4}>
+            <Typography variant="subtitle1">
+              <strong>Name:</strong> {author.name}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Typography variant="subtitle1">
+              <strong>Email:</strong> {author.email}
+            </Typography>
+          </Grid>
+          <Grid item xs={12} sm={4}>
+            <Typography variant="subtitle1">
+              <strong>Type:</strong> {author.isExternal ? 'External' : 'Internal'}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="subtitle1">
+              <strong>Bank Details:</strong> {author.bankDetails.bankName}, {author.bankDetails.branch}
+            </Typography>
+          </Grid>
+          <Grid item xs={12}>
+            <Typography variant="subtitle1">
+              <strong>Share Amount:</strong> ₹{Math.round(author.shareValue * formData.totalAwardAmount)}
+            </Typography>
+          </Grid>
+        </Grid>
+      </Box>
+    </Grid>
+  ))}
+</Grid>
 
 <Dialog open={openDialog} onClose={handleCloseDialog}>
   <DialogTitle>Add New Author</DialogTitle>

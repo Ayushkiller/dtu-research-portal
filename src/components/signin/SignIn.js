@@ -1,7 +1,7 @@
 import * as React from "react";
+import { useEffect } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
-import { useAuth } from "../../App";
 import { useNavigate } from "react-router-dom";
 import Checkbox from "@mui/material/Checkbox";
 import CssBaseline from "@mui/material/CssBaseline";
@@ -69,7 +69,18 @@ export default function SignIn(props) {
   const [open, setOpen] = React.useState(false);
   const [showPassword, setShowPassword] = React.useState(false);
   const navigate = useNavigate();
-  const { login } = useAuth();
+  const token = Cookies.get("token");
+
+  useEffect(() => {
+    if (token) {
+      try {
+        navigate("/dashboard");
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        navigate("/dashboard");
+      }
+    }
+  }, [token, navigate]);
   const handleShowPasswordChange = () => {
     setShowPassword(!showPassword);
   };
@@ -91,15 +102,9 @@ export default function SignIn(props) {
   
     try {
       const response = await API.post("/auth/login", { email, password });
-      const { token, user } = response.data;
-      console.log("Login response:", response);
-      localStorage.setItem("token", token); // Save token
-      Cookies.set("email", user.email); // Set email in cookies
-      Cookies.set("password", password); // Set password in cookies
-      Cookies.set("name", user.name); // Set name in cookies
-      Cookies.set("userType", user.userType); // Set id in cookies
+      const { token } = response.data;
+      Cookies.set('token', token, { expires: 1 / 24 }); // Save token in cookies with 1-hour expiration
       alert("Login successful!");
-      login(user);
       navigate("/dashboard");
     } catch (error) {
       console.error("Login error:", error);
