@@ -12,7 +12,7 @@ function LandingPage({ onFinish }) {
       "An investment in knowledge pays the best interest.",
       // Add more quotes as desired
     ];
-
+//f
     // Select a random quote
     const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
     setQuote(randomQuote);
