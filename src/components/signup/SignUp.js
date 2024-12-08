@@ -217,7 +217,7 @@ export default function SignUp(props) {
                   Student (Undergraduate/Postgraduate)
                 </option>
                 <option value="researchScholar">Research Scholar</option>
-                <option value="commiteemmeber">Commitee Member</option>
+                <option value="committeeMember">Commitee Member</option>
                 <option value="competentauthority">Competent Authority</option>
               </TextField>
             </FormControl>

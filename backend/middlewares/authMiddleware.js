@@ -11,6 +11,7 @@ const authorizeDean = async (req, res, next) => {
 
     // Verify token
     const decoded = jwt.verify(token, JWT_SECRET);
+    console.log(decoded)
     req.user = decoded;
 
     // Check if userType is 'competentAuthority'

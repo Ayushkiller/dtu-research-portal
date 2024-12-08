@@ -79,8 +79,6 @@ export default function DeanDashboard(props) {
           >
             <Header />
             <DeanGrid />
-            {name}
-            {email}
 
           </Stack>
         </Box>
