@@ -4,6 +4,7 @@ import SignIn from './components/signin/SignIn';
 import SignUp from './components/signup/SignUp';
 import LandingPage from './components/LandingPage';
 import Dashboard from './dashboard/Dashboard';
+import DeanDashboard from './dashboard/DeanDashboard';
 
 const AuthContext = createContext();
 
@@ -42,6 +43,7 @@ function App() {
                     <Route path="/signup" element={<SignUp />} />
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/dashboard" element={<Dashboard />} />
+                    <Route path="/dean-dashboard" element={<DeanDashboard />} />
                   </Routes>
                 </div>
               </div>

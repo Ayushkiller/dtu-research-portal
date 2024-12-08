@@ -19,12 +19,12 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import { calculateAuthorShares } from "../utils/awardDistributionUtils";
-import PersonalInformation from "./FormFields/PersonalInformation";
-import PaperDetails from "./FormFields/PaperDetails";
-import BankDetails from "./FormFields/BankDetails";
-import AuthorsList from "./FormFields/AuthorsList";
+import axios from "axios";
 import API from "../../../api/axios";
+import { calculateAuthorShares } from "../utils/awardDistributionUtils";
+import AuthorsList from "./FormFields/AuthorsList";
+
+
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   marginTop: theme.spacing(4),
@@ -36,154 +36,84 @@ const FormButton = styled(Button)(({ theme }) => ({
   margin: theme.spacing(1),
 }));
 
-export default function ResearchPaperSubmissionForm({
-    onSubmit,
-    onSaveDraft,
-    initialDraft = null,
-  }) {
-    const [activeStep, setActiveStep] = useState(0);
-    const [snackbarOpen, setSnackbarOpen] = useState(false);
-    const [snackbarMessage, setSnackbarMessage] = useState("");
-    const [authorDialogOpen, setAuthorDialogOpen] = useState(false);
-    const [currentAuthor, setCurrentAuthor] = useState({
-      name: "",
+export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft = null }) {
+  const [activeStep, setActiveStep] = useState(0);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [currentAuthor, setCurrentAuthor] = useState({
+    name: "",
+    email: "",
+    isExternal: false,
+    bankDetails: {
+      bankName: "",
+      branch: "",
+      accountNo: "",
+      ifscCode: "",
+    },
+  });
+  const [editingAuthorIndex, setEditingAuthorIndex] = useState(null);
+  const [authorDialogOpen, setAuthorDialogOpen] = useState(false);
+  const [formData, setFormData] = useState(
+    initialDraft || {
+      applicantName: "",
       email: "",
-      isExternal: false,
+      mobileNo: "",
+      department: "",
+      applicantType: "",
+      photograph: null,
+      paperDetails: {}, // Store dynamically fetched questions here
       bankDetails: {
         bankName: "",
         branch: "",
         accountNo: "",
         ifscCode: "",
       },
-    });
-    const [editingAuthorIndex, setEditingAuthorIndex] = useState(null);
-  
-    // Initialize form data with draft if available
-    const [formData, setFormData] = useState(
-      initialDraft || {
-        applicantName: "",
-        email: "",
-        mobileNo: "",
-        department: "",
-        applicantType: "",
-        photograph: null,
-        biography: "",
-        paperTitle: "",
-        journalName: "",
-        authorType: "",
-        impactFactor: "",
-        indexing: "",
-        volumeNo: "",
-        pageNo: "",
-        publicationYear: "",
-        publisher: "",
-        bankDetails: {
-          bankName: "",
-          branch: "",
-          accountNo: "",
-          ifscCode: "",
-        },
-        isPaidJournal: "",
-        paperLink: "",
-        doi: "",
-        totalAwardAmount: 900000,
-        authors: [],
-        status: "draft",
-      }
-    );
-  
-    const steps = [
-      "Personal Information",
-      "Paper Details",
-      "Bank Details",
-      "Authors",
-      "Review",
-    ];
-    const validateStep = (step) => {
-        switch (step) {
-          case 0: // Personal Information
-            return formData.applicantName && formData.email && formData.mobileNo;
-          case 1: // Paper Details
-            return (
-              formData.paperTitle &&
-              formData.journalName &&
-              formData.publicationYear
-            );
-          case 2: // Bank Details
-            return formData.bankDetails.bankName && formData.bankDetails.accountNo;
-          case 3: // Authors
-            // Allow navigation even with no authors
-            return true;
-          case 4: // Review
-            return true;
-          default:
-            return false;
-        }
-      };
-    
+      isPaidJournal: "",
+      paperLink: "",
+      doi: "",
+      totalAwardAmount: 500000,
+      authors: [],
+      status: "draft",
+    }
+  );
 
-      const handleNext = () => {
-        if (validateStep(activeStep)) {
-          // Check if we're currently on the last step before review
-          if (activeStep === steps.length - 2) {
-            // Move to the review step
-            setActiveStep((prevActiveStep) => prevActiveStep + 1);
-          } else {
-            // For all other steps, move to the next step
-            setActiveStep((prevActiveStep) => prevActiveStep + 1);
-          }
-        } else {
-          setSnackbarMessage("Please fill in all required fields for this step.");
-          setSnackbarOpen(true);
-        }
-      };
-    
-      const handleBack = () => {
-        setActiveStep((prevActiveStep) => prevActiveStep - 1);
-      };
-    
-      const handleSaveDraft = () => {
-        if (onSaveDraft) {
-          onSaveDraft(formData);
-          setSnackbarMessage("Draft saved successfully!");
-          setSnackbarOpen(true);
-        }
-      };
-    
-      const handleChange = (e) => {
-        const { name, value } = e.target;
-        const [field, subField] = name.split(".");
-    
-        if (subField) {
-          setFormData((prev) => ({
-            ...prev,
-            [field]: {
-              ...prev[field],
-              [subField]: value,
-            },
-          }));
-        } else {
-          setFormData((prev) => ({
-            ...prev,
-            [name]: value,
-          }));
-        }
-      };
-      const handleSubmit = async (e) => {
-        e.preventDefault();
-        try {
-          const response = await API.post("/research-paper-submission", formData);
-          setSnackbarMessage("Research paper submitted successfully!");
-          setSnackbarOpen(true);
-          if (onSubmit) {
-            onSubmit(response.data);
-          }
-        } catch (error) {
-          setSnackbarMessage("Error submitting research paper.");
-          setSnackbarOpen(true);
-          console.error("Error submitting research paper:", error);
-        }
-      };
+  const [questions, setQuestions] = useState([]);
+  const steps = ["Personal Information", "Paper Details", "Bank Details", "Authors", "Review"];
+
+  useEffect(() => {
+    // Fetch questions for the Paper Details section
+    const fetchQuestions = async () => {
+      try {
+        const response = await API.get("/dean/question");
+        setQuestions(response.data);
+      } catch (error) {
+        console.error("Failed to fetch questions:", error);
+        setSnackbarMessage("Failed to fetch questions.");
+        setSnackbarOpen(true);
+      }
+    };
+    fetchQuestions();
+  }, []);
+
+  const validateStep = (step) => {
+    switch (step) {
+      case 0: // Personal Information
+        return formData.applicantName && formData.email && formData.mobileNo;
+      case 1: // Paper Details
+        return questions.every(
+          (q) =>
+            !q.isRequired || (formData.paperDetails[q._id]?.answer && formData.paperDetails[q._id]?.answer.trim() !== "")
+        );
+      case 2: // Bank Details
+        return formData.bankDetails.bankName && formData.bankDetails.accountNo;
+      case 3: // Authors
+        return true; // Allow navigation even with no authors
+      case 4: // Review
+        return true;
+      default:
+        return false;
+    }
+  };
   // Author Management Methods
   const openAuthorDialog = () => {
     setCurrentAuthor({
@@ -219,7 +149,6 @@ export default function ResearchPaperSubmissionForm({
 
     setCurrentAuthor(updatedAuthor);
   };
-
   const saveAuthor = () => {
     const updatedAuthors = [...formData.authors];
 
@@ -238,7 +167,6 @@ export default function ResearchPaperSubmissionForm({
 
     setAuthorDialogOpen(false);
   };
-
   const editAuthor = (index) => {
     setCurrentAuthor(formData.authors[index]);
     setEditingAuthorIndex(index);
@@ -253,6 +181,63 @@ export default function ResearchPaperSubmissionForm({
     }));
   };
 
+  const handleNext = () => {
+    // Only move to the next step if validation passes
+    if (validateStep(activeStep)) {
+      if (activeStep === steps.length - 1) {
+        // If it's the last step, don't increment step, let the Submit button handle the form submission
+        setActiveStep((prev) => prev);
+      } else {
+        setActiveStep((prev) => prev + 1);
+      }
+    } else {
+      setSnackbarMessage("Please fill in all required fields for this step.");
+      setSnackbarOpen(true);
+    }
+  };
+  
+
+  const handleBack = () => {
+    setActiveStep((prev) => prev - 1);
+  };
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    
+    // Find the question using the name (which is the question ID)
+    const question = questions.find((q) => q._id === name);
+  
+    setFormData((prev) => ({
+      ...prev,
+      paperDetails: {
+        ...prev.paperDetails,
+        [name]: {
+          answer: value,       // Store the answer
+          questionText: question?.questionText || "",  // Store the question text
+        },
+      },
+    }));
+  };
+  
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      // Send the form data to the backend
+      console.log("Form data:", formData);
+      console.log(questions)
+      const response = await API.post("/research-paper-submission", formData);
+
+      setSnackbarMessage("Form submitted successfully!");
+      setSnackbarOpen(true);
+    } catch (error) {
+      console.error("Failed to submit the form:", error);
+      setSnackbarMessage("Failed to submit the form.");
+      setSnackbarOpen(true);
+    }
+  };
+
+  
   useEffect(() => {
     if (formData.authors.length > 0 && formData.totalAwardAmount > 0) {
       const authorShares = calculateAuthorShares(
@@ -270,22 +255,148 @@ export default function ResearchPaperSubmissionForm({
     }
   }, [formData.authors, formData.totalAwardAmount]);
 
+
   const renderStepContent = (step) => {
     switch (step) {
       case 0:
         return (
-          <PersonalInformation
-            formData={formData}
-            handleChange={handleChange}
-          />
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Applicant Name"
+                value={formData.applicantName}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, applicantName: e.target.value }))
+                }
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Email"
+                value={formData.email}
+                onChange={(e) => setFormData((prev) => ({ ...prev, email: e.target.value }))}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Mobile Number"
+                value={formData.mobileNo}
+                onChange={(e) => setFormData((prev) => ({ ...prev, mobileNo: e.target.value }))}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Department"
+                value={formData.department}
+                onChange={(e) => setFormData((prev) => ({ ...prev, department: e.target.value }))}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Applicant Type"
+                value={formData.applicantType}
+                onChange={(e) => setFormData((prev) => ({ ...prev, applicantType: e.target.value }))}
+                required
+              />
+            </Grid>
+            {/* Additional fields as needed */}
+          </Grid>
         );
       case 1:
-        return <PaperDetails formData={formData} handleChange={handleChange} />;
+        return (
+          <Grid container spacing={2}>
+            {questions.map((question) => (
+              <Grid item xs={12} sm={6} key={question._id}>
+                <TextField
+                  fullWidth
+                  label={question.questionText}
+                  name={question._id}
+                  value={formData.paperDetails[question._id]?.answer || ""}
+                  onChange={handleChange}
+                  required={question.isRequired}
+                />
+              </Grid>
+            ))}
+          </Grid>
+        );
       case 2:
-        return <BankDetails formData={formData} handleChange={handleChange} />;
+        return (
+          <Grid container spacing={2}>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Bank Name"
+                value={formData.bankDetails.bankName}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    bankDetails: { ...prev.bankDetails, bankName: e.target.value },
+                  }))
+                }
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Branch"
+                name="bankDetails.branch"
+                value={formData.bankDetails.branch}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    bankDetails: { ...prev.bankDetails, branch: e.target.value },
+                  }))
+                }
+                required
+              />
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Account Number"
+                value={formData.bankDetails.accountNo}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    bankDetails: { ...prev.bankDetails, accountNo: e.target.value },
+                  }))
+                }
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+               fullWidth
+                label="IFSC Code"
+                name="bankDetails.ifscCode"
+                value={formData.bankDetails.ifscCode}
+                onChange={(e) =>
+                  setFormData((prev) => ({
+                    ...prev,
+                    bankDetails: { ...prev.bankDetails, ifscCode: e.target.value },
+                  }))
+                }
+                required
+              />
+            </Grid>
+            {/* Additional fields as needed */}
+          </Grid>
+        );
       case 3:
         return (
           <>
+          
             <Grid item xs={12}>
               <Box
                 sx={{
@@ -313,115 +424,7 @@ export default function ResearchPaperSubmissionForm({
                 onRemoveAuthor={removeAuthor}
               />
             </Grid>
-          </>
-        );
-      case 4:
-        return (
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Typography variant="h6">Review Your Submission</Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1">Personal Information</Typography>
-              <Typography>Name: {formData.applicantName}</Typography>
-              <Typography>Email: {formData.email}</Typography>
-              <Typography>Mobile No: {formData.mobileNo}</Typography>
-              <Typography>Department: {formData.department}</Typography>
-              <Typography>Applicant Type: {formData.applicantType}</Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1">Paper Details</Typography>
-              <Typography>Paper Title: {formData.paperTitle}</Typography>
-              <Typography>Journal Name: {formData.journalName}</Typography>
-              <Typography>Author Type: {formData.authorType}</Typography>
-              <Typography>Impact Factor: {formData.impactFactor}</Typography>
-              <Typography>Indexing: {formData.indexing}</Typography>
-              <Typography>Volume No: {formData.volumeNo}</Typography>
-              <Typography>Page No: {formData.pageNo}</Typography>
-              <Typography>
-                Publication Year: {formData.publicationYear}
-              </Typography>
-              <Typography>Publisher: {formData.publisher}</Typography>
-              <Typography>Is Paid Journal: {formData.isPaidJournal}</Typography>
-              <Typography>Paper Link: {formData.paperLink}</Typography>
-              <Typography>DOI: {formData.doi}</Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1">Authors</Typography>
-              <AuthorsList authors={formData.authors} editable={false} />
-            </Grid>
-          </Grid>
-        );
-      default:
-        return "Unknown step";
-    }
-  };
-
-  return (
-    <Container maxWidth="md">
-      <StyledPaper elevation={3}>
-        <Typography variant="h4" align="center" gutterBottom>
-          Research Paper Submission
-        </Typography>
-
-        <Stepper activeStep={activeStep} alternativeLabel>
-          {steps.map((label) => (
-            <Step key={label}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          ))}
-        </Stepper>
-
-        <form onSubmit={handleSubmit}>
-          <Grid container spacing={2} sx={{ mt: 2 }}>
-            {renderStepContent(activeStep)}
-          </Grid>
-
-          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
-            <Box>
-              <FormButton
-                disabled={activeStep === 0}
-                onClick={handleBack}
-                variant="outlined"
-                sx={{ mr: 2 }}
-              >
-                Back
-              </FormButton>
-              <FormButton
-                variant="outlined"
-                color="secondary"
-                onClick={handleSaveDraft}
-              >
-                Save Draft
-              </FormButton>
-            </Box>
-            {activeStep === steps.length   ? (
-              <FormButton type="submit" variant="contained" color="primary">
-                Submit
-              </FormButton>
-            ) : (
-              <FormButton
-                variant="contained"
-                color="primary"
-                onClick={handleNext}
-              >
-                Next
-              </FormButton>
-            )}
-           
-          </Box>
-        </form>
-      </StyledPaper>
-
-      <Snackbar
-        open={snackbarOpen}
-        autoHideDuration={3000}
-        onClose={() => setSnackbarOpen(false)}
-        message={snackbarMessage}
-        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
-      />
-
-      {/* Author Dialog */}
+             {/* Author Dialog */}
       <Dialog
         open={authorDialogOpen}
         onClose={() => setAuthorDialogOpen(false)}
@@ -517,6 +520,90 @@ export default function ResearchPaperSubmissionForm({
           </Button>
         </DialogActions>
       </Dialog>
+            </>
+
+        );
+      case 4:
+        return (
+          
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <Typography variant="h6">Review Your Submission</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle1">Personal Information</Typography>
+              <Typography>Name: {formData.applicantName}</Typography>
+              <Typography>Email: {formData.email}</Typography>
+              <Typography>Mobile No: {formData.mobileNo}</Typography>
+              <Typography>Department: {formData.department}</Typography>
+              <Typography>Applicant Type: {formData.applicantType}</Typography>
+            </Grid>
+            <Grid item xs={12}>
+              {questions.map((question) => (
+              <Typography>{question.questionText}: {formData.paperDetails[question._id]?.answer}</Typography>
+              
+            ))}
+            </Grid>
+            <Grid item xs={12}>
+              <Typography variant="subtitle1">Authors</Typography>
+              <AuthorsList authors={formData.authors} editable={false} />
+            </Grid>
+          </Grid>
+        )// Review implementation
+      default:
+        return "Unknown step";
+    }
+  };
+
+  return (
+    <Container maxWidth="md">
+      <StyledPaper elevation={3}>
+        <Typography variant="h4" align="center" gutterBottom>
+          Research Paper Submission
+        </Typography>
+
+        <Stepper activeStep={activeStep} alternativeLabel>
+          {steps.map((label) => (
+            <Step key={label}>
+              <StepLabel>{label}</StepLabel>
+            </Step>
+          ))}
+        </Stepper>
+
+        <form >
+          <Grid container spacing={2} sx={{ mt: 2 }}>
+            {renderStepContent(activeStep)}
+          </Grid>
+
+          <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
+            <Box>
+              <FormButton disabled={activeStep === 0} onClick={handleBack} variant="outlined">
+                Back
+              </FormButton>
+              <FormButton variant="outlined" color="secondary" onClick={onSaveDraft}>
+                Save Draft
+              </FormButton>
+            </Box>
+            {activeStep === steps.length - 1 ? (
+              <FormButton onClick={handleSubmit} variant="contained" color="primary">
+                Submit
+              </FormButton>
+            ) : (
+              <FormButton variant="contained" color="primary" onClick={handleNext}>
+                Next
+              </FormButton>
+            )}
+          </Box>
+        </form>
+      </StyledPaper>
+
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={3000}
+        onClose={() => setSnackbarOpen(false)}
+        message={snackbarMessage}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+      />
     </Container>
   );
 }
