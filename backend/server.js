@@ -40,7 +40,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/research-portal')
+  .connect(process.env.MONGO_URI || 'mongodb+srv://Ayushkiller:dturesearch@cluster0.i9tfv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 
