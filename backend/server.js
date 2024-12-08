@@ -4,7 +4,8 @@ const morgan = require('morgan');
 const cors = require('cors');
 require('dotenv').config();
 const authRouter = require('./routes/auth').router; // Import the auth router correctly
-
+const researchPaperRouter = require('./routes/researchPaper');
+const path = require('path');
 const app = express();
 
 // Use morgan to log incoming requests
@@ -25,10 +26,21 @@ const PORT = process.env.PORT || 5000;
 // Middleware
 app.use(cors());
 app.use(express.json());
+// Serve uploaded files
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
+// Routes
+app.use('/auth', authRouter);
+app.use('/research-paper-submission', researchPaperRouter);
+// Create uploads directory if it doesn't exist
+const fs = require('fs');
+const uploadsDir = path.join(__dirname, 'uploads/photographs');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/research-portal', { useNewUrlParser: true, useUnifiedTopology: true })
+  .connect(process.env.MONGO_URI || 'mongodb://localhost:27017/research-portal')
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 

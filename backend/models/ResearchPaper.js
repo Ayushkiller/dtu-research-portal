@@ -1,28 +1,41 @@
 const mongoose = require('mongoose');
 
 const researchPaperSchema = new mongoose.Schema({
-  title: { type: String, required: true },
-  authorsInternal: [{ type: String, required: true }],
-  authorsExternal: [{ type: String }],
-  googleDriveLink: { type: String, required: true },
-  impactFactor: { type: Number },
-  indexing: { type: String },
+  applicantName: { type: String, required: true },
+  email: { type: String, required: true },
+  mobileNo: { type: String, required: true },
+  department: { type: String, required: true },
+  applicantType: { type: String, required: true },
+  photograph: { type: String }, // Store file path or URL
+  biography: { type: String, required: true },
+  paperTitle: { type: String, required: true },
   journalName: { type: String, required: true },
-  year: { type: Number, required: true },
-  publisher: { type: String },
-  awardDistribution: {
-    firstAuthor: { type: Number, default: 0 },
-    coAuthors: [{ type: Number }],
+  authorType: { type: String, required: true },
+  impactFactor: { type: String, required: true },
+  indexing: { type: String, required: true },
+  publicationYear: { type: Number, required: true },
+  researchPaperLink: { type: String, required: true },
+  bankDetails: {
+    bankName: { type: String, required: true },
+    branch: { type: String, required: true },
+    accountNo: { type: String, required: true },
+    ifscCode: { type: String, required: true }
   },
-  committeeRemarks: [
-    {
-      reviewer: { type: String }, // Committee member's email
-      remark: { type: String },
-      timestamp: { type: Date, default: Date.now },
+  totalAwardAmount: { type: Number, required: true },
+  authors: [{
+    name: { type: String },
+    email: { type: String },
+    mobileNo: { type: String },
+    isExternal: { type: Boolean, default: false },
+    bankDetails: {
+      bankName: { type: String },
+      branch: { type: String }, 
+      accountNo: { type: String },
+      ifscCode: { type: String }
     },
-  ],
-  status: { type: String, enum: ['pending', 'round1', 'round2', 'approved', 'rejected'], default: 'pending' },
-  createdAt: { type: Date, default: Date.now },
+    shareValue: { type: Number }
+  }],
+  submittedAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('ResearchPaper', researchPaperSchema);

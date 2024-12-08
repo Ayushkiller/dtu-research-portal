@@ -39,6 +39,13 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
     pageNo: "",
     publicationYear: "",
     publisher: "",
+    bankDetails: {
+      bankName: "",
+      branch: "",
+      accountNo: "",
+      ifscCode: "",
+    },
+
     isPaidJournal: "",
     paperLink: "",
     doi: "",
@@ -61,7 +68,19 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
       },
     ],
   });
-
+  const validateAuthors = (authors) => {
+    return authors.every((author) => {
+      return (
+        author.name.trim() !== "" &&
+        author.email.trim() !== "" &&
+        author.mobileNo.trim() !== "" &&
+        author.bankDetails.bankName.trim() !== "" &&
+        author.bankDetails.branch.trim() !== "" &&
+        author.bankDetails.accountNo.trim() !== "" &&
+        author.bankDetails.ifscCode.trim() !== ""
+      );
+    });
+  };
   const [openDialog, setOpenDialog] = useState(false);
   const [newAuthor, setNewAuthor] = useState({
     name: "",
@@ -79,10 +98,21 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
 
   const handleChange = (e) => {
     const { name, value, files } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: files ? files[0] : value,
-    }));
+    if (name.includes("bankDetails.")) {
+      const field = name.split(".")[1];
+      setFormData((prev) => ({
+        ...prev,
+        bankDetails: {
+          ...prev.bankDetails,
+          [field]: value,
+        },
+      }));
+    } else {
+      setFormData((prev) => ({
+        ...prev,
+        [name]: files ? files[0] : value,
+      }));
+    }
   };
 
   const handleAddAuthor = () => {
@@ -106,16 +136,53 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
     });
     handleCloseDialog();
   };
-
   const handleSubmit = async (event) => {
     event.preventDefault();
-    onSubmit(formData);
-    const res = await axios.post(
-      "http://localhost:5000/research-paper-submission",
-      formData
-    );
-    if (res.data.success) {
-      // abhi mai ja rha hu , iske aage dekh lena :> , nahi to fir raat ko karta hu
+
+    // Validate authors data
+    if (!validateAuthors(formData.authors)) {
+      alert("Please fill in all required fields for all authors");
+      return;
+    }
+
+    try {
+      const formDataToSend = new FormData();
+
+      // Only include non-empty authors
+      const authorsToSend = formData.authors.filter(
+        (author) => author.name.trim() !== ""
+      );
+
+      // Append form data
+      Object.keys(formData).forEach((key) => {
+        if (key === "authors") {
+          formDataToSend.append("authors", JSON.stringify(authorsToSend));
+        } else if (key === "photograph" && formData[key]) {
+          formDataToSend.append("photograph", formData[key]);
+        } else {
+          formDataToSend.append(key, formData[key]);
+        }
+      });
+
+      const response = await axios.post(
+        "http://localhost:5000/research-paper-submission",
+        formDataToSend,
+        {
+          headers: {
+            "Content-Type": "multipart/form-data",
+          },
+        }
+      );
+
+      if (response.data.success) {
+        alert("Research paper submitted successfully!");
+        onSubmit(formData);
+      } else {
+        alert("Failed to submit research paper.");
+      }
+    } catch (error) {
+      console.error("Error submitting research paper:", error);
+      alert("An error occurred while submitting the research paper.");
     }
   };
 
@@ -368,6 +435,50 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
         <Grid item xs={12} sm={6}>
           <TextField
             fullWidth
+            label="Bank Name"
+            name="bankDetails.bankName"
+            value={formData.bankDetails.bankName}
+            onChange={handleChange}
+            required
+            variant="outlined"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Branch"
+            name="bankDetails.branch"
+            value={formData.bankDetails.branch}
+            onChange={handleChange}
+            required
+            variant="outlined"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="Account Number"
+            name="bankDetails.accountNo"
+            value={formData.bankDetails.accountNo}
+            onChange={handleChange}
+            required
+            variant="outlined"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
+            label="IFSC Code"
+            name="bankDetails.ifscCode"
+            value={formData.bankDetails.ifscCode}
+            onChange={handleChange}
+            required
+            variant="outlined"
+          />
+        </Grid>
+        <Grid item xs={12} sm={6}>
+          <TextField
+            fullWidth
             label="Your share of the Award Amount"
             name="totalAwardAmount"
             type="number"
@@ -568,6 +679,9 @@ export default function ResearchPaperSubmissionForm({ onSubmit }) {
           <Button onClick={handleAddAuthor}>Add Author</Button>
         </DialogActions>
       </Dialog>
+      <Button type="submit" variant="contained" color="primary">
+        Submit
+      </Button>
     </form>
   );
 }
