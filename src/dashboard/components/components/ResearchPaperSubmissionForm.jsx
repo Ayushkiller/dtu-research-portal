@@ -24,7 +24,7 @@ import PersonalInformation from "./FormFields/PersonalInformation";
 import PaperDetails from "./FormFields/PaperDetails";
 import BankDetails from "./FormFields/BankDetails";
 import AuthorsList from "./FormFields/AuthorsList";
-
+import API from "../../../api/axios";
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
   marginTop: theme.spacing(4),
@@ -37,146 +37,153 @@ const FormButton = styled(Button)(({ theme }) => ({
 }));
 
 export default function ResearchPaperSubmissionForm({
-  onSubmit,
-  onSaveDraft,
-  initialDraft = null,
-}) {
-  const [activeStep, setActiveStep] = useState(0);
-  const [snackbarOpen, setSnackbarOpen] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [authorDialogOpen, setAuthorDialogOpen] = useState(false);
-  const [currentAuthor, setCurrentAuthor] = useState({
-    name: "",
-    email: "",
-    isExternal: false,
-    bankDetails: {
-      bankName: "",
-      branch: "",
-      accountNo: "",
-      ifscCode: "",
-    },
-  });
-  const [editingAuthorIndex, setEditingAuthorIndex] = useState(null);
-
-  // Initialize form data with draft if available
-  const [formData, setFormData] = useState(
-    initialDraft || {
-      applicantName: "",
+    onSubmit,
+    onSaveDraft,
+    initialDraft = null,
+  }) {
+    const [activeStep, setActiveStep] = useState(0);
+    const [snackbarOpen, setSnackbarOpen] = useState(false);
+    const [snackbarMessage, setSnackbarMessage] = useState("");
+    const [authorDialogOpen, setAuthorDialogOpen] = useState(false);
+    const [currentAuthor, setCurrentAuthor] = useState({
+      name: "",
       email: "",
-      mobileNo: "",
-      department: "",
-      applicantType: "",
-      photograph: null,
-      biography: "",
-      paperTitle: "",
-      journalName: "",
-      authorType: "",
-      impactFactor: "",
-      indexing: "",
-      volumeNo: "",
-      pageNo: "",
-      publicationYear: "",
-      publisher: "",
+      isExternal: false,
       bankDetails: {
         bankName: "",
         branch: "",
         accountNo: "",
         ifscCode: "",
       },
-      isPaidJournal: "",
-      paperLink: "",
-      doi: "",
-      totalAwardAmount: 500000,
-      authors: [],
-      status: "draft",
-    }
-  );
-
-  const steps = [
-    "Personal Information",
-    "Paper Details",
-    "Bank Details",
-    "Authors",
-    "Review",
-  ];
-
-  const validateStep = (step) => {
-    switch (step) {
-      case 0: // Personal Information
-        return formData.applicantName && formData.email && formData.mobileNo;
-      case 1: // Paper Details
-        return (
-          formData.paperTitle &&
-          formData.journalName &&
-          formData.publicationYear
-        );
-      case 2: // Bank Details
-        return formData.bankDetails.bankName && formData.bankDetails.accountNo;
-      case 3: // Authors
-        // Allow navigation even with no authors
-        return true;
-      case 4: // Review
-        return true;
-      default:
-        return false;
-    }
-  };
-
-  const handleNext = () => {
-    if (validateStep(activeStep)) {
-      // Check if we're currently on the last step before review
-      if (activeStep === steps.length - 2) {
-        // Move to the review step
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-      } else {
-        // For all other steps, move to the next step
-        setActiveStep((prevActiveStep) => prevActiveStep + 1);
-      }
-    } else {
-      setSnackbarMessage("Please fill in all required fields for this step.");
-      setSnackbarOpen(true);
-    }
-  };
-
-  const handleBack = () => {
-    setActiveStep((prevActiveStep) => prevActiveStep - 1);
-  };
-
-  const handleSaveDraft = () => {
-    if (onSaveDraft) {
-      onSaveDraft(formData);
-      setSnackbarMessage("Draft saved successfully!");
-      setSnackbarOpen(true);
-    }
-  };
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    const [field, subField] = name.split(".");
-
-    if (subField) {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: {
-          ...prev[field],
-          [subField]: value,
+    });
+    const [editingAuthorIndex, setEditingAuthorIndex] = useState(null);
+  
+    // Initialize form data with draft if available
+    const [formData, setFormData] = useState(
+      initialDraft || {
+        applicantName: "",
+        email: "",
+        mobileNo: "",
+        department: "",
+        applicantType: "",
+        photograph: null,
+        biography: "",
+        paperTitle: "",
+        journalName: "",
+        authorType: "",
+        impactFactor: "",
+        indexing: "",
+        volumeNo: "",
+        pageNo: "",
+        publicationYear: "",
+        publisher: "",
+        bankDetails: {
+          bankName: "",
+          branch: "",
+          accountNo: "",
+          ifscCode: "",
         },
-      }));
-    } else {
-      setFormData((prev) => ({
-        ...prev,
-        [name]: value,
-      }));
-    }
-  };
+        isPaidJournal: "",
+        paperLink: "",
+        doi: "",
+        totalAwardAmount: 500000,
+        authors: [],
+        status: "draft",
+      }
+    );
+  
+    const steps = [
+      "Personal Information",
+      "Paper Details",
+      "Bank Details",
+      "Authors",
+      "Review",
+    ];
+    const validateStep = (step) => {
+        switch (step) {
+          case 0: // Personal Information
+            return formData.applicantName && formData.email && formData.mobileNo;
+          case 1: // Paper Details
+            return (
+              formData.paperTitle &&
+              formData.journalName &&
+              formData.publicationYear
+            );
+          case 2: // Bank Details
+            return formData.bankDetails.bankName && formData.bankDetails.accountNo;
+          case 3: // Authors
+            // Allow navigation even with no authors
+            return true;
+          case 4: // Review
+            return true;
+          default:
+            return false;
+        }
+      };
+    
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Set status to submitted
-    const submissionData = { ...formData, status: "submitted" };
-    onSubmit(submissionData);
-  };
-
+      const handleNext = () => {
+        if (validateStep(activeStep)) {
+          // Check if we're currently on the last step before review
+          if (activeStep === steps.length - 2) {
+            // Move to the review step
+            setActiveStep((prevActiveStep) => prevActiveStep + 1);
+          } else {
+            // For all other steps, move to the next step
+            setActiveStep((prevActiveStep) => prevActiveStep + 1);
+          }
+        } else {
+          setSnackbarMessage("Please fill in all required fields for this step.");
+          setSnackbarOpen(true);
+        }
+      };
+    
+      const handleBack = () => {
+        setActiveStep((prevActiveStep) => prevActiveStep - 1);
+      };
+    
+      const handleSaveDraft = () => {
+        if (onSaveDraft) {
+          onSaveDraft(formData);
+          setSnackbarMessage("Draft saved successfully!");
+          setSnackbarOpen(true);
+        }
+      };
+    
+      const handleChange = (e) => {
+        const { name, value } = e.target;
+        const [field, subField] = name.split(".");
+    
+        if (subField) {
+          setFormData((prev) => ({
+            ...prev,
+            [field]: {
+              ...prev[field],
+              [subField]: value,
+            },
+          }));
+        } else {
+          setFormData((prev) => ({
+            ...prev,
+            [name]: value,
+          }));
+        }
+      };
+      const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+          const response = await API.post("/research-paper-submission", formData);
+          setSnackbarMessage("Research paper submitted successfully!");
+          setSnackbarOpen(true);
+          if (onSubmit) {
+            onSubmit(response.data);
+          }
+        } catch (error) {
+          setSnackbarMessage("Error submitting research paper.");
+          setSnackbarOpen(true);
+          console.error("Error submitting research paper:", error);
+        }
+      };
   // Author Management Methods
   const openAuthorDialog = () => {
     setCurrentAuthor({
