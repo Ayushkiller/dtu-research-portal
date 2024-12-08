@@ -7,8 +7,26 @@ const userSchema = new mongoose.Schema({
   department: { type: String, required: true },
   mobileNumber: { type: String, required: true },
   employeeId: { type: String, required: true },
-  userType: { type: String, enum: ['faculty', 'student', 'researchScholar', 'committeeMember', 'competentAuthority'], required: true },
+  userType: { 
+    type: String, 
+    enum: ['faculty', 'student', 'researchScholar', 'committeeMember', 'competentAuthority'], 
+    required: true 
+  },
+  isBanned: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
+  powers: { 
+    type: [String], // Array of strings to allow multiple powers
+    enum: [
+      'suspendResearchPaper', 
+      'unsuspendResearchPaper', 
+      'putUnderReview', 
+      'addRemarks', 
+      'flagQuestion',
+      'unflagQuestion', 
+      'changeShareAmount'
+    ],
+    default: [] // Default to no powers assigned
+  }
 });
 
 module.exports = mongoose.model('User', userSchema);

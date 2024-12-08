@@ -13,7 +13,6 @@ import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 import HelpRoundedIcon from "@mui/icons-material/HelpRounded";
 import Cookies from "js-cookie";
-import { Add } from "@mui/icons-material";
 
 // faculty', 'student', 'researchScholar', 'committeeMember', 'competentAuthority
 

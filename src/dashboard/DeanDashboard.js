@@ -6,7 +6,6 @@ import Box from '@mui/material/Box';
 import Stack from '@mui/material/Stack';
 import AppNavbar from './components/AppNavbar';
 import Header from './components/Header';
-import MainGrid from './components/MainGrid';
 import SideMenu from './components/SideMenu';
 import AppTheme from '../shared-theme/AppTheme';
 import { jwtDecode } from "jwt-decode";
@@ -18,6 +17,7 @@ import {
   datePickersCustomizations,
   treeViewCustomizations,
 } from './theme/customizations';
+import DeanGrid from './components/DeanGrid';
 
 const xThemeComponents = {
   ...chartsCustomizations,
@@ -26,31 +26,31 @@ const xThemeComponents = {
   ...treeViewCustomizations,
 };
 
-export default function Dashboard(props) {
-  const token = Cookies.get("token");
-  const navigate = useNavigate();
-  React.useEffect(() => {
-    if (token) {
-      try {
-        const decodedToken = jwtDecode(token);
-        if(decodedToken.userType === "competentAuthority" || decodedToken.userType === "committeeMember"){
-          alert("You are not authorized to view this page");
-
-          if(decodedToken.userType === "competentAuthority"){
-            navigate("/dean-dashboard");
-          } else {
-            // navigate("/committee-dashboard");
+export default function DeanDashboard(props) {
+    const navigate = useNavigate();
+    const token = Cookies.get("token");
+    const [name, setName] = React.useState("Default Name");
+    const [email, setEmail] = React.useState("default@email.com");
+    
+    React.useEffect(() => {
+      if (token) {
+        try {
+          const decodedToken = jwtDecode(token);
+          if(decodedToken.userType !== "competentAuthority"){
+            alert("You are not authorized to view this page");
+            navigate("/signin");
           }
-          
+          setName(decodedToken.name);
+          setEmail(decodedToken.email);
+        } catch (error) {
+          console.error("Error decoding token:", error);
+          navigate("/signin");
         }
-      } catch (error) {
-        console.error("Error decoding token:", error);
+      } else {
         navigate("/signin");
       }
-    } else {
-      navigate("/signin");
-    }
-  }, [navigate,token]);
+    }, [token, navigate]);
+  
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>
       <CssBaseline enableColorScheme />
@@ -78,7 +78,10 @@ export default function Dashboard(props) {
             }}
           >
             <Header />
-            <MainGrid />
+            <DeanGrid />
+            {name}
+            {email}
+
           </Stack>
         </Box>
       </Box>

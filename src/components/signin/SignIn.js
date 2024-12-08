@@ -19,6 +19,8 @@ import AppTheme from "../shared-theme/AppTheme";
 import ColorModeSelect from "../shared-theme/ColorModeSelect";
 import API from "../../api/axios";
 import Cookies from "js-cookie";
+import { jwtDecode } from "jwt-decode";
+
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
   flexDirection: "column",
@@ -74,13 +76,33 @@ export default function SignIn(props) {
   useEffect(() => {
     if (token) {
       try {
-        navigate("/dashboard");
+        const decodedToken = jwtDecode(token);
+        if(decodedToken.userType === "competentAuthority")
+          {
+            alert("Login successful!");
+            navigate("/dean-dashboard");
+            return
+          }
+        // }else if(decodedToken.userType === "committeeMember")
+        // {
+        //   alert("Login successful!");
+        //   navigate("/committee-dashboard");
+        //   return
+        // }
+        else if(decodedToken.userType === "student" || decodedToken.userType === "faculty" || decodedToken.userType === "researchScholar")
+        {
+          alert("Login successful!");
+          navigate("/dashboard");
+          return
+        }
       } catch (error) {
         console.error("Error decoding token:", error);
         navigate("/dashboard");
       }
     }
   }, [token, navigate]);
+
+
   const handleShowPasswordChange = () => {
     setShowPassword(!showPassword);
   };
@@ -91,6 +113,8 @@ export default function SignIn(props) {
   const handleClose = () => {
     setOpen(false);
   };
+
+
   const handleSubmit = async (event) => {
     event.preventDefault();
     if (emailError || passwordError) {
@@ -104,8 +128,28 @@ export default function SignIn(props) {
       const response = await API.post("/auth/login", { email, password });
       const { token } = response.data;
       Cookies.set('token', token, { expires: 1 / 24 }); // Save token in cookies with 1-hour expiration
-      alert("Login successful!");
-      navigate("/dashboard");
+      if (token) {
+        const decodedToken = jwtDecode(token);
+        console.log(decodedToken);  
+        if(decodedToken.userType === "competentAuthority")
+        {
+          alert("Login successful!");
+          navigate("/dean-dashboard");
+          return
+        }
+      // }else if(decodedToken.userType === "committeeMember")
+      // {
+      //   alert("Login successful!");
+      //   navigate("/committee-dashboard");
+      //   return
+      // }
+      else if(decodedToken.userType === "student" || decodedToken.userType === "faculty" || decodedToken.userType === "researchScholar")
+      {
+        alert("Login successful!");
+        navigate("/dashboard");
+        return
+      }
+    }
     } catch (error) {
       console.error("Login error:", error);
     }
