@@ -42,8 +42,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI || 'mongodb+srv://Ayushkiller:dturesearch@cluster0.i9tfv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
-
+  .connect(process.env.MONGO_URI || 'mongodb+srv://admin:OvpIVRbKRSH92ZQW@cluster0.hymysuv.mongodb.net/dtu-research-portal',)
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 

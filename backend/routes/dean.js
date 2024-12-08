@@ -72,6 +72,7 @@ router.put('/delegate-powers/:userId', authorizeDean, async (req, res) => {
   }
 });
 
+
 // Route to review research papers
 router.get('/research-papers', authorizeDean, async (req, res) => {
   try {
@@ -90,7 +91,7 @@ router.put('/research-papers/:paperId/status', authorizeDean, async (req, res) =
   try {
     const paper = await ResearchPaper.findById(paperId);
     if (!paper) return res.status(404).json({ error: 'Research paper not found' });
-
+    
     paper.status = status; // Add a `status` field in the ResearchPaper schema
     paper.comments = comments || null; // Add a `comments` field in the schema if needed
     await paper.save();
