@@ -86,7 +86,7 @@ export default function ResearchPaperSubmissionForm({
         isPaidJournal: "",
         paperLink: "",
         doi: "",
-        totalAwardAmount: 500000,
+        totalAwardAmount: 900000,
         authors: [],
         status: "draft",
       }

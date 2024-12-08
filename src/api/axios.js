@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const API = axios.create({
-  baseURL: 'http://localhost:5000/', // Backend base URL
+  baseURL: 'http://localhost:9000/'||'https://dtubackend.something.vyvsai.com', // Backend base URL
 });
 
 API.interceptors.request.use((config) => {
