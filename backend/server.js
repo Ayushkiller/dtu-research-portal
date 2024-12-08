@@ -22,7 +22,7 @@ app.use((req, res, next) => {
   next();
 });
 
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 9000;
 
 // Middleware
 app.use(cors());
@@ -42,7 +42,8 @@ if (!fs.existsSync(uploadsDir)) {
 }
 // MongoDB Connection
 mongoose
-  .connect(process.env.MONGO_URI || 'mongodb+srv://admin:OvpIVRbKRSH92ZQW@cluster0.hymysuv.mongodb.net/dtu-research-portal')
+  .connect(process.env.MONGO_URI || 'mongodb+srv://Ayushkiller:dturesearch@cluster0.i9tfv.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
+
   .then(() => console.log('MongoDB connected'))
   .catch((err) => console.error('MongoDB connection error:', err));
 

@@ -12,14 +12,14 @@ function LandingPage({ onFinish }) {
       "An investment in knowledge pays the best interest.",
       // Add more quotes as desired
     ];
-
+//f
     // Select a random quote
     const randomQuote = quotes[Math.floor(Math.random() * quotes.length)];
     setQuote(randomQuote);
 
     // Set timers for fading effects
-    const timer1 = setTimeout(() => setFadeOut(true), 4000); // Start fading out after 4 seconds
-    const timer2 = setTimeout(() => onFinish(), 5000);       // Finish the landing page after 5 seconds
+    const timer1 = setTimeout(() => setFadeOut(true), 1000); // Start fading out after 4 seconds
+    const timer2 = setTimeout(() => onFinish(), 2000);       // Finish the landing page after 5 seconds
 
     return () => {
       clearTimeout(timer1);

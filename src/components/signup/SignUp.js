@@ -139,7 +139,7 @@ export default function SignUp(props) {
 
     try {
       const response = await axios.post(
-        "http://localhost:5000/auth/register",
+        "https://dtubackend.something.vyvsai.com/auth/register",
         userData
       );
       console.log(response.data);

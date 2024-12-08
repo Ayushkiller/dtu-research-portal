@@ -17,8 +17,8 @@ const MechanicalIcon = () => <span>🔧</span>;
 const ElectronicsIcon = () => <span>📡</span>;
 
 const data = [
-  { label: 'Computer Science', value: 35000 },
-  { label: 'Electrical Engineering', value: 25000 },
+  { label: 'Computer Science', value: 39000 },
+  { label: 'Electrical Engineering', value: 29000 },
   { label: 'Mechanical Engineering', value: 20000 },
   { label: 'Electronics & Communication', value: 20000 },
 ];
