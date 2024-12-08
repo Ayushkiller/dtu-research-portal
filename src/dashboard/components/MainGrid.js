@@ -7,7 +7,7 @@ import Copyright from '../internals/components/Copyright';
 import ChartUserByDepartment from './ChartUserByDepartment';
 import CustomizedDataGrid from './CustomizedDataGrid';
 import SubmissionButton from './SubmissionButton';
-import ResearchPaperSubmissionForm from './ResearchPaperSubmissionForm';
+import ResearchPaperSubmissionForm from './components/ResearchPaperSubmissionForm';
 
 export default function MainGrid() {
   const [showForm, setShowForm] = React.useState(false);
