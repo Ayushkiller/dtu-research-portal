@@ -15,7 +15,10 @@ import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
 export default function DeanGrid() {
   const [usersData, setUsersData] = React.useState([]);
+  const [researchPapersData, setResearchPapersData] = React.useState([]);
+  const [selectedPaper, setSelectedPaper] = React.useState(null);
   const [selectedUser, setSelectedUser] = React.useState(null);
+  const [openPaperModal, setOpenPaperModal] = React.useState(false);
   const [openModal, setOpenModal] = React.useState(false);
   const [newPower, setNewPower] = React.useState("");
 
@@ -35,9 +38,7 @@ export default function DeanGrid() {
       try {
         const response = await API.get("/dean/accounts");
         console.log(response.data);
-        
         const users = response.data.map((user) => ({
-          
           id: user._id,
           employeeId: user.employeeId,
           name: user.name,
@@ -48,7 +49,9 @@ export default function DeanGrid() {
           banned: user.isBanned,
           powers: user.powers || [],
         }));
-        const updatedUsers = users.filter((user) => user.userType !== "competentAuthority");
+        const updatedUsers = users.filter(
+          (user) => user.userType !== "competentAuthority"
+        );
 
         setUsersData(updatedUsers);
       } catch (error) {
@@ -58,14 +61,82 @@ export default function DeanGrid() {
     fetchUsers();
   }, [selectedUser]);
 
+  React.useEffect(() => {
+    const fetchPapers = async () => {
+      try {
+        const response = await API.get("/dean/research-papers");
+        console.log(response.data);
+
+        const papers = response.data.map((paper) => {
+          const paperDetails = paper.paperDetails;
+          console.log(paperDetails);
+          // Map questionText to answer
+          const researchPaperData = Object.entries(paperDetails).map(
+            ([key, value], index) => {
+              console.log(`Processing entry ${index}:`, value);
+              return {
+                questionText: value.questionText,
+                answer: value.answer,
+              };
+            }
+          );
+          console.log("research paper data ", researchPaperData);
+
+          const paperTitle = researchPaperData.find(
+            (data) => data.questionText === "Paper Title"
+          )?.answer;
+          const pubYear = researchPaperData.find(
+            (data) => data.questionText === "Publication Year"
+          )?.answer;
+          const impactFactor = researchPaperData.find(
+            (data) => data.questionText === "Impact Factor of the Journal"
+          )?.answer;
+          const excludedQuestions = [
+            "Publication Year",
+            "Paper Title",
+            "Impact Factor",
+          ];
+          const filteredResearchPaperData = researchPaperData.filter(
+            (data) => !excludedQuestions.includes(data.questionText)
+          );
+
+          return {
+            id: paper._id,
+            applicantName: paper.applicantName,
+            department: paper.department,
+            paperTitle: paperTitle,
+            status: paper.status,
+            pubYear: pubYear,
+            impactFactor: impactFactor,
+            researchPaperData: filteredResearchPaperData,
+          };
+        });
+
+        setResearchPapersData(papers);
+      } catch (error) {
+        console.error("Error fetching users:", error);
+      }
+    };
+
+    fetchPapers();
+  }, [selectedPaper]);
+
   const handleRowClick = (params) => {
     setSelectedUser(params.row);
     setOpenModal(true);
+  };
+  const handleResearchRowClick = (params) => {
+    setSelectedPaper(params.row);
+    setOpenPaperModal(true);
   };
 
   const handleCloseModal = () => {
     setOpenModal(false);
     setSelectedUser(null);
+  };
+  const handleClosePaperModal = () => {
+    setOpenPaperModal(false);
+    setSelectedPaper(null);
   };
 
   const handleAddPower = async () => {
@@ -75,20 +146,21 @@ export default function DeanGrid() {
           ...selectedUser,
           powers: [...selectedUser.powers, newPower],
         };
-        
+
         // Send updated powers to backend
-       const response = await API.put(`/dean/delegate-powers/${selectedUser.id}`, {
-          delegatedPowers: updatedUser.powers,
-        });
-        if(response.status === 200){
+        const response = await API.put(
+          `/dean/delegate-powers/${selectedUser.id}`,
+          {
+            delegatedPowers: updatedUser.powers,
+          }
+        );
+        if (response.status === 200) {
           setSelectedUser(updatedUser);
         }
-       
-        
-        setNewPower("");
 
+        setNewPower("");
       } catch (error) {
-        alert(error.response.data.error)
+        alert(error.response.data.error);
         console.error("Error adding power:", error);
       }
     }
@@ -117,7 +189,7 @@ export default function DeanGrid() {
     if (selectedUser) {
       try {
         await API.put(`/dean/accounts/ban/${selectedUser.id}`);
-       
+
         setOpenModal(false);
         alert(`${selectedUser.name} banned successfully.`);
       } catch (error) {
@@ -148,7 +220,37 @@ export default function DeanGrid() {
     { field: "name", headerName: "Name", flex: 1 },
     { field: "userType", headerName: "User Type", flex: 1 },
     { field: "department", headerName: "Department", flex: 1 },
+    { field: "banned", headerName: "Banned", flex: 1 },
   ];
+  const paperColumns = [
+    { field: "applicantName", headerName: "Applicant Name", flex: 1 },
+    { field: "paperTitle", headerName: "Paper Title", flex: 1 },
+    { field: "department", headerName: "Department", flex: 1 },
+    { field: "impactFactor", headerName: "impact Factor", flex: 1 },
+    { field: "pubYear", headerName: "Publication Year", flex: 1 },
+    { field: "status", headerName: "Status", flex: 1 },
+  ];
+
+  const handleUpdateStatus = async (status) => {
+    if (!selectedPaper) return;
+
+    try {
+      const response = await API.put(
+        `/dean/research-papers/${selectedPaper.id}/status`,
+        {
+          status,
+          comments: null, // You can allow the user to add comments if needed
+        }
+      );
+
+      console.log(response.data.message);
+      alert(`Research paper ${status}`);
+      setOpenPaperModal(false); // Close modal after action
+    } catch (error) {
+      console.error("Failed to update research paper status:", error);
+      alert("Failed to update status. Please try again.");
+    }
+  };
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -157,7 +259,7 @@ export default function DeanGrid() {
       </Typography>
       <Grid container spacing={2} columns={12}>
         <Grid item xs={12} lg={9}>
-          <div style={{ height: 400, width: "100%" }}>
+          <div style={{ height: 400, width: "700px" }}>
             <DataGrid
               rows={usersData}
               columns={columns}
@@ -171,7 +273,7 @@ export default function DeanGrid() {
       <Copyright sx={{ my: 4 }} />
 
       <Modal open={openModal} onClose={handleCloseModal}>
-        <Paper sx={{ p: 4, width: 400, mx: "auto", my: "15%" }}>
+        <Paper sx={{ p: 4, width: 400, mx: "auto", my: "10%" }}>
           <Typography variant="h6" sx={{ mb: 2 }}>
             User Details
           </Typography>
@@ -218,26 +320,21 @@ export default function DeanGrid() {
                     </MenuItem>
                   ))}
                 </Select>
-                <Button
-                  variant="contained"
-                  onClick={handleAddPower}
-                  
-                >
+                <Button variant="contained" onClick={handleAddPower}>
                   Add Power
                 </Button>
               </Stack>
-              
-             {
-                selectedUser.banned ? (
-                  <Button
+
+              {selectedUser.banned ? (
+                <Button
                   variant="contained"
                   onClick={handleUnbanUser}
                   sx={{ mt: 2 }}
                 >
                   Unban User
                 </Button>
-                ) : (
-                  <Button
+              ) : (
+                <Button
                   variant="contained"
                   onClick={handleBanUser}
                   sx={{ mt: 2 }}
@@ -245,8 +342,73 @@ export default function DeanGrid() {
                 >
                   Ban User
                 </Button>
-                )
-             }
+              )}
+            </>
+          )}
+        </Paper>
+      </Modal>
+
+      <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
+        Research Papers
+      </Typography>
+      <Grid container spacing={2} columns={12}>
+        <Grid item xs={12} lg={9}>
+          <div style={{ height: 400, width: "700px" }}>
+            <DataGrid
+              rows={researchPapersData}
+              columns={paperColumns}
+              pageSize={5}
+              rowsPerPageOptions={[5]}
+              onRowClick={handleResearchRowClick}
+            />
+          </div>
+        </Grid>
+      </Grid>
+
+      <Modal open={openPaperModal} onClose={handleClosePaperModal}>
+        <Paper sx={{ p: 4, width: 400, mx: "auto", my: "10%" }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Paper Details
+          </Typography>
+
+          {selectedPaper && (
+            <>
+              <Typography>Paper Title: {selectedPaper.paperTitle}</Typography>
+              <Typography>
+                Applicant Name: {selectedPaper.applicantName}
+              </Typography>
+              <Typography>Department: {selectedPaper.department}</Typography>
+              <Typography>Publication Year: {selectedPaper.pubYear}</Typography>
+              <Typography>
+                Impact Factor Of Journal: {selectedPaper.impactFactor}
+              </Typography>
+              {selectedPaper.researchPaperData.map((data, index) => (
+                <div key={index}>
+                  <Typography>
+                    {data.questionText}: {data.answer}
+                  </Typography>
+                </div>
+              ))}
+
+              {/* Approve and Reject Buttons */}
+              <Box
+                sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}
+              >
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={() => handleUpdateStatus("approved")}
+                >
+                  Approve
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => handleUpdateStatus("rejected")}
+                >
+                  Reject
+                </Button>
+              </Box>
             </>
           )}
         </Paper>

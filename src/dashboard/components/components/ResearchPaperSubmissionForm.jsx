@@ -73,7 +73,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       doi: "",
       totalAwardAmount: 500000,
       authors: [],
-      status: "draft",
+      status: "Submitted",
     }
   );
 

@@ -1,6 +1,7 @@
 const mongoose = require("mongoose");
 
 const researchPaperSchema = new mongoose.Schema({
+  status : { type: String, default: "Submitted", enum: ["Submitted", "Under Review", "approved", "rejected"] },
   applicantName: { type: String, required: true },
   email: { type: String, required: true },
   mobileNo: { type: String, required: true },
