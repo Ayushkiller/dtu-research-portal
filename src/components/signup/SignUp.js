@@ -15,6 +15,7 @@ import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
 import AppTheme from "../shared-theme/AppTheme";
 import ColorModeSelect from "../shared-theme/ColorModeSelect";
+import API from "../../api/axios";
 
 const Card = styled(MuiCard)(({ theme }) => ({
   display: "flex",
@@ -138,10 +139,11 @@ export default function SignUp(props) {
     };
 
     try {
-      const response = await axios.post(
-        "https://dtubackend.something.vyvsai.com/auth/register",
-        userData
-      );
+      // const response = await axios.post(
+      //   "https://dtubackend.something.vyvsai.com/auth/register",
+      //   userData
+      // );
+      const response = await API.post("/auth/register", userData);
       console.log(response.data);
       alert("User registered successfully!");
     } catch (error) {
