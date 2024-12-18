@@ -81,14 +81,11 @@ export default function SignIn(props) {
           alert("Login successful!");
           navigate("/dean-dashboard");
           return;
-        }
-        // }else if(decodedToken.userType === "committeeMember")
-        // {
-        //   alert("Login successful!");
-        //   navigate("/committee-dashboard");
-        //   return
-        // }
-        else if (
+        } else if (decodedToken.userType === "committeeMember") {
+          alert("Login successful!");
+          navigate("/committee-dashboard");
+          return;
+        } else if (
           decodedToken.userType === "student" ||
           decodedToken.userType === "faculty" ||
           decodedToken.userType === "researchScholar"
