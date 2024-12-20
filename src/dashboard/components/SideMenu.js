@@ -8,9 +8,7 @@ import Stack from "@mui/material/Stack";
 import Typography from "@mui/material/Typography";
 import SelectContent from "./SelectContent";
 import MenuContent from "./MenuContent";
-import CardAlert from "./CardAlert";
 import OptionsMenu from "./OptionsMenu";
-import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
 
@@ -20,14 +18,16 @@ const Drawer = styled(MuiDrawer)({
   width: drawerWidth,
   flexShrink: 0,
   boxSizing: "border-box",
-  mt: 10,
   [`& .${drawerClasses.paper}`]: {
     width: drawerWidth,
     boxSizing: "border-box",
+    display: "flex",
+    flexDirection: "column",
+    justifyContent: "space-between", // Ensures the Avatar stays at the bottom
   },
 });
 
-export default function SideMenu() {
+export default function SideMenu({ onMenuSelect }) {
   const navigate = useNavigate();
   const token = Cookies.get("token");
   const [name, setName] = useState("Default Name");
@@ -36,7 +36,7 @@ export default function SideMenu() {
   useEffect(() => {
     if (token) {
       try {
-        const decodedToken = jwtDecode(token);
+        const decodedToken = JSON.parse(atob(token.split(".")[1]));
         setName(decodedToken.name);
         setEmail(decodedToken.email);
       } catch (error) {
@@ -59,18 +59,37 @@ export default function SideMenu() {
         width: drawerWidth,
       }}
     >
-      <Box
-        sx={{
-          display: "flex",
-          mt: "calc(var(--template-frame-height, 0px) + 4px)",
-          p: 1.5,
-        }}
-      >
+      {/* Top Section */}
+      <Box sx={{ display: "flex", mt: 2, p: 1.5 }}>
         <SelectContent />
       </Box>
       <Divider />
-      <MenuContent />
-      <CardAlert />
+
+      {/* Main Menu */}
+      <MenuContent onMenuSelect={onMenuSelect} />
+
+      <Divider />
+
+      {/* Next Meeting */}
+      <Box
+        sx={{
+          p: 2,
+          display: { xs: "block", md: "flex" },
+          alignItems: "center",
+          justifyContent: "space-between",
+          borderTop: "1px solid",
+          borderColor: "divider",
+        }}
+      >
+        <Typography variant="subtitle2" sx={{ flexGrow: 1 }}>
+          Next Meeting:
+        </Typography>
+        <Typography variant="caption" sx={{ fontWeight: 600 }}>
+          3:00 PM, 21 Dec 2024
+        </Typography>
+      </Box>
+
+      {/* User Info - Moved to the Bottom */}
       <Stack
         direction="row"
         sx={{
@@ -82,7 +101,6 @@ export default function SideMenu() {
         }}
       >
         <Avatar
-          sizes="small"
           alt={name}
           src="/static/images/avatar/7.jpg"
           sx={{ width: 36, height: 36 }}
