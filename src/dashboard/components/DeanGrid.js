@@ -13,6 +13,7 @@ import TextField from "@mui/material/TextField";
 import API from "../../api/axios";
 import Select from "@mui/material/Select";
 import MenuItem from "@mui/material/MenuItem";
+import { Dialog, List, ListItem } from "@mui/material";
 export default function DeanGrid() {
   const [usersData, setUsersData] = React.useState([]);
   const [researchPapersData, setResearchPapersData] = React.useState([]);
@@ -21,6 +22,12 @@ export default function DeanGrid() {
   const [openPaperModal, setOpenPaperModal] = React.useState(false);
   const [openModal, setOpenModal] = React.useState(false);
   const [newPower, setNewPower] = React.useState("");
+  const [questions, setQuestions] = React.useState([]);
+  const [openQuestionModal, setOpenQuestionModal] = React.useState(false);
+  const [selectedQuestion, setSelectedQuestion] = React.useState(null);
+  const [questionUpdateModel, setQuestionUpdateModel] = React.useState(null)
+  const [dropdownOptions, setDropdownOptions] = React.useState([]); 
+
 
   const predefinedPowers = [
     "suspendResearchPaper",
@@ -31,94 +38,120 @@ export default function DeanGrid() {
     "unflagQuestion",
     "changeShareAmount",
   ];
+  
 
-  // Fetch users data from backend
-  React.useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const response = await API.get("/dean/accounts");
-        console.log(response.data);
-        const users = response.data.map((user) => ({
-          id: user._id,
-          employeeId: user.employeeId,
-          name: user.name,
-          email: user.email,
-          mobileNo: user.mobileNumber,
-          department: user.department,
-          userType: user.userType,
-          banned: user.isBanned,
-          powers: user.powers || [],
-        }));
-        const updatedUsers = users.filter(
-          (user) => user.userType !== "competentAuthority"
+  const fetchQuestions = async () => {
+    try {
+      const response = await API.get("/dean/question");
+      console.log(response.data);
+
+      const questions = await response.data.map((question) => ({
+        id: question._id,
+        options : question.options,
+        questionText: question.questionText,
+        questionType: question.questionType,
+        required: question.isRequired,
+      }));
+
+      setQuestions(questions);
+     
+      
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+
+  const fetchUsers = async () => {
+    try {
+      const response = await API.get("/dean/accounts");
+      const users = response.data.map((user) => ({
+        id: user._id,
+        employeeId: user.employeeId,
+        name: user.name,
+        email: user.email,
+        mobileNo: user.mobileNumber,
+        department: user.department,
+        userType: user.userType,
+        banned: user.isBanned,
+        powers: user.powers || [],
+      }));
+      const updatedUsers = users.filter(
+        (user) => user.userType !== "competentAuthority"
+      );
+
+      setUsersData(updatedUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
+
+
+ 
+
+  const fetchPapers = async () => {
+    try {
+      const response = await API.get("/dean/research-papers");
+
+      const papers = response.data.map((paper) => {
+        const paperDetails = paper.paperDetails;
+        // Map questionText to answer
+        const researchPaperData = Object.entries(paperDetails).map(
+          ([key, value], index) => {
+           
+            return {
+              questionText: value.questionText,
+              answer: value.answer,
+            };
+          }
+        );
+       
+        const paperTitle = researchPaperData.find(
+          (data) => data.questionText === "Paper Title"
+        )?.answer;
+        const pubYear = researchPaperData.find(
+          (data) => data.questionText === "Publication Year"
+        )?.answer;
+        const impactFactor = researchPaperData.find(
+          (data) => data.questionText === "Impact Factor of the Journal"
+        )?.answer;
+        const excludedQuestions = [
+          "Publication Year",
+          "Paper Title",
+          "Impact Factor",
+        ];
+        const filteredResearchPaperData = researchPaperData.filter(
+          (data) => !excludedQuestions.includes(data.questionText)
         );
 
-        setUsersData(updatedUsers);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-    fetchUsers();
-  }, [selectedUser]);
+        return {
+          id: paper._id,
+          applicantName: paper.applicantName,
+          department: paper.department,
+          paperTitle: paperTitle,
+          status: paper.status,
+          pubYear: pubYear,
+          impactFactor: impactFactor,
+          researchPaperData: filteredResearchPaperData,
+        };
+      });
+
+      setResearchPapersData(papers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+    }
+  };
 
   React.useEffect(() => {
-    const fetchPapers = async () => {
-      try {
-        const response = await API.get("/dean/research-papers");
-        console.log(response.data);
-
-        const papers = response.data.map((paper) => {
-          const paperDetails = paper.paperDetails;
-          console.log(paperDetails);
-          // Map questionText to answer
-          const researchPaperData = Object.entries(paperDetails).map(
-            ([key, value], index) => {
-              console.log(`Processing entry ${index}:`, value);
-              return {
-                questionText: value.questionText,
-                answer: value.answer,
-              };
-            }
-          );
-          console.log("research paper data ", researchPaperData);
-
-          const paperTitle = researchPaperData.find(
-            (data) => data.questionText === "Paper Title"
-          )?.answer;
-          const pubYear = researchPaperData.find(
-            (data) => data.questionText === "Publication Year"
-          )?.answer;
-          const impactFactor = researchPaperData.find(
-            (data) => data.questionText === "Impact Factor of the Journal"
-          )?.answer;
-          const excludedQuestions = [
-            "Publication Year",
-            "Paper Title",
-            "Impact Factor",
-          ];
-          const filteredResearchPaperData = researchPaperData.filter(
-            (data) => !excludedQuestions.includes(data.questionText)
-          );
-
-          return {
-            id: paper._id,
-            applicantName: paper.applicantName,
-            department: paper.department,
-            paperTitle: paperTitle,
-            status: paper.status,
-            pubYear: pubYear,
-            impactFactor: impactFactor,
-            researchPaperData: filteredResearchPaperData,
-          };
-        });
-
-        setResearchPapersData(papers);
-      } catch (error) {
-        console.error("Error fetching users:", error);
-      }
-    };
-
-    fetchPapers();
+    fetchQuestions();
+  }, []);
+  // Fetch users data from backend
+  React.useEffect(() => {
+    fetchUsers();
+  }, [selectedUser]);
+  
+  React.useEffect(() => {
+   fetchPapers();
   }, [selectedPaper]);
 
   const handleRowClick = (params) => {
@@ -129,6 +162,12 @@ export default function DeanGrid() {
     setSelectedPaper(params.row);
     setOpenPaperModal(true);
   };
+  const handleQuestionRowClick = (params) => {
+    console.log(params.row);
+    setSelectedQuestion(params?.row);
+    setOpenQuestionModal(true);
+  };
+
 
   const handleCloseModal = () => {
     setOpenModal(false);
@@ -138,6 +177,58 @@ export default function DeanGrid() {
     setOpenPaperModal(false);
     setSelectedPaper(null);
   };
+  const handleCloseQuestionModal = () => {
+    setOpenQuestionModal(false);
+    setSelectedQuestion(null);
+  }
+  const handleCloseUpdateQuestionModal = () => {
+    setQuestionUpdateModel(false);
+  }
+
+  const handleQuestionTypeChange = (event) => {
+    setSelectedQuestion({
+      ...selectedQuestion,
+      questionType: event.target.value,
+    });
+  };
+
+
+
+
+  const handleOptionChange = (index, event) => {
+  
+
+    const updatedOptions = [...dropdownOptions];
+    updatedOptions[index] = event.target.value;
+    setDropdownOptions(updatedOptions); 
+    setSelectedQuestion({ 
+      ...selectedQuestion, 
+      options: updatedOptions 
+    });
+  };
+
+  const handleAddOption = () => {
+    setDropdownOptions([...dropdownOptions, '']); 
+  };
+
+  const handleRemoveOption = (index) => {
+    const updatedOptions = [...dropdownOptions];
+    updatedOptions.splice(index, 1);
+    setDropdownOptions(updatedOptions);
+    setSelectedQuestion({
+      ...selectedQuestion,
+      options: updatedOptions,
+    });
+  };
+
+
+  const questionTypeOptions = [
+    { value: 'text', label: 'Text' },
+    { value: 'dropdown', label: 'Dropdown' },
+    { value: 'checkbox', label: 'Checkbox' },
+    { value: 'radio', label: 'Radio' },
+    { value: 'multiple_select', label: 'Multiple Select' },
+  ];
 
   const handleAddPower = async () => {
     if (newPower && selectedUser) {
@@ -179,6 +270,7 @@ export default function DeanGrid() {
         await API.put(`/dean/delegate-powers/${selectedUser.id}`, {
           delegatedPowers: updatedPowers,
         });
+
       } catch (error) {
         console.error("Error removing power:", error);
       }
@@ -189,7 +281,7 @@ export default function DeanGrid() {
     if (selectedUser) {
       try {
         await API.put(`/dean/accounts/ban/${selectedUser.id}`);
-
+        fetchUsers();
         setOpenModal(false);
         alert(`${selectedUser.name} banned successfully.`);
       } catch (error) {
@@ -207,6 +299,7 @@ export default function DeanGrid() {
             user.id === selectedUser.id ? { ...user, isBanned: false } : user
           )
         );
+        fetchUsers();
         setOpenModal(false);
         alert(`${selectedUser.name} unbanned successfully.`);
       } catch (error) {
@@ -230,6 +323,11 @@ export default function DeanGrid() {
     { field: "pubYear", headerName: "Publication Year", flex: 1 },
     { field: "status", headerName: "Status", flex: 1 },
   ];
+  const questionColumns = [
+    { field: "questionText", headerName: "Question Text", flex: 1 },
+    { field: "questionType", headerName: "Question Type", flex: 1 },
+    { field: "required", headerName: "Required", flex: 1 },
+  ];
 
   const handleUpdateStatus = async (status) => {
     if (!selectedPaper) return;
@@ -242,8 +340,8 @@ export default function DeanGrid() {
           comments: null, // You can allow the user to add comments if needed
         }
       );
-
-      console.log(response.data.message);
+      fetchPapers();
+    
       alert(`Research paper ${status}`);
       setOpenPaperModal(false); // Close modal after action
     } catch (error) {
@@ -270,7 +368,6 @@ export default function DeanGrid() {
           </div>
         </Grid>
       </Grid>
-      <Copyright sx={{ my: 4 }} />
 
       <Modal open={openModal} onClose={handleCloseModal}>
         <Paper sx={{ p: 4, width: 400, mx: "auto", my: "10%" }}>
@@ -348,7 +445,7 @@ export default function DeanGrid() {
         </Paper>
       </Modal>
 
-      <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
+      <Typography component="h2" variant="h6" sx={{ mb: 2, mt: 4 }}>
         Research Papers
       </Typography>
       <Grid container spacing={2} columns={12}>
@@ -413,6 +510,320 @@ export default function DeanGrid() {
           )}
         </Paper>
       </Modal>
+
+      {/* Question Section */}
+      <Typography component="h2" variant="h6" sx={{ mb: 2, mt: 4 }}>
+        Questions
+      </Typography>
+      <Grid container spacing={2} columns={12}>
+        <Grid item xs={12} lg={9}>
+          <div style={{ height: 400, width: "700px" }}>
+            <DataGrid
+              rows={questions}
+              columns={questionColumns}
+              pageSize={5}
+              rowsPerPageOptions={[5]}
+              onRowClick={handleQuestionRowClick}
+            />
+          </div>
+        </Grid>
+      </Grid>
+      
+      <Modal  open={openQuestionModal} onClose={handleCloseQuestionModal}>
+        <Paper sx={{ p: 4, width: 400, mx: "auto", my: "10%" }}>
+          <Typography variant="h6" sx={{ mb: 2 }}>
+            Question Details
+          </Typography>
+
+
+          {selectedQuestion && (
+            <>
+              <Typography>Question Text: {selectedQuestion.questionText}</Typography>
+              <Typography>
+                Question Type: {selectedQuestion.questionType}
+              </Typography>
+              {selectedQuestion.questionType === "dropdown" &&
+                <Typography>Options: {      
+                selectedQuestion?.options?.map((op)=> {
+                return <li>{op}</li>
+              })
+              }</Typography>}
+              
+              
+              <Typography>Required: {selectedQuestion.required ? "YES" : "NO"}</Typography>
+
+              <Box sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}>
+                <Button 
+                  variant="contained"
+                  onClick={async () => {
+                  try {
+                    await API.delete(`/dean/question/${selectedQuestion.id}`);
+                    fetchQuestions();
+                    setOpenQuestionModal(false);
+                    alert("Question deleted successfully.");
+                  } catch (error) {
+                    console.error("Error deleting question:", error);
+                    alert("Failed to delete question. Please try again.");
+                  }
+                  }}
+                  color="error">Delete Question</Button>
+                <Button 
+                  onClick={() => {
+                  setQuestionUpdateModel(true)
+                  setDropdownOptions(selectedQuestion.options)
+                  }}
+                  variant="outlined"
+                  color="error">Update Question</Button>
+              </Box>
+
+
+
+           { questionUpdateModel &&
+              <Dialog open={questionUpdateModel}  onClose={handleCloseUpdateQuestionModal}>
+                <Paper sx={{ p: 4, width: 400, mx: "auto" }}>
+
+                  <Typography variant="h6" sx={{ mb: 2 }}>
+                    Update Question
+                  </Typography>
+
+                  <label>Question Text</label>
+                 
+                  <TextField
+                    variant="outlined"
+                    value={selectedQuestion.questionText}
+                    onChange={(e) => {
+                      setSelectedQuestion({
+                    ...selectedQuestion,
+                    questionText: e.target.value,
+                  });
+                    }}
+                    fullWidth
+                    size="small"
+                    sx={{ mb: 2 , mt: 1}}
+                  />
+                  <label>Question Type</label>
+
+                  <Select
+                      value={selectedQuestion.questionType}
+                      onChange={handleQuestionTypeChange}
+                      displayEmpty
+                      variant="outlined"
+                      size="small"
+                      sx={{ mb: 2, width: "100%", mt: 1 }}
+                    >
+                  {questionTypeOptions?.map((option) => (
+                    <MenuItem key={option.value} value={option.value}>
+                      {option.label}
+                    </MenuItem>
+                  ))}
+                 </Select>
+                {selectedQuestion.questionType === 'dropdown' && (
+                  <div>
+                  <List>
+                    {dropdownOptions?.length > 0 &&
+                      dropdownOptions?.map((option, index) => (
+                      <ListItem key={index}>
+                        <TextField 
+                          label={`Option ${index + 1}`} 
+                          variant="outlined" 
+                          fullWidth 
+                          size="small" 
+                          value={option} 
+                          onChange={(event) => handleOptionChange(index, event)} 
+                        />
+                        <Button 
+                          variant="outlined" 
+                          color="error" 
+                          sx={{ ml: 1 }}
+                          size="small" 
+                          onClick={() => handleRemoveOption(index)} 
+                        >
+                          Remove
+                        </Button>
+                      </ListItem>
+                    ))}
+                  </List>
+                  <Button 
+                    variant="contained" 
+                    
+                    size="small"
+                    onClick={handleAddOption} 
+                    sx={{ mt: 1, mb: 2,  }} 
+                  >
+                    Add Option
+                  </Button>
+                </div>
+                )}
+                <label>Required</label>
+                            <Select
+                              value={selectedQuestion.required} 
+                              onChange={(e) => setSelectedQuestion(
+                                {
+                                  ...selectedQuestion,
+                                  required: e.target.value})}
+                              displayEmpty
+                              variant="outlined"
+                              size="small"
+                              sx={{ mb: 2, width: "100%" , mt: 1}}
+                            >
+                              <MenuItem value={false}>No</MenuItem>
+                              <MenuItem value={true}>Yes</MenuItem>
+                            </Select>
+                            
+                            <Button 
+                              onClick={async() => {
+                              if(selectedQuestion.questionType !== 'dropdown') {
+
+                                setSelectedQuestion({
+                                  ...selectedQuestion,
+                                  options: [],
+                                });
+                              }
+                              console.log(selectedQuestion);
+                                try {
+                              const response = await API.put(`/dean/question/${selectedQuestion.id}`,
+                              {
+                                questionText: selectedQuestion.questionText,
+                                questionType: selectedQuestion.questionType,
+                                options: selectedQuestion.options,
+                                isRequired: selectedQuestion.required,
+                              });
+                              // console.log(response.data);
+                              fetchQuestions();
+                            
+                              
+                            } catch (error) {
+                              console.error("Error fetching users:", error);
+                            }
+                              }}
+                              sx={{ mt: 2, width: "100%" }}
+                            variant="contained">Update</Button>
+                          </Paper>
+                        </Dialog>}
+                      </>
+                    )}
+                    
+        </Paper>
+      </Modal>
+      <Typography component="h2" variant="h6" sx={{mb: 2,  mt: 4 }}>
+        Add New Question
+      </Typography>
+      <Paper sx={{ p: 4, width: 400, mx: "auto" }}>
+        <TextField
+          label="Question Text"
+          variant="outlined"
+          fullWidth
+          size="small"
+          sx={{ mb: 2 }}
+          value={selectedQuestion?.questionText || ""}
+          onChange={(e) =>
+        setSelectedQuestion({
+          ...selectedQuestion,
+          questionText: e.target.value,
+        })
+          }
+        />
+        <Select
+          value={selectedQuestion?.questionType || ""}
+          onChange={(e) =>
+        setSelectedQuestion({
+          ...selectedQuestion,
+          questionType: e.target.value,
+        })
+          }
+          displayEmpty
+          variant="outlined"
+          size="small"
+          sx={{ mb: 2, width: "100%" }}
+        >
+          <MenuItem value="" disabled>
+        Select Question Type
+          </MenuItem>
+          {questionTypeOptions.map((option) => (
+        <MenuItem key={option.value} value={option.value}>
+          {option.label}
+        </MenuItem>
+          ))}
+        </Select>
+        {selectedQuestion?.questionType === "dropdown" && (
+          <div>
+        <List>
+          {dropdownOptions.map((option, index) => (
+            <ListItem key={index}>
+          <TextField
+            label={`Option ${index + 1}`}
+            variant="outlined"
+            fullWidth
+            size="small"
+            value={option}
+            onChange={(event) => handleOptionChange(index, event)}
+          />
+          <Button
+            variant="outlined"
+            color="error"
+            sx={{ ml: 1 }}
+            size="small"
+            onClick={() => handleRemoveOption(index)}
+          >
+            Remove
+          </Button>
+            </ListItem>
+          ))}
+        </List>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={handleAddOption}
+          sx={{ mt: 1, mb: 2 }}
+        >
+          Add Option
+        </Button>
+          </div>
+        )}
+        <label>Required</label>
+        <Select
+          value={selectedQuestion?.required || false}
+          onChange={(e) =>
+        setSelectedQuestion({
+          ...selectedQuestion,
+          required: e.target.value,
+        })
+          }
+          displayEmpty
+          variant="outlined"
+          size="small"
+          sx={{ mb: 2, width: "100%", mt: 1 }}
+        >
+          <MenuItem value={false}>No</MenuItem>
+          <MenuItem value={true}>Yes</MenuItem>
+        </Select>
+        <Button
+          onClick={async () => {
+        try {
+          const response = await API.post("/dean/question", {
+            questionText: selectedQuestion.questionText,
+            questionType: selectedQuestion.questionType,
+            options: selectedQuestion.options,
+            isRequired: selectedQuestion.required,
+          });
+          fetchQuestions();
+          setSelectedQuestion(null);
+          setDropdownOptions([]);
+          alert("Question added successfully.");
+        } catch (error) {
+          console.error("Error adding question:", error);
+          alert("Failed to add question. Please try again.");
+        }
+          }}
+          sx={{ mt: 2, width: "100%" }}
+          variant="contained"
+        >
+          Add Question
+        </Button>
+      </Paper>
+      <Copyright sx={{ my: 4 }} />
+
+
     </Box>
   );
 }

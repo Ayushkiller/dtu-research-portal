@@ -50,7 +50,7 @@ export default function DeanGrid() {
           powers: user.powers || [],
         }));
         const updatedUsers = users.filter(
-          (user) => user.userType !== "competentAuthority"
+          (user) => user.userType !== "committeeMember"
         );
 
         setUsersData(updatedUsers);

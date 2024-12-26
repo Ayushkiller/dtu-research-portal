@@ -122,6 +122,7 @@ router.get("/question", async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 });
+
 router.post("/question", async (req, res) => {
   try {
     const { questionText, questionType = "text", options = [], isRequired = false } = req.body;
@@ -169,6 +170,36 @@ router.delete("/question/:id", async (req, res) => {
     }
 
     res.status(200).json({ message: "Question removed successfully", question: deletedQuestion });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+router.put("/question/:id", async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { questionText, questionType = "text", options = [], isRequired = false } = req.body;
+
+    // Check if the ID is valid
+    if (!mongoose.Types.ObjectId.isValid(id)) {
+      return res.status(400).json({ error: "Invalid question ID" });
+    }
+
+    // Update the question
+    const updatedQuestion = await FormQuestion.findByIdAndUpdate(
+      id,
+      { questionText, questionType, options, isRequired },
+      { new: true }
+    );
+
+
+
+    if (!updatedQuestion) {
+      return res.status(404).json({ error: "Question not found" });
+    }
+
+    res.status(200).json({ message: "Question updated successfully", question: updatedQuestion });
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "Internal server error" });
