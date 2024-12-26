@@ -19,7 +19,6 @@ import {
   FormControlLabel,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
-import axios from "axios";
 import API from "../../../api/axios";
 import { calculateAuthorShares } from "../utils/awardDistributionUtils";
 import AuthorsList from "./FormFields/AuthorsList";

@@ -42,7 +42,7 @@ if (!fs.existsSync(uploadsDir)) {
 }
 // MongoDB Connection
 mongoose
-  .connect("mongodb://localhost:27017/dtu-research-portal")
+  .connect("mongodb+srv://admin:OvpIVRbKRSH92ZQW@cluster0.hymysuv.mongodb.net/dtu-research-portal")
   .then(() => console.log("MongoDB connected"))
   .catch((err) => console.error("MongoDB connection error:", err));
 
