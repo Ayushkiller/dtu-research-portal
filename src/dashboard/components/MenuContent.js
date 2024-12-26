@@ -1,4 +1,5 @@
 import * as React from "react";
+import { useNavigate } from "react-router-dom";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -13,55 +14,59 @@ import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
 import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 import HelpRoundedIcon from "@mui/icons-material/HelpRounded";
 import Cookies from "js-cookie";
-
-// faculty', 'student', 'researchScholar', 'committeeMember', 'competentAuthority
-
-const typeOfUser = Cookies.get("userType") || "student";
-
-const student = [
-  { text: "Home", icon: <HomeRoundedIcon /> },
-  { text: "My Submissions ", icon: <AnalyticsRoundedIcon /> },
-  { text: "Peers", icon: <PeopleRoundedIcon /> },
-  { text: "Eligibility and Awards", icon: <AssignmentRoundedIcon /> },
-];
-
-const faculty = student;
-const researchScholar = student;
-
-const committeeMember = [
-  { text: "Home", icon: <HomeRoundedIcon /> },
-  { text: "Approvals", icon: <AnalyticsRoundedIcon /> },
-  { text: "Rejected", icon: <PeopleRoundedIcon /> },
-  { text: "Pending List", icon: <AssignmentRoundedIcon /> },
-];
-
-const competentAuthority = [
-  { text: "Home", icon: <HomeRoundedIcon /> },
-  { text: "Approvals", icon: <AnalyticsRoundedIcon /> },
-  { text: "Rejected", icon: <PeopleRoundedIcon /> },
-  { text: "Pending List", icon: <AssignmentRoundedIcon /> },
-  { text: "Add Committee Member", icon: <PeopleRoundedIcon /> },
-];
-
-const PrimaryListItems =
-  typeOfUser === "student"
-    ? student
-    : typeOfUser === "faculty"
-    ? faculty
-    : typeOfUser === "researchScholar"
-    ? researchScholar
-    : typeOfUser === "committeeMember"
-    ? committeeMember
-    : competentAuthority;
-
-const SecondaryListItems = [
-  { text: "Settings", icon: <SettingsRoundedIcon /> },
-  { text: "About", icon: <InfoRoundedIcon /> },
-  { text: "Feedback", icon: <HelpRoundedIcon /> },
-  { text: "Devloper's info ", icon: <PeopleRoundedIcon /> },
-];
+import { jwtDecode } from "jwt-decode";
 
 export default function MenuContent() {
+  const navigate = useNavigate();
+  const token = Cookies.get("token");
+  let typeOfUser = "";
+
+  if (token) {
+    const decodedToken = jwtDecode(token);
+    typeOfUser = decodedToken.userType;
+  } else {
+    alert("Session Expired. Please login again.");
+    navigate("/signup");
+  }
+
+  const student = [
+    { text: "Home", icon: <HomeRoundedIcon /> },
+    { text: "My Submissions", icon: <AnalyticsRoundedIcon /> },
+    { text: "Peers", icon: <PeopleRoundedIcon /> },
+    { text: "Eligibility and Awards", icon: <AssignmentRoundedIcon /> },
+  ];
+
+  const committeeMember = [
+    { text: "Home", icon: <HomeRoundedIcon /> },
+    { text: "Approvals", icon: <AnalyticsRoundedIcon /> },
+    { text: "Rejected", icon: <PeopleRoundedIcon /> },
+    { text: "Pending List", icon: <AssignmentRoundedIcon /> },
+  ];
+
+  const competentAuthority = [
+    { text: "Home", icon: <HomeRoundedIcon /> },
+    { text: "Approvals", icon: <AnalyticsRoundedIcon /> },
+    { text: "Rejected", icon: <PeopleRoundedIcon /> },
+    { text: "Pending List", icon: <AssignmentRoundedIcon /> },
+    { text: "Add Committee Member", icon: <PeopleRoundedIcon /> },
+  ];
+
+  const PrimaryListItems =
+    typeOfUser === "student" ||
+    typeOfUser === "faculty" ||
+    typeOfUser === "researchScholar"
+      ? student
+      : typeOfUser === "committeeMember"
+      ? committeeMember
+      : competentAuthority;
+
+  const SecondaryListItems = [
+    { text: "Settings", icon: <SettingsRoundedIcon /> },
+    { text: "About", icon: <InfoRoundedIcon /> },
+    { text: "Feedback", icon: <HelpRoundedIcon /> },
+    { text: "Developer's Info", icon: <PeopleRoundedIcon /> },
+  ];
+
   return (
     <Stack sx={{ flexGrow: 1, p: 1, justifyContent: "space-between" }}>
       <List dense>

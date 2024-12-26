@@ -1,10 +1,12 @@
-import React, { useState, useContext, createContext } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-import SignIn from './components/signin/SignIn';
-import SignUp from './components/signup/SignUp';
-import LandingPage from './components/LandingPage';
-import Dashboard from './dashboard/Dashboard';
-import DeanDashboard from './dashboard/DeanDashboard';
+import React, { useState, useContext, createContext } from "react";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+import SignIn from "./components/signin/SignIn";
+import SignUp from "./components/signup/SignUp";
+import LandingPage from "./components/LandingPage";
+import Dashboard from "./dashboard/Dashboard";
+import DeanDashboard from "./dashboard/DeanDashboard";
+import CommitteeDashboard from "./dashboard/CommitteeDashboard";
+import Cookies from "js-cookie";
 
 const AuthContext = createContext();
 
@@ -25,6 +27,7 @@ function App() {
   };
 
   const logout = () => {
+    Cookies.remove("token");
     setUser(null);
   };
 
@@ -44,6 +47,10 @@ function App() {
                     <Route path="/signin" element={<SignIn />} />
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/dean-dashboard" element={<DeanDashboard />} />
+                    <Route
+                      path="/committee-dashboard"
+                      element={<CommitteeDashboard />}
+                    />
                   </Routes>
                 </div>
               </div>
