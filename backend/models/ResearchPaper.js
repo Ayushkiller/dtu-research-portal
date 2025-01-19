@@ -1,7 +1,10 @@
 const mongoose = require("mongoose");
-
 const researchPaperSchema = new mongoose.Schema({
-  status : { type: String, default: "Submitted", enum: ["Submitted", "Under Review", "approved", "rejected"] },
+  status: {
+    type: String,
+    default: "authorshipConfirmationPending",
+    enum: ["Submitted", "Under Review", "approved", "rejected","authorshipConfirmationPending"],
+  },
   applicantName: { type: String, required: true },
   email: { type: String, required: true },
   mobileNo: { type: String, required: true },
@@ -21,6 +24,11 @@ const researchPaperSchema = new mongoose.Schema({
       email: { type: String },
       mobileNo: { type: String },
       isExternal: { type: Boolean, default: false },
+      confirmationStatus: { type: Boolean, default: false },
+      confirmationToken: {
+        token: { type: String },
+        used: { type: Boolean, default: false },
+      },
       bankDetails: {
         bankName: { type: String },
         branch: { type: String },
@@ -33,7 +41,7 @@ const researchPaperSchema = new mongoose.Schema({
   submittedAt: { type: Date, default: Date.now },
 
   // Storing answers to dynamic form questions
-paperDetails: {
+  paperDetails: {
     type: Map,
     of: mongoose.Schema.Types.Mixed, // Supports different answer types like text, array, etc.
   },
