@@ -53,7 +53,8 @@ router.post('/', upload, async (req, res) => {
       res.status(201).json({
         success: true,
         message: 'Research paper submitted successfully',
-        data: researchPaper
+        data: researchPaper,
+
       });
     } catch (error) {
       console.error('Error submitting research paper:', error);
@@ -85,11 +86,10 @@ router.post('/save-draft', upload, async (req, res) => {
   
       const researchPaper = new ResearchPaper(formData);
       await researchPaper.save();
-  
+      console.log('Draft saved:', researchPaperId);
       res.status(201).json({
         success: true,
         message: 'Draft saved successfully',
-        data: researchPaper
       });
     } catch (error) {
       console.error('Error saving draft:', error);

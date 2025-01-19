@@ -72,7 +72,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       doi: "",
       totalAwardAmount: 500000,
       authors: [],
-      status: "Submitted",
+      
     }
   );
 
@@ -224,9 +224,15 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
     try {
       // Send the form data to the backend
       console.log("Form data:", formData);
+      
       console.log(questions)
       const response = await API.post("/research-paper-submission", formData);
 
+      console.log(response.data.data._id);
+      const researchPaperId = response?.data?.data?._id;
+      console.log(researchPaperId);
+
+      authorSendEmail(researchPaperId, formData.authors);
       setSnackbarMessage("Form submitted successfully!");
       setSnackbarOpen(true);
     } catch (error) {
@@ -235,6 +241,29 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       setSnackbarOpen(true);
     }
   };
+
+  const authorSendEmail = async (id, authors) => {
+    try {
+      // Send the form data to the backend
+      
+      const authorEmailData = authors.map((author) => ({
+        name: author.name,
+        email: author.email,
+        token: author.confirmationToken.token,
+      }));
+      const response = await API.post("/research-author-email/send", {
+        authors: authorEmailData,
+        paperTitle : formData.paperDetails[questions[0]._id]?.answer,
+        submissionId : id,
+      });
+
+      setSnackbarMessage("Emails sent successfully!");
+      console.log(response.results)
+      
+    } catch (error) {
+      console.log(error)
+    }
+  }
 
   
   useEffect(() => {
@@ -249,6 +278,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
           ...author,
           shareValue: authorShares[index].shareValue,
           amount: authorShares[index].amount,
+          confirmationToken :{
+            token : Math.random().toString(36).substring(2, 12),
+          }
         })),
       }));
     }

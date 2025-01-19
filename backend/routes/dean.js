@@ -76,7 +76,9 @@ router.put('/delegate-powers/:userId', authorizeDean, async (req, res) => {
 // Route to review research papers
 router.get('/research-papers', authorizeDean, async (req, res) => {
   try {
-    const researchPapers = await ResearchPaper.find();
+    const researchPapers = await ResearchPaper.find({
+      status: { $ne: 'authorshipConfirmationPending' }
+    });
     res.status(200).json(researchPapers);
   } catch (error) {
     res.status(500).json({ error: 'Failed to fetch research papers' });

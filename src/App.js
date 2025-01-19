@@ -7,6 +7,7 @@ import Dashboard from "./dashboard/Dashboard";
 import DeanDashboard from "./dashboard/DeanDashboard";
 import CommitteeDashboard from "./dashboard/CommitteeDashboard";
 import Cookies from "js-cookie";
+import ConfirmAuthorship from "./ConfirmAuthorship";
 
 const AuthContext = createContext();
 
@@ -50,6 +51,10 @@ function App() {
                     <Route
                       path="/committee-dashboard"
                       element={<CommitteeDashboard />}
+                    />
+                    <Route
+                      path="/confirm-authorship"
+                      element={<ConfirmAuthorship />}
                     />
                   </Routes>
                 </div>
