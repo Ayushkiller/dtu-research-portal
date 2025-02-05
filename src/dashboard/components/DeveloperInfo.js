@@ -19,7 +19,7 @@ export default function DeveloperInfo() {
       name: "Ayush Kumar",
       role: "Full Stack Developer",
       image: "/path/to/avatar.jpg", // Add your image path
-      github: "https://github.com/yourusername",
+      github: "https://github.com/ayushkiller",
       email: "malikayush999@gmail.com",
     }
     // Add your name talha
