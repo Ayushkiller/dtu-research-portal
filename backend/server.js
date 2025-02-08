@@ -6,7 +6,9 @@ require("dotenv").config();
 const authRouter = require("./routes/auth").router; // Import the auth router correctly
 const deanRouter = require("./routes/dean");
 const researchPaperRouter = require("./routes/researchPaper");
+const researchPaperSubmissionRouter = require("./routes/research-paper-submission");
 const researchAuthorEmailRouter = require("./routes/sendResearchPaperAuthorEmailConfirmation");
+const feedbackRouter = require('./routes/feedback');
 const path = require("path");
 const app = express();
 
@@ -36,6 +38,8 @@ app.use("/auth", authRouter);
 app.use("/dean", deanRouter);
 app.use("/research-paper-submission", researchPaperRouter);
 app.use("/research-author-email",researchAuthorEmailRouter );
+app.use("/research-paper-fetch", researchPaperSubmissionRouter);
+app.use('/feedback', feedbackRouter);
 // Create uploads directory if it doesn't exist
 const fs = require("fs");
 const uploadsDir = path.join(__dirname, "uploads/photographs");

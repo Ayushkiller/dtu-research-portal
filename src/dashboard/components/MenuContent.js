@@ -10,8 +10,6 @@ import HomeRoundedIcon from "@mui/icons-material/HomeRounded";
 import AnalyticsRoundedIcon from "@mui/icons-material/AnalyticsRounded";
 import PeopleRoundedIcon from "@mui/icons-material/PeopleRounded";
 import AssignmentRoundedIcon from "@mui/icons-material/AssignmentRounded";
-import SettingsRoundedIcon from "@mui/icons-material/SettingsRounded";
-import InfoRoundedIcon from "@mui/icons-material/InfoRounded";
 import HelpRoundedIcon from "@mui/icons-material/HelpRounded";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
@@ -19,6 +17,7 @@ import { jwtDecode } from "jwt-decode";
 export default function MenuContent() {
   const navigate = useNavigate();
   const token = Cookies.get("token");
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
   let typeOfUser = "";
 
   if (token) {
@@ -32,7 +31,6 @@ export default function MenuContent() {
   const student = [
     { text: "Home", icon: <HomeRoundedIcon /> },
     { text: "My Submissions", icon: <AnalyticsRoundedIcon /> },
-    { text: "Peers", icon: <PeopleRoundedIcon /> },
     { text: "Eligibility and Awards", icon: <AssignmentRoundedIcon /> },
   ];
 
@@ -61,18 +59,34 @@ export default function MenuContent() {
       : competentAuthority;
 
   const SecondaryListItems = [
-    { text: "Settings", icon: <SettingsRoundedIcon /> },
-    { text: "About", icon: <InfoRoundedIcon /> },
     { text: "Feedback", icon: <HelpRoundedIcon /> },
     { text: "Developer's Info", icon: <PeopleRoundedIcon /> },
   ];
+
+  const handleListItemClick = (index, text) => {
+    setSelectedIndex(index);
+    if (text === "Eligibility and Awards") {
+      window.dispatchEvent(new CustomEvent('menuClick', { detail: 'Eligibility and Awards' }));
+    } else if (text === "Home") {
+      window.dispatchEvent(new CustomEvent('menuClick', { detail: 'Home' }));
+    } else if (text === "My Submissions") {
+      window.dispatchEvent(new CustomEvent('menuClick', { detail: 'My Submissions' }));
+    } else if (text === "Feedback") {
+      window.dispatchEvent(new CustomEvent('menuClick', { detail: 'Feedback' }));
+    } else if (text === "Developer's Info") {
+      window.dispatchEvent(new CustomEvent('menuClick', { detail: "Developer's Info" }));
+    }
+  };
 
   return (
     <Stack sx={{ flexGrow: 1, p: 1, justifyContent: "space-between" }}>
       <List dense>
         {PrimaryListItems.map((item, index) => (
           <ListItem key={index} disablePadding sx={{ display: "block" }}>
-            <ListItemButton selected={index === 0}>
+            <ListItemButton
+              selected={selectedIndex === index}
+              onClick={() => handleListItemClick(index, item.text)}
+            >
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText primary={item.text} />
             </ListItemButton>
@@ -83,7 +97,9 @@ export default function MenuContent() {
       <List dense>
         {SecondaryListItems.map((item, index) => (
           <ListItem key={index} disablePadding sx={{ display: "block" }}>
-            <ListItemButton>
+            <ListItemButton
+              onClick={() => handleListItemClick(PrimaryListItems.length + index, item.text)}
+            >
               <ListItemIcon>{item.icon}</ListItemIcon>
               <ListItemText primary={item.text} />
             </ListItemButton>
