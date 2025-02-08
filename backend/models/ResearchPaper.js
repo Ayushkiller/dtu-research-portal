@@ -45,6 +45,14 @@ const researchPaperSchema = new mongoose.Schema({
     type: Map,
     of: mongoose.Schema.Types.Mixed, // Supports different answer types like text, array, etc.
   },
+  applicantEmail: { type: String }, // Add this if it doesn't exist
+}, { timestamps: true });
+
+// Add this to help with debugging
+researchPaperSchema.set('toJSON', {
+  transform: function(doc, ret) {
+    return ret;
+  }
 });
 
 module.exports = mongoose.model("ResearchPaper", researchPaperSchema);
