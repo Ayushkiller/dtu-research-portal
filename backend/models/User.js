@@ -23,7 +23,9 @@ const userSchema = new mongoose.Schema({
       'addRemarks', 
       'flagQuestion',
       'unflagQuestion', 
-      'changeShareAmount'
+      'changeShareAmount',
+      "approveResearchPaper",
+      "rejectResearchPaper",
     ],
     default: [] // Default to no powers assigned
   }

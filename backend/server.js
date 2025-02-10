@@ -8,7 +8,8 @@ const deanRouter = require("./routes/dean");
 const researchPaperRouter = require("./routes/researchPaper");
 const researchPaperSubmissionRouter = require("./routes/research-paper-submission");
 const researchAuthorEmailRouter = require("./routes/sendResearchPaperAuthorEmailConfirmation");
-const feedbackRouter = require('./routes/feedback');
+const committeeRouter = require("./routes/committee");
+const userRouter = require("./routes/user");
 const path = require("path");
 const app = express();
 
@@ -25,7 +26,8 @@ app.use((req, res, next) => {
   next();
 });
 
-const PORT = process.env.PORT || 9000;
+const PORT = process.env.PORT || 9000;   
+
 
 // Middleware
 app.use(cors());
@@ -36,10 +38,11 @@ app.use("/uploads", express.static(path.join(__dirname, "uploads")));
 // Routes
 app.use("/auth", authRouter);
 app.use("/dean", deanRouter);
+app.use("/committee", committeeRouter);
+app.use("/user", userRouter);
 app.use("/research-paper-submission", researchPaperRouter);
 app.use("/research-author-email",researchAuthorEmailRouter );
 app.use("/research-paper-fetch", researchPaperSubmissionRouter);
-app.use('/feedback', feedbackRouter);
 // Create uploads directory if it doesn't exist
 const fs = require("fs");
 const uploadsDir = path.join(__dirname, "uploads/photographs");
