@@ -28,7 +28,6 @@ const xThemeComponents = {
 
 const CommitteeApprovals = () => {
   const { userId } = useParams(); // Get ID from URL params
-  const [approval, setApproval] = useState(null);
   const [loading, setLoading] = useState(true);
     const token = Cookies.get("token");
     const [me, setMe] = useState({});
@@ -127,10 +126,7 @@ const CommitteeApprovals = () => {
     setOpenPaperModal(true);
   };
 
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedUser(null);
-  };
+
   const handleClosePaperModal = () => {
     setOpenPaperModal(false);
     setSelectedPaper(null);

@@ -3,7 +3,7 @@ import { DataGrid } from '@mui/x-data-grid'
 import React from 'react'
 import API from '../../api/axios';
 
-export const UserTable = ({usersData, columns, fetchUsers}) => {
+export const UserTable = ({usersData,setUsersData, columns, fetchUsers}) => {
     const [openModal, setOpenModal] = React.useState(false);
     const [selectedUser, setSelectedUser] = React.useState(null);
     const [newPower, setNewPower] = React.useState("");
