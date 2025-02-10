@@ -254,7 +254,7 @@ export default function DeanGrid() {
   return (
     <Box sx={{ flexGrow: 1 }}>
     {/* Users Table  */}
-    <UserTable columns={columns} fetchUsers={fetchUsers} usersData={usersData}/>
+    <UserTable setUsersData={setUsersData} columns={columns} fetchUsers={fetchUsers} usersData={usersData}/>
 
       <Typography component="h2" variant="h6" sx={{ mb: 2, mt: 4 }}>
         Research Papers

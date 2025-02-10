@@ -127,10 +127,7 @@ const CommitteePending = () => {
     setOpenPaperModal(true);
   };
 
-  const handleCloseModal = () => {
-    setOpenModal(false);
-    setSelectedUser(null);
-  };
+
   const handleClosePaperModal = () => {
     setOpenPaperModal(false);
     setSelectedPaper(null);
