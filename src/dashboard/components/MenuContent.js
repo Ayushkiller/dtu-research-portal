@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import List from "@mui/material/List";
 import ListItem from "@mui/material/ListItem";
 import ListItemButton from "@mui/material/ListItemButton";
@@ -18,11 +18,18 @@ export default function MenuContent() {
   const navigate = useNavigate();
   const token = Cookies.get("token");
   const [selectedIndex, setSelectedIndex] = React.useState(0);
-  let typeOfUser = "";
+  const [me, setMe] = React.useState({});
 
+
+        
+
+  let typeOfUser = "";
+  let userId = "";
   if (token) {
     const decodedToken = jwtDecode(token);
+    userId = decodedToken.id;
     typeOfUser = decodedToken.userType;
+
   } else {
     alert("Session Expired. Please login again.");
     navigate("/signup");
@@ -36,9 +43,9 @@ export default function MenuContent() {
 
   const committeeMember = [
     { text: "Home", icon: <HomeRoundedIcon /> },
-    { text: "Approvals", icon: <AnalyticsRoundedIcon /> },
-    { text: "Rejected", icon: <PeopleRoundedIcon /> },
-    { text: "Pending List", icon: <AssignmentRoundedIcon /> },
+    { text: "Approvals", icon: <AnalyticsRoundedIcon />, link: `/approvals/${userId}` },
+    { text: "Rejected", icon: <PeopleRoundedIcon  />, link: `/rejected/${userId}` },
+    { text: "Pending List", icon: <AssignmentRoundedIcon /> , link: `/pending/${userId}` },
   ];
 
   const competentAuthority = [
@@ -86,9 +93,13 @@ export default function MenuContent() {
             <ListItemButton
               selected={selectedIndex === index}
               onClick={() => handleListItemClick(index, item.text)}
+
             >
               <ListItemIcon>{item.icon}</ListItemIcon>
+            <a  style={{ textDecoration: "none" }} href={item.link}>
               <ListItemText primary={item.text} />
+            </a>
+
             </ListItemButton>
           </ListItem>
         ))}

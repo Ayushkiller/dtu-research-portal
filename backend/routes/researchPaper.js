@@ -65,6 +65,31 @@ router.post('/', upload, async (req, res) => {
       });
     }
   });
+  router.get('/:status/:userId', async (req, res) => {
+    const { status, userId } = req.params;
+  
+    try {
+      const researchPapers = await ResearchPaper.find({
+        status,
+        $or: [
+          { approvedBy: userId },
+          { suspendedBy: userId },
+          { reviewedBy: userId },
+          { rejectedBy: userId }
+        ]
+      });
+  
+      res.status(200).json(researchPapers);
+    } catch (error) {
+      console.error('Error fetching research papers:', error);
+      res.status(500).json({
+        success: false,
+        message: 'Error fetching research papers',
+        error: error.message
+      });
+    }
+  });
+  
 
   
   

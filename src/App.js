@@ -8,6 +8,9 @@ import DeanDashboard from "./dashboard/DeanDashboard";
 import CommitteeDashboard from "./dashboard/CommitteeDashboard";
 import Cookies from "js-cookie";
 import ConfirmAuthorship from "./ConfirmAuthorship";
+import CommitteeApprovals from "./dashboard/components/CommitteeApprovals";
+import CommitteeRejected from "./dashboard/components/CommitteeRejected";
+import CommitteePending from "./dashboard/components/CommitteePending";
 
 const AuthContext = createContext();
 
@@ -52,6 +55,9 @@ function App() {
                       path="/committee-dashboard"
                       element={<CommitteeDashboard />}
                     />
+                    <Route path="/approvals/:userId" element={<CommitteeApprovals />} />
+                    <Route path="/rejected/:userId" element={<CommitteeRejected />} />
+                    <Route path="/pending/:userId" element={<CommitteePending />} />
                     <Route
                       path="/confirm-authorship"
                       element={<ConfirmAuthorship />}

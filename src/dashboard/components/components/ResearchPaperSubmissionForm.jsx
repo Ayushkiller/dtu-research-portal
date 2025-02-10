@@ -54,6 +54,8 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
   const [authorDialogOpen, setAuthorDialogOpen] = useState(false);
   const [formData, setFormData] = useState(
     initialDraft || {
+      paperTitle: "",
+      pubYear: "",
       applicantName: "",
       email: "",
       mobileNo: "",
@@ -226,7 +228,17 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       console.log("Form data:", formData);
       
       console.log(questions)
+
+      if(formData.authors.length === 0){
+        formData.status = "Submitted"
+
+        const response = await API.post("/research-paper-submission", formData);
+        setSnackbarMessage("Form submitted successfully!");
+        setSnackbarOpen(true);
+        return
+      }
       const response = await API.post("/research-paper-submission", formData);
+
 
       console.log(response.data.data._id);
       const researchPaperId = response?.data?.data?._id;
@@ -303,6 +315,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                 required
               />
             </Grid>
+           
             <Grid item xs={12} sm={6}>
               <TextField
                 fullWidth
@@ -345,6 +358,31 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       case 1:
         return (
           <Grid container spacing={2}>
+           
+            <Grid item xs={12} sm={6}>
+            
+
+            <TextField
+                variant="outlined"
+                fullWidth
+                label="Paper Title"
+                value={formData.paperTitle}
+                onChange={(e) => setFormData((prev) => ({ ...prev, paperTitle: e.target.value }))}
+                required
+              />
+            </Grid>
+            <Grid item xs={12} sm={6}>
+              <TextField
+                fullWidth
+                label="Publication Year"
+                value={formData.pubYear}
+                onChange={(e) =>
+                  setFormData((prev) => ({ ...prev, pubYear: e.target.value }))
+                }
+                required
+              />
+            </Grid>
+
             {questions.map((question) => (
               <Grid item xs={12} sm={6} key={question._id}>
                 <TextField

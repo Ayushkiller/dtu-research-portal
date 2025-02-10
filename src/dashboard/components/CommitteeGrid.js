@@ -20,22 +20,28 @@ export default function DeanGrid() {
   const [openPaperModal, setOpenPaperModal] = React.useState(false);
   const [openModal, setOpenModal] = React.useState(false);
   const [newPower, setNewPower] = React.useState("");
+  const [me, setMe] = React.useState(null);
+ 
 
-  const predefinedPowers = [
-    "suspendResearchPaper",
-    "unsuspendResearchPaper",
-    "putUnderReview",
-    "addRemarks",
-    "flagQuestion",
-    "unflagQuestion",
-    "changeShareAmount",
-  ];
+  React.useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const response = await API.get("/user/me");
+        // console.log("-----------------",response.data);
+        setMe(response.data);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+    fetchMe();
+  }, []);
+
 
   // Fetch users data from backend
   React.useEffect(() => {
     const fetchUsers = async () => {
       try {
-        const response = await API.get("/dean/accounts");
+        const response = await API.get("/committee/accounts");
         console.log(response.data);
         const users = response.data.map((user) => ({
           id: user._id,
@@ -45,7 +51,6 @@ export default function DeanGrid() {
           mobileNo: user.mobileNumber,
           department: user.department,
           userType: user.userType,
-          banned: user.isBanned,
           powers: user.powers || [],
         }));
         const updatedUsers = users.filter(
@@ -53,6 +58,7 @@ export default function DeanGrid() {
         );
 
         setUsersData(updatedUsers);
+        console.log(updatedUsers)
       } catch (error) {
         console.error("Error fetching users:", error);
       }
@@ -63,7 +69,7 @@ export default function DeanGrid() {
   React.useEffect(() => {
     const fetchPapers = async () => {
       try {
-        const response = await API.get("/dean/research-papers");
+        const response = await API.get("/committee/research-papers");
         console.log(response.data);
 
         const papers = response.data.map((paper) => {
@@ -81,33 +87,15 @@ export default function DeanGrid() {
           );
           console.log("research paper data ", researchPaperData);
 
-          const paperTitle = researchPaperData.find(
-            (data) => data.questionText === "Paper Title"
-          )?.answer;
-          const pubYear = researchPaperData.find(
-            (data) => data.questionText === "Publication Year"
-          )?.answer;
-          const impactFactor = researchPaperData.find(
-            (data) => data.questionText === "Impact Factor of the Journal"
-          )?.answer;
-          const excludedQuestions = [
-            "Publication Year",
-            "Paper Title",
-            "Impact Factor",
-          ];
-          const filteredResearchPaperData = researchPaperData.filter(
-            (data) => !excludedQuestions.includes(data.questionText)
-          );
 
           return {
             id: paper._id,
             applicantName: paper.applicantName,
             department: paper.department,
-            paperTitle: paperTitle,
+            paperTitle: paper.paperTitle,
             status: paper.status,
-            pubYear: pubYear,
-            impactFactor: impactFactor,
-            researchPaperData: filteredResearchPaperData,
+            pubYear: paper.pubYear,
+            researchPaperData: researchPaperData,
           };
         });
 
@@ -138,104 +126,60 @@ export default function DeanGrid() {
     setSelectedPaper(null);
   };
 
-  const handleAddPower = async () => {
-    if (newPower && selectedUser) {
-      try {
-        const updatedUser = {
-          ...selectedUser,
-          powers: [...selectedUser.powers, newPower],
-        };
 
-        // Send updated powers to backend
-        const response = await API.put(
-          `/dean/delegate-powers/${selectedUser.id}`,
-          {
-            delegatedPowers: updatedUser.powers,
-          }
-        );
-        if (response.status === 200) {
-          setSelectedUser(updatedUser);
-        }
+ 
 
-        setNewPower("");
-      } catch (error) {
-        alert(error.response.data.error);
-        console.error("Error adding power:", error);
-      }
-    }
-  };
+  
 
-  const handleRemovePower = async (power) => {
-    if (selectedUser) {
-      const updatedPowers = selectedUser.powers.filter((p) => p !== power);
-      setSelectedUser((prev) => ({
-        ...prev,
-        powers: updatedPowers,
-      }));
-
-      try {
-        // Send updated powers to backend
-        await API.put(`/dean/delegate-powers/${selectedUser.id}`, {
-          delegatedPowers: updatedPowers,
-        });
-      } catch (error) {
-        console.error("Error removing power:", error);
-      }
-    }
-  };
-
-  const handleBanUser = async () => {
-    if (selectedUser) {
-      try {
-        await API.put(`/dean/accounts/ban/${selectedUser.id}`);
-
-        setOpenModal(false);
-        alert(`${selectedUser.name} banned successfully.`);
-      } catch (error) {
-        console.error("Error banning user:", error);
-      }
-    }
-  };
-
-  const handleUnbanUser = async () => {
-    if (selectedUser) {
-      try {
-        await API.put(`/dean/accounts/unban/${selectedUser.id}`);
-        setUsersData((prev) =>
-          prev.map((user) =>
-            user.id === selectedUser.id ? { ...user, isBanned: false } : user
-          )
-        );
-        setOpenModal(false);
-        alert(`${selectedUser.name} unbanned successfully.`);
-      } catch (error) {
-        console.error("Error unbanning user:", error);
-      }
-    }
-  };
 
   const columns = [
     { field: "employeeId", headerName: "ID", flex: 1 },
     { field: "name", headerName: "Name", flex: 1 },
     { field: "userType", headerName: "User Type", flex: 1 },
     { field: "department", headerName: "Department", flex: 1 },
-    { field: "banned", headerName: "Banned", flex: 1 },
   ];
   const paperColumns = [
     { field: "applicantName", headerName: "Applicant Name", flex: 1 },
     { field: "paperTitle", headerName: "Paper Title", flex: 1 },
     { field: "department", headerName: "Department", flex: 1 },
-    { field: "impactFactor", headerName: "impact Factor", flex: 1 },
     { field: "pubYear", headerName: "Publication Year", flex: 1 },
     { field: "status", headerName: "Status", flex: 1 },
   ];
 
+
+  const predefinedPowers = [
+    "suspendResearchPaper",
+    "unsuspendResearchPaper",
+    "putUnderReview",
+    "addRemarks",
+    "flagQuestion",
+    "unflagQuestion",
+    "changeShareAmount",
+  ];
+
   const handleUpdateStatus = async (status) => {
     if (!selectedPaper) return;
+    if(status === "suspended" && me.powers.includes("suspendResearchPaper") === false){
+      alert("You don't have permission to suspend research paper");
+      return;
+    }
+    if(status === "underReview" && me.powers.includes("putUnderReview") === false){
+      alert("You don't have permission to put research paper under review");
+      return;
+    }
+    if(status === "approved" && me.powers.includes("approveResearchPaper") === false){
+      alert("You don't have permission to approve research paper");
+      return;
+    }
+    if(status === "rejected" && me.powers.includes("rejectResearchPaper") === false){
+      alert("You don't have permission to reject research paper");
+      return;
+    }
+    
 
     try {
       const response = await API.put(
-        `/dean/research-papers/${selectedPaper.id}/status`,
+        `/committee/research-papers/${selectedPaper.id}/status`,
         {
           status,
           comments: null, // You can allow the user to add comments if needed
@@ -284,64 +228,10 @@ export default function DeanGrid() {
               <Typography>Mobile No: {selectedUser.mobileNo}</Typography>
               <Typography>Department: {selectedUser.department}</Typography>
               <Typography>User Type: {selectedUser.userType}</Typography>
-              <Typography variant="h6" sx={{ mt: 2 }}>
-                Powers
-              </Typography>
-              <ul>
-                {selectedUser.powers.map((power, index) => (
-                  <li key={index}>
-                    {power}{" "}
-                    <Button
-                      size="small"
-                      color="error"
-                      onClick={() => handleRemovePower(power)}
-                    >
-                      Remove
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-              <Stack direction="row" spacing={2} sx={{ mt: 2 }}>
-                <Select
-                  value={newPower}
-                  onChange={(e) => setNewPower(e.target.value)}
-                  displayEmpty
-                  variant="outlined"
-                  size="small"
-                  sx={{ minWidth: 200 }}
-                >
-                  <MenuItem value="" disabled>
-                    Select Power
-                  </MenuItem>
-                  {predefinedPowers.map((power) => (
-                    <MenuItem key={power} value={power}>
-                      {power}
-                    </MenuItem>
-                  ))}
-                </Select>
-                <Button variant="contained" onClick={handleAddPower}>
-                  Add Power
-                </Button>
-              </Stack>
 
-              {selectedUser.banned ? (
-                <Button
-                  variant="contained"
-                  onClick={handleUnbanUser}
-                  sx={{ mt: 2 }}
-                >
-                  Unban User
-                </Button>
-              ) : (
-                <Button
-                  variant="contained"
-                  onClick={handleBanUser}
-                  sx={{ mt: 2 }}
-                  color="error"
-                >
-                  Ban User
-                </Button>
-              )}
+             
+          
+
             </>
           )}
         </Paper>
@@ -395,7 +285,21 @@ export default function DeanGrid() {
               >
                 <Button
                   variant="contained"
-                  color="success"
+                  color="secondary"
+                  onClick={() => handleUpdateStatus("suspended")}
+                >
+                  Suspend
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
+                  onClick={() => handleUpdateStatus("underReview")}
+                >
+                  Review
+                </Button>
+                <Button
+                  variant="contained"
+                  color="secondary"
                   onClick={() => handleUpdateStatus("approved")}
                 >
                   Approve
