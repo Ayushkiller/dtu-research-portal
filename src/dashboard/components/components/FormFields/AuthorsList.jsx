@@ -99,7 +99,7 @@ export default function AuthorsList({
                   <AttachMoneyIcon color="primary" />
                   <Tooltip title="Calculated Share Amount" placement="top">
                     <Typography variant="subtitle1" color="primary">
-                      <strong>Share Amount:</strong> ₹{author.shareValue ? author.shareValue.toLocaleString() : 'N/A'}
+                      <strong>Share Amount:</strong> ₹{author.amount !== undefined && author.amount !== null ? author.amount.toLocaleString() : 'N/A'}
                     </Typography>
                   </Tooltip>
                 </Box>

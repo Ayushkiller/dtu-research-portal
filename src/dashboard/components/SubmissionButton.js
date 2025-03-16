@@ -7,9 +7,30 @@ export default function SubmissionButton({ onShowForm }) {
   const theme = useTheme();
 
   return (
-    <Card variant="outlined" sx={{ width: '100%' }}>
-      <CardContent>
-        <Typography component="h2" variant="h6" gutterBottom>
+    <Card 
+      variant="outlined" 
+      sx={{ 
+        width: '100%',
+        borderRadius: theme.shape.borderRadius,
+        boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+        transition: 'transform 0.2s, box-shadow 0.2s',
+        '&:hover': {
+          boxShadow: '0 6px 18px rgba(0,0,0,0.1)',
+          transform: 'translateY(-2px)'
+        }
+      }}
+    >
+      <CardContent sx={{ p: { xs: 2, sm: 3 } }}>
+        <Typography 
+          component="h2" 
+          variant="h5" 
+          gutterBottom
+          sx={{ 
+            fontWeight: 'medium',
+            mb: 2,
+            color: theme.palette.primary.main
+          }}
+        >
           Research Paper Submission
         </Typography>
         
@@ -21,10 +42,10 @@ export default function SubmissionButton({ onShowForm }) {
         <Divider sx={{ marginY: 2 }} />
 
         {/* Guidelines */}
-        <Typography component="h3" variant="subtitle1" gutterBottom>
+        <Typography component="h3" variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium' }}>
           Submission Guidelines
         </Typography>
-        <List dense>
+        <List dense sx={{ mb: 2 }}>
           <ListItem>
             <ListItemIcon>
               <CheckCircleIcon color="primary" />
@@ -48,7 +69,7 @@ export default function SubmissionButton({ onShowForm }) {
         <Divider sx={{ marginY: 2 }} />
 
         {/* Eligibility */}
-        <Typography component="h3" variant="subtitle1" gutterBottom>
+        <Typography component="h3" variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium' }}>
           Eligibility Criteria
         </Typography>
         <Typography variant="body2" sx={{ marginBottom: 2, color: 'text.secondary' }}>
@@ -60,10 +81,10 @@ export default function SubmissionButton({ onShowForm }) {
         <Divider sx={{ marginY: 2 }} />
 
         {/* Submission Call-to-Action */}
-        <Typography component="h3" variant="subtitle1" gutterBottom>
+        <Typography component="h3" variant="subtitle1" gutterBottom sx={{ fontWeight: 'medium' }}>
           Next Steps
         </Typography>
-        <Typography variant="body2" sx={{ marginBottom: 2, color: 'text.secondary' }}>
+        <Typography variant="body2" sx={{ marginBottom: 3, color: 'text.secondary' }}>
           Click the button below to access the research paper submission form. Ensure all required fields are filled out correctly before submission.
         </Typography>
         <Stack direction="row" justifyContent="center">
@@ -73,8 +94,13 @@ export default function SubmissionButton({ onShowForm }) {
             onClick={onShowForm}
             sx={{
               textTransform: 'none',
-              padding: theme.spacing(1.5),
+              padding: theme.spacing(1.5, 3),
               fontSize: theme.typography.pxToRem(16),
+              borderRadius: theme.shape.borderRadius,
+              boxShadow: '0 4px 8px rgba(0,0,0,0.1)',
+              '&:hover': {
+                boxShadow: '0 6px 12px rgba(0,0,0,0.15)',
+              }
             }}
           >
             Submit Research Paper

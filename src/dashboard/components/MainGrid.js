@@ -74,53 +74,40 @@ export default function MainGrid() {
         flexGrow: 1,
         width: '100%',
         height: '100%',
-        m: 0,
-        p: 0
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'flex-start',
       }}
     >
-
       { showDeveloperInfo ? (
-        <DeveloperInfo />
+        <Box sx={{ width: '100%', maxWidth: '1000px' }}>
+          <DeveloperInfo />
+        </Box>
       ) : showSubmissions ? (
-        <MySubmissions />
+        <Box sx={{ width: '100%', maxWidth: '1000px' }}>
+          <MySubmissions />
+        </Box>
       ) : showEligibility ? (
-        <Box sx={{ width: '100%', height: '100%', m: 0, p: 0 }}>
+        <Box sx={{ width: '100%', maxWidth: '1000px' }}>
           <EligibilityContent />
         </Box>
       ) : showForm ? (
-        <Box sx={{ mt: 2, mb: 4 }}>
+        <Box sx={{ width: '100%', maxWidth: '1000px', my: 2 }}>
           <ResearchPaperSubmissionForm onSubmit={handleFormSubmit} />
         </Box>
       ) : showFeedback ? (
-        <FeedbackForm />
+        <Box sx={{ width: '100%', maxWidth: '800px' }}>
+          <FeedbackForm />
+        </Box>
       ) : (
-        <>
-          <Grid container spacing={3} columns={12} sx={{ mb: 4 }}>
-            <Grid item xs={12} md={8} lg={6}>
+        <Box sx={{ width: '100%' }}>
+          <Grid container spacing={3} columns={12} sx={{ mb: 4, justifyContent: 'center' }}>
+            <Grid item xs={12} md={10} lg={8}>
               <SubmissionButton onShowForm={handleShowForm} />
             </Grid>
           </Grid>
-          <Typography 
-            component="h2" 
-            variant="h5" 
-            sx={{ 
-              mb: 3,
-              fontWeight: 'medium',
-              color: 'primary.main' 
-            }}
-          >
-          </Typography>
-          <Grid container spacing={2} columns={12}>
-            <Grid item xs={12} lg={9}>
-            </Grid>
-            <Grid item xs={12} lg={3}>
-              <Stack gap={2} direction={{ xs: 'column', sm: 'row', lg: 'column' }}>
-                {/* Add any additional components here */}
-              </Stack>
-            </Grid>
-          </Grid>
-          <Copyright sx={{ mt: 6, mb: 4 }} />
-        </>
+        </Box>
       )}
     </Box>
   );

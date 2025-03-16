@@ -51,10 +51,11 @@ export default function Dashboard(props) {
       navigate("/signin");
     }
   }, [navigate,token]);
+  
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>
       <CssBaseline enableColorScheme />
-      <Box sx={{ display: 'flex' }}>
+      <Box sx={{ display: 'flex', minHeight: '100vh' }}>
         <SideMenu />
         <AppNavbar />
         {/* Main content */}
@@ -66,15 +67,24 @@ export default function Dashboard(props) {
               ? `rgba(${theme.vars.palette.background.defaultChannel} / 1)`
               : alpha(theme.palette.background.default, 1),
             overflow: 'auto',
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
           })}
         >
           <Stack
-            spacing={2}
+            spacing={3}
             sx={{
               alignItems: 'center',
-              mx: 3,
+              mx: { xs: 2, sm: 3, md: 4 },
+              py: { xs: 2, sm: 3 },
+              px: { xs: 1, sm: 2 },
               pb: 5,
-              mt: { xs: 8, md: 0 },
+              mt: { xs: 10, md: 12 },
+              width: '100%',
+              maxWidth: '1200px',
+              marginLeft: 'auto',
+              marginRight: 'auto',
             }}
           >
             <Header />

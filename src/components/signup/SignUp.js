@@ -57,6 +57,20 @@ export default function SignUp(props) {
   const [confirmPasswordErrorMessage, setConfirmPasswordErrorMessage] =
     useState("");
   const [termsError, setTermsError] = useState(false);
+  const [dateOfBirthError, setDateOfBirthError] = useState(false);
+  const [dateOfBirthErrorMessage, setDateOfBirthErrorMessage] = useState("");
+  const [addressError, setAddressError] = useState(false);
+  const [addressErrorMessage, setAddressErrorMessage] = useState("");
+  const [bankAccountError, setBankAccountError] = useState(false);
+  const [bankAccountErrorMessage, setBankAccountErrorMessage] = useState("");
+  const [bankNameError, setBankNameError] = useState(false);
+  const [bankNameErrorMessage, setBankNameErrorMessage] = useState("");
+  const [branchNameError, setBranchNameError] = useState(false);
+  const [branchNameErrorMessage, setBranchNameErrorMessage] = useState("");
+  const [ifscError, setIfscError] = useState(false);
+  const [ifscErrorMessage, setIfscErrorMessage] = useState("");
+  const [accountHolderError, setAccountHolderError] = useState(false);
+  const [accountHolderErrorMessage, setAccountHolderErrorMessage] = useState("");
 
   const validateInputs = () => {
     const email = document.getElementById("email");
@@ -64,6 +78,13 @@ export default function SignUp(props) {
     const confirmPassword = document.getElementById("confirmPassword");
     const name = document.getElementById("name");
     const terms = document.getElementById("terms");
+    const dateOfBirth = document.getElementById("dateOfBirth");
+    const address = document.getElementById("address");
+    const bankAccount = document.getElementById("bankAccount");
+    const bankName = document.getElementById("bankName");
+    const branchName = document.getElementById("branchName");
+    const ifsc = document.getElementById("ifsc");
+    const accountHolderName = document.getElementById("accountHolderName");
 
     let isValid = true;
 
@@ -118,6 +139,69 @@ export default function SignUp(props) {
       setTermsError(false);
     }
 
+    if (!dateOfBirth.value) {
+      setDateOfBirthError(true);
+      setDateOfBirthErrorMessage("Date of birth is required.");
+      isValid = false;
+    } else {
+      setDateOfBirthError(false);
+      setDateOfBirthErrorMessage("");
+    }
+
+    if (!address.value) {
+      setAddressError(true);
+      setAddressErrorMessage("Address is required.");
+      isValid = false;
+    } else {
+      setAddressError(false);
+      setAddressErrorMessage("");
+    }
+
+    if (!bankAccount.value) {
+      setBankAccountError(true);
+      setBankAccountErrorMessage("Bank account info is required.");
+      isValid = false;
+    } else {
+      setBankAccountError(false);
+      setBankAccountErrorMessage("");
+    }
+
+    if (!bankName.value) {
+      setBankNameError(true);
+      setBankNameErrorMessage("Bank name is required.");
+      isValid = false;
+    } else {
+      setBankNameError(false);
+      setBankNameErrorMessage("");
+    }
+
+    if (!branchName.value) {
+      setBranchNameError(true);
+      setBranchNameErrorMessage("Branch name is required.");
+      isValid = false;
+    } else {
+      setBranchNameError(false);
+      setBranchNameErrorMessage("");
+    }
+
+    if (!ifsc.value) {
+      setIfscError(true);
+      setIfscErrorMessage("IFSC code is required.");
+      isValid = false;
+    } else {
+      setIfscError(false);
+      setIfscErrorMessage("");
+    }
+
+    if (!accountHolderName.value) {
+      setAccountHolderError(true);
+      setAccountHolderErrorMessage("Account holder name is required.");
+      isValid = false;
+    } else {
+      setAccountHolderError(false);
+      setAccountHolderErrorMessage("");
+    }
+
     return isValid;
   };
 
@@ -136,6 +220,13 @@ export default function SignUp(props) {
       department: data.get("department"),
       mobileNumber: data.get("mobileNumber"),
       password: data.get("password"),
+      dateOfBirth: data.get("dateOfBirth"),
+      address: data.get("address"),
+      bankAccount: data.get("bankAccount"),
+      bankName: data.get("bankName"),
+      branchName: data.get("branchName"),
+      ifsc: data.get("ifsc"),
+      accountHolderName: data.get("accountHolderName"),
     };
 
     try {
@@ -262,6 +353,97 @@ export default function SignUp(props) {
                 placeholder="8307266041"
                 type="tel"
                 inputProps={{ pattern: "[0-9]{10}" }}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel htmlFor="dateOfBirth">Date of Birth</FormLabel>
+              <TextField
+                required
+                fullWidth
+                id="dateOfBirth"
+                name="dateOfBirth"
+                type="date"
+                variant="outlined"
+                error={dateOfBirthError}
+                helperText={dateOfBirthErrorMessage}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel htmlFor="address">Address</FormLabel>
+              <TextField
+                required
+                fullWidth
+                id="address"
+                name="address"
+                placeholder="123, Example Street"
+                variant="outlined"
+                error={addressError}
+                helperText={addressErrorMessage}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel htmlFor="bankAccount">Bank Account Info</FormLabel>
+              <TextField
+                required
+                fullWidth
+                id="bankAccount"
+                name="bankAccount"
+                placeholder="1234567890"
+                variant="outlined"
+                error={bankAccountError}
+                helperText={bankAccountErrorMessage}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel htmlFor="bankName">Bank Name</FormLabel>
+              <TextField
+                required
+                fullWidth
+                id="bankName"
+                name="bankName"
+                placeholder="State Bank of India"
+                variant="outlined"
+                error={bankNameError}
+                helperText={bankNameErrorMessage}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel htmlFor="branchName">Branch Name</FormLabel>
+              <TextField
+                required
+                fullWidth
+                id="branchName"
+                name="branchName"
+                placeholder="Connaught Place"
+                variant="outlined"
+                error={branchNameError}
+                helperText={branchNameErrorMessage}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel htmlFor="ifsc">IFSC Code</FormLabel>
+              <TextField
+                required
+                fullWidth
+                id="ifsc"
+                name="ifsc"
+                placeholder="SBIN000000"
+                variant="outlined"
+                error={ifscError}
+                helperText={ifscErrorMessage}
+              />
+            </FormControl>
+            <FormControl>
+              <FormLabel htmlFor="accountHolderName">Account Holder Name</FormLabel>
+              <TextField
+                required
+                fullWidth
+                id="accountHolderName"
+                name="accountHolderName"
+                placeholder="Full Name"
+                variant="outlined"
+                error={accountHolderError}
+                helperText={accountHolderErrorMessage}
               />
             </FormControl>
             <FormControl>
