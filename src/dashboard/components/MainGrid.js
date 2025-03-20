@@ -1,7 +1,7 @@
 import * as React from 'react';
 import Grid from '@mui/material/Grid2';
 import Box from '@mui/material/Box';
-import Stack from '@mui/material/Stack';
+import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Copyright from '../internals/components/Copyright';
 import SubmissionButton from './SubmissionButton';
@@ -68,47 +68,89 @@ export default function MainGrid() {
     setShowEligibility(false);
   };
 
+  // Determine current view title
+  const getCurrentViewTitle = () => {
+    if (showDeveloperInfo) return "Developer's Information";
+    if (showSubmissions) return "My Research Submissions";
+    if (showEligibility) return "Eligibility and Awards";
+    if (showForm) return "Submit Research Paper";
+    if (showFeedback) return "Provide Feedback";
+    return "Research Portal Dashboard";
+  };
+
+  // Render the appropriate content based on state
+  const renderContent = () => {
+    if (showDeveloperInfo) return <DeveloperInfo />;
+    if (showSubmissions) return <MySubmissions />;
+    if (showEligibility) return <EligibilityContent />;
+    if (showForm) return <ResearchPaperSubmissionForm onSubmit={handleFormSubmit} />;
+    if (showFeedback) return <FeedbackForm />;
+    
+    // Home view
+    return (
+      <Grid container spacing={3} sx={{ mb: 4, justifyContent: 'center' }}>
+        <Grid item xs={12} md={10} lg={8}>
+          <SubmissionButton onShowForm={handleShowForm} />
+        </Grid>
+      </Grid>
+    );
+  };
+
   return (
     <Box 
       sx={{ 
         flexGrow: 1,
         width: '100%',
-        height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
-        justifyContent: 'flex-start',
+        height: '100%',
+        overflow: 'hidden' // Prevent outer scrollbar
       }}
     >
-      { showDeveloperInfo ? (
-        <Box sx={{ width: '100%', maxWidth: '1000px' }}>
-          <DeveloperInfo />
-        </Box>
-      ) : showSubmissions ? (
-        <Box sx={{ width: '100%', maxWidth: '1000px' }}>
-          <MySubmissions />
-        </Box>
-      ) : showEligibility ? (
-        <Box sx={{ width: '100%', maxWidth: '1000px' }}>
-          <EligibilityContent />
-        </Box>
-      ) : showForm ? (
-        <Box sx={{ width: '100%', maxWidth: '1000px', my: 2 }}>
-          <ResearchPaperSubmissionForm onSubmit={handleFormSubmit} />
-        </Box>
-      ) : showFeedback ? (
-        <Box sx={{ width: '100%', maxWidth: '800px' }}>
-          <FeedbackForm />
-        </Box>
-      ) : (
-        <Box sx={{ width: '100%' }}>
-          <Grid container spacing={3} columns={12} sx={{ mb: 4, justifyContent: 'center' }}>
-            <Grid item xs={12} md={10} lg={8}>
-              <SubmissionButton onShowForm={handleShowForm} />
-            </Grid>
-          </Grid>
-        </Box>
-      )}
+      {/* Main content area */}
+      <Box
+        sx={{ 
+          flexGrow: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'auto', // Only this container should scroll
+          p: 2
+        }}
+      >
+        {/* Header - Removed Paper wrapper */}
+        <Typography variant="h5" component="h1" gutterBottom sx={{ px: 1, pt: 1 }}>
+          {getCurrentViewTitle()}
+        </Typography>
+        
+        {/* Content wrapper */}
+        <Paper 
+          elevation={2} 
+          sx={{ 
+            p: { xs: 2, md: 3 }, 
+            flexGrow: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            mb: 2
+          }}
+        >
+          {renderContent()}
+        </Paper>
+      </Box>
+      
+      {/* Footer */}
+      <Box 
+        component="footer" 
+        sx={{ 
+          py: 2, 
+          px: 2, 
+          backgroundColor: (theme) => theme.palette.mode === 'dark' 
+            ? theme.palette.background.paper 
+            : theme.palette.grey[50],
+          borderTop: (theme) => `1px solid ${theme.palette.divider}`
+        }}
+      >
+        <Copyright sx={{ color: 'text.primary' }} />
+      </Box>
     </Box>
   );
 }
