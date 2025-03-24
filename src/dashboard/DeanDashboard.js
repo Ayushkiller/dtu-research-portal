@@ -17,7 +17,7 @@ import {
   datePickersCustomizations,
   treeViewCustomizations,
 } from './theme/customizations';
-import DeanGrid from './components/DeanGrid';
+import DeanGrid from './components/dean/DeanGrid';
 
 const xThemeComponents = {
   ...chartsCustomizations,

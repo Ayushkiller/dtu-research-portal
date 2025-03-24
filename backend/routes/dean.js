@@ -50,28 +50,6 @@ router.put('/accounts/unban/:userId', authorizeDean, async (req, res) => {
   }
 });
 
-// Route to delegate powers to committee members
-router.put('/delegate-powers/:userId', authorizeDean, async (req, res) => {
-  const { userId } = req.params;
-  const { delegatedPowers } = req.body; // List of delegated powers
-
-  try {
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
-
-    if (user.userType !== 'committeeMember') {
-      return res.status(400).json({ error: 'User is not a committee member' });
-    }
-
-    user.powers = delegatedPowers; // Add a `delegatedPowers` field in the User schema
-    await user.save();
-
-    res.status(200).json({ message: `Powers delegated to ${user.name}` });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to delegate powers' });
-  }
-});
-
 
 // Route to review research papers
 router.get('/research-papers', authorizeDean, async (req, res) => {
@@ -104,9 +82,51 @@ router.put('/research-papers/:paperId/status', authorizeDean, async (req, res) =
   }
 });
 
+// Route to promote a user to committee member
+router.put('/accounts/promote/:userId', authorizeDean, async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    // Check if user is already a committee member
+    if (user.userType === 'committeeMember') {
+      return res.status(400).json({ error: 'User is already a committee member' });
+    }
+    // Save the previous role in case we need to revert
+    const previousRole = user.userType;
+    // Update user type to committee member
+    user.userType = 'committeeMember';
+    await user.save();
+    res.status(200).json({ 
+      message: `User ${user.name} promoted to committee member successfully`,
+      previousRole
+    });
+  } catch (error) {
+    console.error('Error promoting user:', error);
+    res.status(500).json({ error: 'Failed to promote user' });
+  }
+});
 
-
-
+// Route to demote a user from committee member
+router.put('/accounts/demote/:userId', authorizeDean, async (req, res) => {
+  const { userId } = req.params;
+  try {
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: 'User not found' });
+    // Check if user is actually a committee member
+    if (user.userType !== 'committeeMember') {
+      return res.status(400).json({ error: 'User is not a committee member' });
+    }
+    user.userType = 'faculty';
+    await user.save();
+    res.status(200).json({ 
+      message: `User ${user.name} demoted from committee member successfully` 
+    });
+  } catch (error) {
+    console.error('Error demoting user:', error);
+    res.status(500).json({ error: 'Failed to demote user' });
+  }
+});
 
 /**
  * @route   POST /questions
@@ -194,8 +214,6 @@ router.put("/question/:id", async (req, res) => {
       { questionText, questionType, options, isRequired },
       { new: true }
     );
-
-
 
     if (!updatedQuestion) {
       return res.status(404).json({ error: "Question not found" });

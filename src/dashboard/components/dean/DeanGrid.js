@@ -1,13 +1,13 @@
 import * as React from "react";
 import Box from "@mui/material/Box";
-import Copyright from "../internals/components/Copyright";
-import API from "../../api/axios";
+import Copyright from "../../internals/components/Copyright";
+import API from "../../../api/axios";
 import { Chip } from "@mui/material";
 import CancelIcon from '@mui/icons-material/Cancel';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import PendingIcon from '@mui/icons-material/Pending';
 import { UserManagement } from "./UserManagement";
-import { ResearchPapers } from "./ResearchPapers";
+import { ResearchPapers } from "../ResearchPapers";
 import { QuestionManagement } from "./QuestionManagement";
 import { PaperDetailsModal, QuestionDetailsModal } from "./Modals";
 import {
@@ -63,7 +63,6 @@ export default function DeanGrid() {
         department: user.department,
         userType: user.userType,
         banned: user.isBanned,
-        powers: user.powers || [],
       }));
       const updatedUsers = users.filter(
         (user) => user.userType !== "competentAuthority"

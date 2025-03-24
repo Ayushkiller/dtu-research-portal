@@ -71,6 +71,13 @@ const CommitteeApprovals = () => {
 
   useEffect(() => {
    const fetchApprovals = async () => {
+        // Check if user is a committee member before fetching data
+        if (me.userType !== "committeeMember") {
+          setError("You are not authorized to view this data");
+          setLoading(false);
+          return;
+        }
+        
         try {
             await API
             .get(`/research-paper-submission/approved/${userId}`)
@@ -117,7 +124,7 @@ const CommitteeApprovals = () => {
 
    }
    fetchApprovals();
-  }, [userId]);
+  }, [userId, me.userType]);
 
 
 
@@ -135,23 +142,14 @@ const CommitteeApprovals = () => {
   
   const handleUpdateStatus = async (status) => {
     if (!selectedPaper) return;
-    if(status === "suspended" && me.powers.includes("suspendResearchPaper") === false){
-      alert("You don't have permission to suspend research paper");
-      return;
-    }
-    if(status === "underReview" && me.powers.includes("putUnderReview") === false){
-      alert("You don't have permission to put research paper under review");
-      return;
-    }
-    if(status === "approved" && me.powers.includes("approveResearchPaper") === false){
-      alert("You don't have permission to approve research paper");
-      return;
-    }
-    if(status === "rejected" && me.powers.includes("rejectResearchPaper") === false){
-      alert("You don't have permission to reject research paper");
+    
+    // Check if user is a committee member
+    if (me.userType !== "committeeMember") {
+      alert("You don't have permission to perform this action");
       return;
     }
     
+    // Continue with status update if user is a committee member
 
     try {
       const response = await API.put(

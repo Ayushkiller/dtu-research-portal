@@ -22,22 +22,7 @@ const userSchema = new mongoose.Schema({
   ifsc: { type: String },
   accountHolderName: { type: String },
   isBanned: { type: Boolean, default: false },
-  createdAt: { type: Date, default: Date.now },
-  powers: { 
-    type: [String], // Array of strings to allow multiple powers
-    enum: [
-      'suspendResearchPaper', 
-      'unsuspendResearchPaper', 
-      'putUnderReview', 
-      'addRemarks', 
-      'flagQuestion',
-      'unflagQuestion', 
-      'changeShareAmount',
-      "approveResearchPaper",
-      "rejectResearchPaper",
-    ],
-    default: [] // Default to no powers assigned
-  }
+  createdAt: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('User', userSchema);

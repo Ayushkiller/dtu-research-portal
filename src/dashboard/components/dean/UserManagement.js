@@ -18,8 +18,6 @@ import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
 import SchoolIcon from "@mui/icons-material/School";
 import PersonIcon from "@mui/icons-material/Person";
 import SearchIcon from "@mui/icons-material/Search";
-import FilterListIcon from "@mui/icons-material/FilterList";
-import RefreshIcon from "@mui/icons-material/Refresh";
 import CloseIcon from "@mui/icons-material/Close";
 
 export const UserManagement = ({ usersData, setUsersData, columns, fetchUsers, searchText, setSearchText }) => {
@@ -36,20 +34,39 @@ export const UserManagement = ({ usersData, setUsersData, columns, fetchUsers, s
   ).length;
   const bannedUsers = usersData.filter((user) => user.banned).length;
 
-  // Filter users based on activeFilter
+  // Filter users based on activeFilter and searchText
   const filteredUsers = React.useMemo(() => {
+    // First filter by category
+    let filtered = usersData;
     switch (activeFilter) {
       case "faculty":
-        return usersData.filter((user) => user.userType === "faculty");
+        filtered = usersData.filter((user) => user.userType === "faculty");
+        break;
       case "committee":
-        return usersData.filter((user) => user.userType === "committeeMember");
+        filtered = usersData.filter((user) => user.userType === "committeeMember");
+        break;
       case "banned":
-        return usersData.filter((user) => user.banned);
+        filtered = usersData.filter((user) => user.banned);
+        break;
       case "all":
       default:
-        return usersData;
+        filtered = usersData;
     }
-  }, [usersData, activeFilter]);
+
+    // Then filter by search text if it exists
+    if (searchText && searchText.trim() !== '') {
+      const lowerCaseSearch = searchText.toLowerCase();
+      filtered = filtered.filter(user => 
+        (user.name && user.name.toLowerCase().includes(lowerCaseSearch)) || 
+        (user.email && user.email.toLowerCase().includes(lowerCaseSearch)) || 
+        (user.department && user.department.toLowerCase().includes(lowerCaseSearch)) ||
+        (user.employeeId && user.employeeId.toLowerCase().includes(lowerCaseSearch)) ||
+        (user.userType && user.userType.toLowerCase().includes(lowerCaseSearch))
+      );
+    }
+
+    return filtered;
+  }, [usersData, activeFilter, searchText]);
 
   // Handle filter change when a card is clicked
   const handleFilterChange = (filter) => {

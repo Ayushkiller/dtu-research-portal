@@ -16,11 +16,14 @@ import {
   Select,
   MenuItem,
   Dialog,
+  Chip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import AddIcon from "@mui/icons-material/Add";
+import ArticleIcon from "@mui/icons-material/Article";
+import QuestionAnswerIcon from "@mui/icons-material/QuestionAnswer";
 
 export const PaperDetailsModal = ({
   openPaperModal,
@@ -29,17 +32,26 @@ export const PaperDetailsModal = ({
   handleUpdateStatus,
 }) => {
   return (
-    <Modal open={openPaperModal} onClose={handleClosePaperModal}>
+    <Modal 
+      open={openPaperModal} 
+      onClose={handleClosePaperModal}
+      sx={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
       <Paper
         sx={{
-          p: 4,
-          maxWidth: 600,
-          width: "90%",
-          mx: "auto",
-          my: "5%",
+          p: { xs: 2, sm: 3, md: 4 },
+          maxWidth: { xs: '95vw', sm: '90vw', md: '85vw', lg: '80vw' },
+          width: '95%',
+          maxHeight: '90vh',
+          height: 'auto',
           borderRadius: 2,
-          maxHeight: "80vh",
-          overflow: "auto",
+          overflow: 'auto',
+          m: 0, // Remove margins
+          position: 'relative',
         }}
       >
         <Box
@@ -112,22 +124,79 @@ export const PaperDetailsModal = ({
               </Grid>
             </Box>
 
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Research Details
-            </Typography>
-            <Divider sx={{ mb: 2 }} />
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 2, mt: 4 }}>
+              <ArticleIcon sx={{ color: (theme) => theme.palette.primary.main, mr: 1 }} />
+              <Typography variant="h6" fontWeight="600" color="primary.main">
+                Research Details
+              </Typography>
+            </Box>
+            <Divider sx={{ mb: 3 }} />
 
             <Box sx={{ mb: 3 }}>
               {selectedPaper.researchPaperData.map((data, index) => (
-                <Box
-                  key={index}
-                  sx={{ mb: 2, p: 2, bgcolor: "#f8f9fa", borderRadius: 1 }}
+                <Paper 
+                  key={index} 
+                  elevation={0}
+                  sx={{ 
+                    mb: 2.5, 
+                    p: 2.5, 
+                    bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : '#f8f9fa', 
+                    borderRadius: 2,
+                    border: '1px solid',
+                    borderColor: (theme) => theme.palette.divider,
+                    transition: 'all 0.2s ease',
+                    '&:hover': {
+                      bgcolor: (theme) => theme.palette.mode === 'dark' 
+                        ? 'rgba(25, 118, 210, 0.08)'
+                        : '#f0f7ff',
+                      boxShadow: (theme) => `0 4px 8px ${theme.palette.mode === 'dark' 
+                        ? 'rgba(0,0,0,0.2)'
+                        : 'rgba(0,0,0,0.05)'}`
+                    }
+                  }}
                 >
-                  <Typography variant="subtitle2" color="text.secondary">
-                    {data.questionText}
+                  <Box sx={{ display: 'flex', mb: 1.5, alignItems: 'flex-start' }}>
+                    <QuestionAnswerIcon 
+                      fontSize="small" 
+                      sx={{ color: 'primary.main', mr: 1.5, mt: 0.2 }} 
+                    />
+                    <Typography 
+                      variant="subtitle1" 
+                      fontWeight="600"
+                      color="primary.main"
+                    >
+                      {data.questionText}
+                    </Typography>
+                  </Box>
+                  <Typography 
+                    variant="body1" 
+                    sx={{ 
+                      ml: 4.5, 
+                      padding: '10px 15px',
+                      bgcolor: (theme) => theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.03)' : 'white',
+                      borderRadius: 1,
+                      border: '1px solid',
+                      borderColor: (theme) => theme.palette.divider
+                    }}
+                  >
+                    {data.answer}
                   </Typography>
-                  <Typography variant="body1">{data.answer}</Typography>
-                </Box>
+                  <Box sx={{ ml: 4.5, mt: 1.5 }}>
+                    <Chip 
+                      size="small" 
+                      label={`Question ${index + 1}`} 
+                      sx={{ 
+                        bgcolor: (theme) => theme.palette.mode === 'dark' 
+                          ? 'rgba(25, 118, 210, 0.15)' 
+                          : '#e3f2fd', 
+                        fontSize: '0.7rem',
+                        color: (theme) => theme.palette.mode === 'dark' 
+                          ? theme.palette.primary.light
+                          : theme.palette.primary.dark
+                      }} 
+                    />
+                  </Box>
+                </Paper>
               ))}
             </Box>
 
