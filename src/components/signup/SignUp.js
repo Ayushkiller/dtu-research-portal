@@ -87,6 +87,7 @@ export default function SignUp(props) {
     mobileNumber: { error: false, message: "" },
     employeeId: { error: false, message: "" },
     applicantPhoto: { error: false, message: "" },
+    applicantBiography: { error: false, message: "" },
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formData, setFormData] = useState({
@@ -105,6 +106,7 @@ export default function SignUp(props) {
     ifsc: "",
     accountHolderName: "",
     applicantPhoto: "",
+    applicantBiography: "",
   });
 
   const validateInputs = (step) => {
@@ -180,6 +182,18 @@ export default function SignUp(props) {
         isValid = false;
       }
 
+      // Validate applicantBiography (optional)
+      if (
+        formData.applicantBiography &&
+        formData.applicantBiography.length > 1000
+      ) {
+        newErrors.applicantBiography = {
+          error: true,
+          message: "Biography should be less than 1000 characters",
+        };
+        isValid = false;
+      }
+
       // Validate password for final step
       if (
         !formData.password ||
@@ -212,6 +226,7 @@ export default function SignUp(props) {
       const address = document.getElementById("address");
       const mobileNumber = document.getElementById("mobileNumber");
       const applicantPhoto = document.getElementById("applicantPhoto");
+      const applicantBiography = document.getElementById("applicantBiography");
 
       if (!name || !name.value || name.value.length < 2) {
         newErrors.name = {
@@ -278,6 +293,21 @@ export default function SignUp(props) {
         isValid = false;
       } else {
         newErrors.mobileNumber = { error: false, message: "" };
+      }
+
+      // applicantBiography is optional but if provided should not be too long
+      if (
+        applicantBiography &&
+        applicantBiography.value &&
+        applicantBiography.value.length > 1000
+      ) {
+        newErrors.applicantBiography = {
+          error: true,
+          message: "Biography should be less than 1000 characters",
+        };
+        isValid = false;
+      } else {
+        newErrors.applicantBiography = { error: false, message: "" };
       }
 
       if (!isValid && step !== -1) {
@@ -457,6 +487,10 @@ export default function SignUp(props) {
         "",
       applicantPhoto:
         formDataObj.get("applicantPhoto") || formData.applicantPhoto || "",
+      applicantBiography:
+        formDataObj.get("applicantBiography") ||
+        formData.applicantBiography ||
+        "",
     };
 
     return newData;
@@ -609,6 +643,7 @@ export default function SignUp(props) {
                         fullWidth
                         id="name"
                         placeholder="Ayush Kumar"
+                        variant="standard"
                         error={formErrors.name.error}
                         helperText={formErrors.name.message}
                         color={formErrors.name.error ? "error" : "primary"}
@@ -626,7 +661,7 @@ export default function SignUp(props) {
                         placeholder="ayushkumar_cs24a02_052@dtu.ac.in"
                         name="email"
                         autoComplete="email"
-                        variant="outlined"
+                        variant="standard"
                         error={formErrors.email.error}
                         helperText={formErrors.email.message}
                         color={formErrors.email.error ? "error" : "primary"}
@@ -646,6 +681,7 @@ export default function SignUp(props) {
                         name="mobileNumber"
                         placeholder="8307266041"
                         type="tel"
+                        variant="standard"
                         inputProps={{ pattern: "[0-9]{10}" }}
                         error={formErrors.mobileNumber.error}
                         helperText={formErrors.mobileNumber.message}
@@ -664,7 +700,7 @@ export default function SignUp(props) {
                         id="dateOfBirth"
                         name="dateOfBirth"
                         type="date"
-                        variant="outlined"
+                        variant="standard"
                         error={formErrors.dateOfBirth.error}
                         helperText={formErrors.dateOfBirth.message}
                         InputLabelProps={{ shrink: true }}
@@ -681,7 +717,7 @@ export default function SignUp(props) {
                         id="address"
                         name="address"
                         placeholder="123, Example Street, City, State, Pincode"
-                        variant="outlined"
+                        variant="standard"
                         multiline
                         rows={2}
                         error={formErrors.address.error}
@@ -700,11 +736,28 @@ export default function SignUp(props) {
                         id="applicantPhoto"
                         name="applicantPhoto"
                         placeholder="https://drive.google.com/file/d/1"
-                        variant="outlined"
-                        multiline
-                        rows={2}
+                        variant="standard"
+                        
                         error={formErrors.applicantPhoto.error}
                         helperText={formErrors.applicantPhoto.message}
+                      />
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <FormLabel htmlFor="applicantBiography">
+                        Brief Biography
+                      </FormLabel>
+                      <TextField
+                        fullWidth
+                        id="applicantBiography"
+                        name="applicantBiography"
+                        placeholder="Tell us about yourself, your research interests, and academic background"
+                        variant="standard"
+                        multiline
+                        rows={4}
+                        error={formErrors.applicantBiography.error}
+                        helperText={formErrors.applicantBiography.message}
                       />
                     </FormControl>
                   </Grid>
