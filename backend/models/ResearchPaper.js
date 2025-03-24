@@ -16,6 +16,8 @@ const researchPaperSchema = new mongoose.Schema({
   mobileNo: { type: String, required: true },
   department: { type: String, required: true },
   applicantType: { type: String, required: true },
+  applicantBiography: { type: String, required: false },
+  employeeId: { type: String, required: true },
   photograph: { type: String },
   bankDetails: {
     bankName: { type: String, required: true },
