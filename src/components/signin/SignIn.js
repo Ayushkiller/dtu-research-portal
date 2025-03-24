@@ -1,5 +1,5 @@
 import * as React from "react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import Box from "@mui/material/Box";
 import Button from "@mui/material/Button";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +14,13 @@ import Typography from "@mui/material/Typography";
 import Stack from "@mui/material/Stack";
 import MuiCard from "@mui/material/Card";
 import { styled } from "@mui/material/styles";
+import IconButton from "@mui/material/IconButton";
+import InputAdornment from "@mui/material/InputAdornment";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
+import CircularProgress from "@mui/material/CircularProgress";
+import Snackbar from "@mui/material/Snackbar";
+import Alert from "@mui/material/Alert";
 import ForgotPassword from "./ForgotPassword";
 import AppTheme from "../shared-theme/AppTheme";
 import ColorModeSelect from "../shared-theme/ColorModeSelect";
@@ -26,9 +33,10 @@ const Card = styled(MuiCard)(({ theme }) => ({
   flexDirection: "column",
   alignSelf: "center",
   width: "100%",
-  padding: theme.spacing(4),
-  gap: theme.spacing(2),
+  padding: theme.spacing(5),
+  gap: theme.spacing(3),
   margin: "auto",
+  borderRadius: theme.shape.borderRadius * 2,
   [theme.breakpoints.up("sm")]: {
     maxWidth: "450px",
   },
@@ -63,119 +71,155 @@ const SignInContainer = styled(Stack)(({ theme }) => ({
   },
 }));
 
-export default function SignIn(props) {
-  const [emailError, setEmailError] = React.useState(false);
-  const [emailErrorMessage, setEmailErrorMessage] = React.useState("");
-  const [passwordError, setPasswordError] = React.useState(false);
-  const [passwordErrorMessage, setPasswordErrorMessage] = React.useState("");
-  const [open, setOpen] = React.useState(false);
-  const [showPassword, setShowPassword] = React.useState(false);
-  const navigate = useNavigate();
-  const token = Cookies.get("token");
+const LogoContainer = styled(Box)(({ theme }) => ({
+  display: "flex",
+  justifyContent: "center",
+  alignItems: "center",
+  marginBottom: theme.spacing(2),
+}));
 
+export default function SignIn(props) {
+  const [formState, setFormState] = useState({
+    email: "",
+    password: "",
+    rememberMe: false,
+    showPassword: false
+  });
+  
+  const [errors, setErrors] = useState({
+    email: "",
+    password: ""
+  });
+  
+  const [isLoading, setIsLoading] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [notification, setNotification] = useState({
+    open: false,
+    message: "",
+    severity: "success"
+  });
+  
+  const navigate = useNavigate();
+  
+  // Check for existing token on mount
   useEffect(() => {
+    const token = Cookies.get("token");
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
-        if (decodedToken.userType === "competentAuthority") {
-          alert("Login successful!");
-          navigate("/dean-dashboard");
-          return;
-        } else if (decodedToken.userType === "committeeMember") {
-          alert("Login successful!");
-          navigate("/committee-dashboard");
-          return;
-        } else if (
-          decodedToken.userType === "student" ||
-          decodedToken.userType === "faculty" ||
-          decodedToken.userType === "researchScholar"
-        ) {
-          alert("Login successful!");
-          navigate("/dashboard");
-          return;
-        }
+        redirectBasedOnUserType(decodedToken.userType);
       } catch (error) {
         console.error("Error decoding token:", error);
-        navigate("/dashboard");
       }
     }
-  }, [token, navigate]);
+  }, []);
 
-  const handleShowPasswordChange = () => {
-    setShowPassword(!showPassword);
+  const redirectBasedOnUserType = (userType) => {
+    if (userType === "competentAuthority") {
+      navigate("/dean-dashboard");
+    } else if (userType === "committeeMember") {
+      navigate("/committee-dashboard");
+    } else if (["student", "faculty", "researchScholar"].includes(userType)) {
+      navigate("/dashboard");
+    }
   };
-  const handleClickOpen = () => {
-    setOpen(true);
+  
+  const handleInputChange = (e) => {
+    const { name, value, checked, type } = e.target;
+    setFormState({
+      ...formState,
+      [name]: type === "checkbox" ? checked : value
+    });
+    
+    // Validate on change
+    if (name === "email") {
+      validateEmail(value);
+    } else if (name === "password") {
+      validatePassword(value);
+    }
   };
-
-  const handleClose = () => {
-    setOpen(false);
+  
+  const validateEmail = (email) => {
+    if (!email) {
+      setErrors(prev => ({ ...prev, email: "Email is required" }));
+      return false;
+    } else if (!/\S+@\S+\.\S+/.test(email)) {
+      setErrors(prev => ({ ...prev, email: "Please enter a valid email address" }));
+      return false;
+    } else {
+      setErrors(prev => ({ ...prev, email: "" }));
+      return true;
+    }
   };
-
+  
+  const validatePassword = (password) => {
+    if (!password) {
+      setErrors(prev => ({ ...prev, password: "Password is required" }));
+      return false;
+    } else if (password.length < 6) {
+      setErrors(prev => ({ ...prev, password: "Password must be at least 6 characters long" }));
+      return false;
+    } else {
+      setErrors(prev => ({ ...prev, password: "" }));
+      return true;
+    }
+  };
+  
+  const togglePasswordVisibility = () => {
+    setFormState(prev => ({ ...prev, showPassword: !prev.showPassword }));
+  };
+  
   const handleSubmit = async (event) => {
     event.preventDefault();
-    if (emailError || passwordError) {
+    
+    const isEmailValid = validateEmail(formState.email);
+    const isPasswordValid = validatePassword(formState.password);
+    
+    if (!isEmailValid || !isPasswordValid) {
       return;
     }
-    const data = new FormData(event.currentTarget);
-    const email = data.get("email");
-    const password = data.get("password");
-
+    
+    setIsLoading(true);
+    
     try {
-      const response = await API.post("/auth/login", { email, password });
+      const response = await API.post("/auth/login", {
+        email: formState.email,
+        password: formState.password
+      });
+      
       const { token } = response.data;
-      console.log(token);
-      Cookies.set("token", token, { expires: 1 / 24 }); // Save token in cookies with 1-hour expiration
-      if (token) {
-        const decodedToken = jwtDecode(token);
-        console.log(decodedToken);
-        if (decodedToken.userType === "competentAuthority") {
-          alert("Login successful!");
-          navigate("/dean-dashboard");
-          return;
-        } else if (decodedToken.userType === "committeeMember") {
-          alert("Login successful!");
-          navigate("/committee-dashboard");
-          return;
-        } else if (
-          decodedToken.userType === "student" ||
-          decodedToken.userType === "faculty" ||
-          decodedToken.userType === "researchScholar"
-        ) {
-          alert("Login successful!");
-          navigate("/dashboard");
-          return;
-        }
-      }
+      
+      // Set cookie expiration based on "remember me"
+      const expirationTime = formState.rememberMe ? 7 : 1/24; // 7 days or 1 hour
+      Cookies.set("token", token, { expires: expirationTime });
+      
+      const decodedToken = jwtDecode(token);
+      
+      setNotification({
+        open: true,
+        message: "Login successful!",
+        severity: "success"
+      });
+      
+      // Short delay before redirect for notification to be seen
+      setTimeout(() => {
+        redirectBasedOnUserType(decodedToken.userType);
+      }, 1000);
+      
     } catch (error) {
       console.error("Login error:", error);
+      setNotification({
+        open: true,
+        message: error.response?.data?.message || "Login failed. Please check your credentials.",
+        severity: "error"
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
-  const validateInputs = () => {
-    const email = document.getElementById("email");
-    const password = document.getElementById("password");
-
-    let isValid = true;
-
-    if (!email.value || !/\S+@\S+\.\S+/.test(email.value)) {
-      setEmailError(true);
-      setEmailErrorMessage("Please enter a valid email address.");
-      isValid = false;
-    } else {
-      setEmailError(false);
-      setEmailErrorMessage("");
-    }
-
-    if (!password.value || password.value.length < 6) {
-      setPasswordError(true);
-      setPasswordErrorMessage("Password must be at least 6 characters long.");
-      isValid = false;
-    } else {
-      setPasswordError(false);
-      setPasswordErrorMessage("");
-    }
-
-    return isValid;
+  
+  const closeNotification = () => {
+    setNotification(prev => ({ ...prev, open: false }));
   };
 
   return (
@@ -185,19 +229,30 @@ export default function SignIn(props) {
         <ColorModeSelect
           sx={{ position: "fixed", top: "1rem", right: "1rem" }}
         />
-        <Card variant="outlined" sx={{ textAlign: "center" }}>
-          <img
-            src="/logo.png"
-            alt="Logo"
-            style={{ height: 50, width: 50, margin: "0 auto" }}
-          />
+        
+        <Card variant="outlined">
+          <LogoContainer>
+            <img
+              src="/logo.png"
+              alt="Logo"
+              style={{ height: 64, width: 64 }}
+            />
+          </LogoContainer>
+          
           <Typography
             component="h1"
             variant="h4"
-            sx={{ width: "100%", fontSize: "clamp(2rem, 10vw, 2.15rem)" }}
+            sx={{ 
+              width: "100%", 
+              fontSize: "clamp(2rem, 10vw, 2.15rem)",
+              fontWeight: 600,
+              textAlign: "center",
+              mb: 2
+            }}
           >
             Sign in
           </Typography>
+          
           <Box
             component="form"
             onSubmit={handleSubmit}
@@ -206,82 +261,134 @@ export default function SignIn(props) {
               display: "flex",
               flexDirection: "column",
               width: "100%",
-              gap: 2,
+              gap: 3,
             }}
           >
             <FormControl>
-              <FormLabel htmlFor="email">Email</FormLabel>
+              <FormLabel htmlFor="email" sx={{ mb: 1 }}>Email</FormLabel>
               <TextField
-                error={emailError}
-                helperText={emailErrorMessage}
                 id="email"
-                type="email"
                 name="email"
+                type="email"
+                value={formState.email}
+                onChange={handleInputChange}
+                onBlur={() => validateEmail(formState.email)}
                 placeholder="your@email.com"
                 autoComplete="email"
                 autoFocus
                 required
                 fullWidth
                 variant="outlined"
-                color={emailError ? "error" : "primary"}
+                error={!!errors.email}
+                helperText={errors.email}
               />
             </FormControl>
+            
             <FormControl>
-              <FormLabel htmlFor="password">Password</FormLabel>
+              <FormLabel htmlFor="password" sx={{ mb: 1 }}>Password</FormLabel>
               <TextField
-                error={passwordError}
-                helperText={passwordErrorMessage}
-                name="password"
-                placeholder="••••••"
-                type={showPassword ? "text" : "password"}
                 id="password"
+                name="password"
+                type={formState.showPassword ? "text" : "password"}
+                value={formState.password}
+                onChange={handleInputChange}
+                onBlur={() => validatePassword(formState.password)}
+                placeholder="••••••"
                 autoComplete="current-password"
                 required
                 fullWidth
                 variant="outlined"
-                color={passwordError ? "error" : "primary"}
+                error={!!errors.password}
+                helperText={errors.password}
+                InputProps={{
+                  endAdornment: (
+                    <InputAdornment position="end">
+                      <IconButton
+                        aria-label="toggle password visibility"
+                        onClick={togglePasswordVisibility}
+                        edge="end"
+                      >
+                        {formState.showPassword ? <VisibilityOff /> : <Visibility />}
+                      </IconButton>
+                    </InputAdornment>
+                  ),
+                }}
               />
             </FormControl>
+            
             <FormControlLabel
               control={
                 <Checkbox
-                  checked={showPassword}
-                  onChange={handleShowPasswordChange}
+                  name="rememberMe"
+                  checked={formState.rememberMe}
+                  onChange={handleInputChange}
                   color="primary"
                 />
               }
-              label="Show Password"
-            />
-            <FormControlLabel
-              control={<Checkbox value="remember" color="primary" />}
               label="Remember me"
             />
-            <ForgotPassword open={open} handleClose={handleClose} />
+            
             <Button
               type="submit"
               fullWidth
               variant="contained"
-              onClick={validateInputs}
+              size="large"
+              disabled={isLoading}
+              sx={{ 
+                py: 1.5,
+                mt: 1,
+                borderRadius: 2,
+                textTransform: "none",
+                fontSize: "1rem"
+              }}
             >
-              Sign in
+              {isLoading ? <CircularProgress size={24} color="inherit" /> : "Sign in"}
             </Button>
+            
+            <Stack direction="row" justifyContent="center" spacing={1}>
+              <Typography>
+                Don't have an account?
+              </Typography>
+              <Link 
+                href="/signup" 
+                variant="body2" 
+                sx={{ fontWeight: 600 }}
+              >
+                Sign up
+              </Link>
+            </Stack>
+            
             <Link
               component="button"
               type="button"
-              onClick={handleClickOpen}
+              onClick={() => setForgotPasswordOpen(true)}
               variant="body2"
-              sx={{ alignSelf: "center" }}
+              sx={{ alignSelf: "center", mt: 1 }}
             >
               Forgot your password?
             </Link>
-            <Typography sx={{ textAlign: "center" }}>
-              Don&apos;t have an account?{" "}
-              <Link href="/signup" variant="body2" sx={{ alignSelf: "center" }}>
-                Sign up
-              </Link>
-            </Typography>
           </Box>
         </Card>
+        
+        <ForgotPassword 
+          open={forgotPasswordOpen} 
+          handleClose={() => setForgotPasswordOpen(false)} 
+        />
+        
+        <Snackbar 
+          open={notification.open} 
+          autoHideDuration={6000} 
+          onClose={closeNotification}
+          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        >
+          <Alert 
+            onClose={closeNotification} 
+            severity={notification.severity}
+            sx={{ width: '100%' }}
+          >
+            {notification.message}
+          </Alert>
+        </Snackbar>
       </SignInContainer>
     </AppTheme>
   );
