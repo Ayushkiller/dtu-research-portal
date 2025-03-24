@@ -1,17 +1,27 @@
-import { Box, Button, Grid, MenuItem, Modal, Paper, Select, Stack, Typography } from '@mui/material'
-import { DataGrid } from '@mui/x-data-grid'
-import React from 'react'
-import API from '../../api/axios';
+import {
+  Box,
+  Button,
+  Grid,
+  MenuItem,
+  Modal,
+  Paper,
+  Select,
+  Stack,
+  Typography,
+} from "@mui/material";
+import { DataGrid } from "@mui/x-data-grid";
+import React from "react";
+import API from "../../api/axios";
 
-export const UserTable = ({usersData,setUsersData, columns, fetchUsers}) => {
-    const [openModal, setOpenModal] = React.useState(false);
-    const [selectedUser, setSelectedUser] = React.useState(null);
-    const [newPower, setNewPower] = React.useState("");
+export const UserTable = ({ usersData, setUsersData, columns, fetchUsers }) => {
+  const [openModal, setOpenModal] = React.useState(false);
+  const [selectedUser, setSelectedUser] = React.useState(null);
+  const [newPower, setNewPower] = React.useState("");
   // Fetch users data from backend
   React.useEffect(() => {
     fetchUsers();
   }, [selectedUser]);
-  
+
   const predefinedPowers = [
     "suspendResearchPaper",
     "unsuspendResearchPaper",
@@ -24,101 +34,100 @@ export const UserTable = ({usersData,setUsersData, columns, fetchUsers}) => {
     "rejectResearchPaper",
   ];
 
-    const handleRowClick = (params) => {
-        setSelectedUser(params.row);
-        setOpenModal(true);
-      };
-      const handleCloseModal = () => {
+  const handleRowClick = (params) => {
+    setSelectedUser(params.row);
+    setOpenModal(true);
+  };
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedUser(null);
+  };
+
+  const handleAddPower = async () => {
+    if (newPower && selectedUser) {
+      try {
+        const updatedUser = {
+          ...selectedUser,
+          powers: [...selectedUser.powers, newPower],
+        };
+
+        // Send updated powers to backend
+        const response = await API.put(
+          `/dean/delegate-powers/${selectedUser.id}`,
+          {
+            delegatedPowers: updatedUser.powers,
+          }
+        );
+        if (response.status === 200) {
+          setSelectedUser(updatedUser);
+        }
+
+        setNewPower("");
+      } catch (error) {
+        alert(error.response.data.error);
+        console.error("Error adding power:", error);
+      }
+    }
+  };
+
+  const handleRemovePower = async (power) => {
+    if (selectedUser) {
+      const updatedPowers = selectedUser.powers.filter((p) => p !== power);
+      setSelectedUser((prev) => ({
+        ...prev,
+        powers: updatedPowers,
+      }));
+
+      try {
+        // Send updated powers to backend
+        await API.put(`/dean/delegate-powers/${selectedUser.id}`, {
+          delegatedPowers: updatedPowers,
+        });
+      } catch (error) {
+        console.error("Error removing power:", error);
+      }
+    }
+  };
+
+  const handleBanUser = async () => {
+    if (selectedUser) {
+      try {
+        await API.put(`/dean/accounts/ban/${selectedUser.id}`);
+        fetchUsers();
         setOpenModal(false);
-        setSelectedUser(null);
-      };
+        alert(`${selectedUser.name} banned successfully.`);
+      } catch (error) {
+        console.error("Error banning user:", error);
+      }
+    }
+  };
 
-      const handleAddPower = async () => {
-        if (newPower && selectedUser) {
-          try {
-            const updatedUser = {
-              ...selectedUser,
-              powers: [...selectedUser.powers, newPower],
-            };
-    
-            // Send updated powers to backend
-            const response = await API.put(
-              `/dean/delegate-powers/${selectedUser.id}`,
-              {
-                delegatedPowers: updatedUser.powers,
-              }
-            );
-            if (response.status === 200) {
-              setSelectedUser(updatedUser);
-            }
-    
-            setNewPower("");
-          } catch (error) {
-            alert(error.response.data.error);
-            console.error("Error adding power:", error);
-          }
-        }
-      };
-
-      const handleRemovePower = async (power) => {
-        if (selectedUser) {
-          const updatedPowers = selectedUser.powers.filter((p) => p !== power);
-          setSelectedUser((prev) => ({
-            ...prev,
-            powers: updatedPowers,
-          }));
-    
-          try {
-            // Send updated powers to backend
-            await API.put(`/dean/delegate-powers/${selectedUser.id}`, {
-              delegatedPowers: updatedPowers,
-            });
-    
-          } catch (error) {
-            console.error("Error removing power:", error);
-          }
-        }
-      };
-
-      const handleBanUser = async () => {
-        if (selectedUser) {
-          try {
-            await API.put(`/dean/accounts/ban/${selectedUser.id}`);
-            fetchUsers();
-            setOpenModal(false);
-            alert(`${selectedUser.name} banned successfully.`);
-          } catch (error) {
-            console.error("Error banning user:", error);
-          }
-        }
-      };
-    
-      const handleUnbanUser = async () => {
-        if (selectedUser) {
-          try {
-            await API.put(`/dean/accounts/unban/${selectedUser.id}`);
-            setUsersData((prev) =>
-              prev.map((user) =>
-                user.id === selectedUser.id ? { ...user, isBanned: false } : user
-              )
-            );
-            fetchUsers();
-            setOpenModal(false);
-            alert(`${selectedUser.name} unbanned successfully.`);
-          } catch (error) {
-            console.error("Error unbanning user:", error);
-          }
-        }
-      };
+  const handleUnbanUser = async () => {
+    if (selectedUser) {
+      try {
+        await API.put(`/dean/accounts/unban/${selectedUser.id}`);
+        setUsersData((prev) =>
+          prev.map((user) =>
+            user.id === selectedUser.id ? { ...user, isBanned: false } : user
+          )
+        );
+        fetchUsers();
+        setOpenModal(false);
+        alert(`${selectedUser.name} unbanned successfully.`);
+      } catch (error) {
+        console.error("Error unbanning user:", error);
+      }
+    }
+  };
 
   return (
     <Box>
-    <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
+      <Typography component="h2" variant="h6" sx={{ mb: 2 }}>
         Users
       </Typography>
       <Grid container spacing={2} columns={12}>
         <Grid item xs={12} lg={9}>
-          <div style={{ height: 400, width: "700px" }}>
+          <div style={{ height: 400, width: '131%' }}>
             <DataGrid
               rows={usersData}
               columns={columns}
@@ -132,9 +141,9 @@ export const UserTable = ({usersData,setUsersData, columns, fetchUsers}) => {
 
       <Modal open={openModal} onClose={handleCloseModal}>
         <Paper sx={{ p: 4, width: 400, mx: "auto", my: "10%" }}>
-        <Typography component="h2" variant="h4" sx={{ mb: 2 }}>
-        {selectedUser && selectedUser.name}
-      </Typography>
+          <Typography component="h2" variant="h4" sx={{ mb: 2 }}>
+            {selectedUser && selectedUser.name}
+          </Typography>
           {selectedUser && (
             <>
               <Typography variant="h6" sx={{ mt: 2 }}>
@@ -200,5 +209,5 @@ export const UserTable = ({usersData,setUsersData, columns, fetchUsers}) => {
         </Paper>
       </Modal>
     </Box>
-  )
-}
+  );
+};

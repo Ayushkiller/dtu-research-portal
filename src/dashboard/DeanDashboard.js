@@ -49,7 +49,7 @@ export default function DeanDashboard(props) {
       } else {
         navigate("/signin");
       }
-    }, [token, navigate]);
+    }, [token, navigate, setName, setEmail]);
   
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>
