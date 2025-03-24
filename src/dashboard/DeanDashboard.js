@@ -17,7 +17,7 @@ import {
   datePickersCustomizations,
   treeViewCustomizations,
 } from './theme/customizations';
-import DeanGrid from './components/DeanGrid';
+import DeanGrid from './components/dean/DeanGrid';
 
 const xThemeComponents = {
   ...chartsCustomizations,
@@ -49,7 +49,7 @@ export default function DeanDashboard(props) {
       } else {
         navigate("/signin");
       }
-    }, [token, navigate]);
+    }, [token, navigate, setName, setEmail]);
   
   return (
     <AppTheme {...props} themeComponents={xThemeComponents}>

@@ -136,20 +136,8 @@ const CommitteePending = () => {
   
   const handleUpdateStatus = async (status) => {
     if (!selectedPaper) return;
-    if(status === "suspended" && me.powers.includes("suspendResearchPaper") === false){
-      alert("You don't have permission to suspend research paper");
-      return;
-    }
-    if(status === "underReview" && me.powers.includes("putUnderReview") === false){
-      alert("You don't have permission to put research paper under review");
-      return;
-    }
-    if(status === "approved" && me.powers.includes("approveResearchPaper") === false){
-      alert("You don't have permission to approve research paper");
-      return;
-    }
-    if(status === "rejected" && me.powers.includes("rejectResearchPaper") === false){
-      alert("You don't have permission to reject research paper");
+    if (me.userType !== "committeeMember") {
+      alert("You don't have permission to perform this action");
       return;
     }
     

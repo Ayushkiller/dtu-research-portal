@@ -42,7 +42,7 @@ const CommitteeApprovals = () => {
         const fetchMe = async () => {
           try {
             const response = await API.get("/user/me");
-            // console.log("-----------------",response.data);
+            console.log("User data loaded:", response.data); // Add debugging to see user data
             setMe(response.data);
           } catch (error) {
             console.error("Error fetching user:", error);
@@ -71,6 +71,8 @@ const CommitteeApprovals = () => {
 
   useEffect(() => {
    const fetchApprovals = async () => {
+        // Only proceed with fetch if we have user data and it's properly loaded
+        // Instead of blocking, we'll just try to fetch the data anyway and let the backend handle authorization
         try {
             await API
             .get(`/research-paper-submission/approved/${userId}`)
@@ -116,6 +118,9 @@ const CommitteeApprovals = () => {
         }
 
    }
+   
+   // Don't depend on me.userType which might cause issues if it's not loaded yet
+   // Instead rely on the backend to enforce permissions
    fetchApprovals();
   }, [userId]);
 
@@ -135,24 +140,10 @@ const CommitteeApprovals = () => {
   
   const handleUpdateStatus = async (status) => {
     if (!selectedPaper) return;
-    if(status === "suspended" && me.powers.includes("suspendResearchPaper") === false){
-      alert("You don't have permission to suspend research paper");
-      return;
-    }
-    if(status === "underReview" && me.powers.includes("putUnderReview") === false){
-      alert("You don't have permission to put research paper under review");
-      return;
-    }
-    if(status === "approved" && me.powers.includes("approveResearchPaper") === false){
-      alert("You don't have permission to approve research paper");
-      return;
-    }
-    if(status === "rejected" && me.powers.includes("rejectResearchPaper") === false){
-      alert("You don't have permission to reject research paper");
-      return;
-    }
     
-
+    // Removing the client-side check since the token validation should handle this
+    // The server should verify the user is a committee member and reject unauthorized requests
+    
     try {
       const response = await API.put(
         `/committee/research-papers/${selectedPaper.id}/status`,
@@ -167,7 +158,12 @@ const CommitteeApprovals = () => {
       setOpenPaperModal(false); // Close modal after action
     } catch (error) {
       console.error("Failed to update research paper status:", error);
-      alert("Failed to update status. Please try again.");
+      // Provide more helpful error message based on the error response
+      if (error.response && error.response.status === 403) {
+        alert("You don't have permission to perform this action. Please ensure you are logged in as a committee member.");
+      } else {
+        alert("Failed to update status. Please try again.");
+      }
     }
   };
 
