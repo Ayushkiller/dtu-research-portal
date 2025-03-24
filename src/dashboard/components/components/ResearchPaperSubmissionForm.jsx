@@ -114,6 +114,7 @@ export default function ResearchPaperSubmissionForm({
         applicantBiography: response.data.applicantBiography,
         employeeId: response.data.employeeId,
         photograph: response.data.applicantPhoto,
+
         bankDetails: {
           bankName: response.data.bankName,
           branch: response.data.branchName,
@@ -344,12 +345,17 @@ export default function ResearchPaperSubmissionForm({
         JSON.stringify(formDataToSubmit, null, 2)
       );
 
-      if (formDataToSubmit.authors.length === 0) {
+      if (formDataToSubmit.authors.length === 1 && formDataToSubmit.authors[0].name === formDataToSubmit.applicantName) {
         formDataToSubmit.status = "Submitted";
         setSnackbarMessage("Form submitted successfully!");
         setSnackbarOpen(true);
         return;
       }
+      if(formDataToSubmit.authors.length > 1 && formDataToSubmit.authors[0].name === formDataToSubmit.applicantName){
+        formDataToSubmit.authors[0].confirmationStatus = true;
+        formDataToSubmit.authors[0].confirmationToken.used = true;
+      }
+
       const response = await API.post(
         "/research-paper-submission",
         formDataToSubmit
@@ -372,12 +378,16 @@ export default function ResearchPaperSubmissionForm({
   const authorSendEmail = async (id, authors) => {
     try {
       // Send the form data to the backend
+      const filteredAuthors = authors.filter(
+        (author) => author.name !== formData.applicantName && author.isExternal === false && author.email !== formData.email
+      );
 
-      const authorEmailData = authors.map((author) => ({
+      const authorEmailData = filteredAuthors.map((author) => ({
         name: author.name,
         email: author.email,
         token: author.confirmationToken.token,
       }));
+
       const response = await API.post("/research-author-email/send", {
         authors: authorEmailData,
         paperTitle: formData.paperDetails[questions[0]._id]?.answer,
