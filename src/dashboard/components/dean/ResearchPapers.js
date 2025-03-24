@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Box,
   Typography,
@@ -12,6 +12,7 @@ import {
   InputAdornment,
   IconButton,
   Paper,
+  Button,
 } from "@mui/material";
 import { DataGrid } from "@mui/x-data-grid";
 import ArticleIcon from "@mui/icons-material/Article";
@@ -20,6 +21,8 @@ import PendingIcon from "@mui/icons-material/Pending";
 import CancelIcon from "@mui/icons-material/Cancel";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
+import PrintIcon from "@mui/icons-material/Print";
+import PrintResearchPapers from "./PrintResearchPapers";
 
 export const ResearchPapers = ({
   researchPapersData,
@@ -33,6 +36,8 @@ export const ResearchPapers = ({
   getStatusColor,
   enhancedPaperColumns,
 }) => {
+  const [printModalOpen, setPrintModalOpen] = useState(false);
+
   const totalPapers = researchPapersData.length;
   const approvedPapers = researchPapersData.filter(
     (paper) => paper.status === "approved"
@@ -81,28 +86,38 @@ export const ResearchPapers = ({
             Research Papers
           </Typography>
         </Box>
-        <TextField
-          placeholder="Search papers..."
-          size="small"
-          variant="outlined"
-          value={searchText}
-          onChange={(e) => setSearchText(e.target.value)}
-          InputProps={{
-            startAdornment: (
-              <InputAdornment position="start">
-                <SearchIcon />
-              </InputAdornment>
-            ),
-            endAdornment: searchText && (
-              <InputAdornment position="end">
-                <IconButton size="small" onClick={() => setSearchText("")}>
-                  <CloseIcon fontSize="small" />
-                </IconButton>
-              </InputAdornment>
-            ),
-          }}
-          sx={{ width: 250 }}
-        />
+        <Box sx={{ display: "flex", gap: 2 }}>
+          <Button
+            variant="outlined"
+            startIcon={<PrintIcon />}
+            onClick={() => setPrintModalOpen(true)}
+            size="small"
+          >
+            Print Options
+          </Button>
+          <TextField
+            placeholder="Search papers..."
+            size="small"
+            variant="outlined"
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+              endAdornment: searchText && (
+                <InputAdornment position="end">
+                  <IconButton size="small" onClick={() => setSearchText("")}>
+                    <CloseIcon fontSize="small" />
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+            sx={{ width: 250 }}
+          />
+        </Box>
       </Box>
 
       <Grid container spacing={2} sx={{ mb: 3 }}>
@@ -347,6 +362,13 @@ export const ResearchPapers = ({
           }}
         />
       </Box>
+
+      <PrintResearchPapers
+        open={printModalOpen}
+        onClose={() => setPrintModalOpen(false)}
+        researchPapersData={researchPapersData}
+        columns={enhancedPaperColumns}
+      />
     </Paper>
   );
 };
