@@ -98,14 +98,14 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
 
       setUser(response.data);
       
-      // setFormData((prev) => ({
-      //   ...prev,  
-      //   applicantName: response.data.name,
-      //   email: response.data.email,
-      //   mobileNo: response.data.mobileNumber,        
-      //   department: response.data.department,
-      //   applicantType: response.data.userType,
-      // }));
+      setFormData((prev) => ({
+        ...prev,  
+        applicantName: response.data.name,
+        email: response.data.email,
+        mobileNo: response.data.mobileNumber,        
+        department: response.data.department,
+        applicantType: response.data.userType,
+      }));
 
     } catch (error) {
       console.error("Failed to fetch user:", error);
