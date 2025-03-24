@@ -3,11 +3,11 @@ import Box from "@mui/material/Box";
 import Copyright from "../../internals/components/Copyright";
 import API from "../../../api/axios";
 import { Chip } from "@mui/material";
-import CancelIcon from '@mui/icons-material/Cancel';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import PendingIcon from '@mui/icons-material/Pending';
+import CancelIcon from "@mui/icons-material/Cancel";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PendingIcon from "@mui/icons-material/Pending";
 import { UserManagement } from "./UserManagement";
-import { ResearchPapers } from "../ResearchPapers";
+import { ResearchPapers } from "./ResearchPapers";
 import { QuestionManagement } from "./QuestionManagement";
 import { PaperDetailsModal, QuestionDetailsModal } from "./Modals";
 import {
@@ -192,10 +192,9 @@ export default function DeanGrid() {
     }
   };
 
-  // Enhanced paper columns with status chip
-  const enhancedPaperColumns = React.useMemo(() => { // Use useMemo to compute this only when paperColumns changes
+  const enhancedPaperColumns = React.useMemo(() => {
     if (!paperColumns) {
-      return []; // Return an empty array or some default value if paperColumns is undefined
+      return [];
     }
     return [
       ...paperColumns.slice(0, 4),
@@ -221,8 +220,7 @@ export default function DeanGrid() {
         ),
       },
     ];
-  }, [paperColumns, getStatusColor]); // Add paperColumns as a dependency
-
+  }, []);
   return (
     <Box sx={{ flexGrow: 1, p: 3 }}>
       {/* Users Section */}
