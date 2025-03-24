@@ -56,10 +56,18 @@ const StyledFormSection = styled(Box)(({ theme }) => ({
   marginBottom: theme.spacing(2),
   padding: theme.spacing(2),
   borderRadius: theme.shape.borderRadius,
-  backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+  backgroundColor:
+    theme.palette.mode === "dark"
+      ? "rgba(255, 255, 255, 0.05)"
+      : "rgba(0, 0, 0, 0.02)",
 }));
 
-const steps = ['Personal Information', 'Academic Details', 'Banking Information', 'Set Password'];
+const steps = [
+  "Personal Information",
+  "Academic Details",
+  "Banking Information",
+  "Set Password",
+];
 
 export default function SignUp(props) {
   const [activeStep, setActiveStep] = useState(0);
@@ -78,26 +86,137 @@ export default function SignUp(props) {
     accountHolderName: { error: false, message: "" },
     mobileNumber: { error: false, message: "" },
     employeeId: { error: false, message: "" },
+    applicantPhoto: { error: false, message: "" },
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
-  const [formData, setFormData] = useState({});
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    userType: "student",
+    employeeId: "",
+    department: "computerScience",
+    mobileNumber: "",
+    password: "",
+    dateOfBirth: "",
+    address: "",
+    bankAccount: "",
+    bankName: "",
+    branchName: "",
+    ifsc: "",
+    accountHolderName: "",
+    applicantPhoto: "",
+  });
 
   const validateInputs = (step) => {
     let isValid = true;
     let newErrors = { ...formErrors };
 
+    console.log(`Validating step: ${step}`);
+
+    // If step is -1, validate all steps but use the stored form data instead of DOM elements
+    if (step === -1) {
+      console.log("Validating all steps with formData:", formData);
+
+      // Validate name
+      if (!formData.name || formData.name.length < 2) {
+        newErrors.name = {
+          error: true,
+          message: "Please enter your full name (at least 2 characters)",
+        };
+        isValid = false;
+      }
+
+      // Validate email
+      if (!formData.email || !/\S+@dtu\.ac\.in$/.test(formData.email)) {
+        newErrors.email = {
+          error: true,
+          message: "Please enter a valid DTU email address",
+        };
+        isValid = false;
+      }
+
+      // Validate dateOfBirth
+      if (!formData.dateOfBirth) {
+        newErrors.dateOfBirth = {
+          error: true,
+          message: "Date of birth is required",
+        };
+        isValid = false;
+      }
+
+      // Validate address
+      if (!formData.address || formData.address.length < 5) {
+        newErrors.address = {
+          error: true,
+          message: "Please enter a valid address",
+        };
+        isValid = false;
+      }
+
+      // Validate applicantPhoto
+      if (!formData.applicantPhoto || formData.applicantPhoto.length < 5) {
+        newErrors.applicantPhoto = {
+          error: true,
+          message: "Please enter a valid photo link",
+        };
+        isValid = false;
+      }
+
+      // Validate mobileNumber
+      if (!formData.mobileNumber || !/^\d{10}$/.test(formData.mobileNumber)) {
+        newErrors.mobileNumber = {
+          error: true,
+          message: "Please enter a valid 10-digit mobile number",
+        };
+        isValid = false;
+      }
+
+      // Validate employeeId
+      if (!formData.employeeId) {
+        newErrors.employeeId = {
+          error: true,
+          message: "ID/Roll number is required",
+        };
+        isValid = false;
+      }
+
+      // Validate password for final step
+      if (
+        !formData.password ||
+        formData.password.length < 8 ||
+        !/[A-Za-z]/.test(formData.password) ||
+        !/\d/.test(formData.password) ||
+        !/[!@#$%^&*]/.test(formData.password)
+      ) {
+        newErrors.password = {
+          error: true,
+          message:
+            "Password must be at least 8 characters with letters, numbers, and symbols",
+        };
+        isValid = false;
+      }
+
+      if (!isValid) {
+        console.log("Full validation failed with errors:", newErrors);
+        setFormErrors(newErrors);
+      }
+
+      return isValid;
+    }
+
     // Personal Information (Step 0)
-    if (step === 0 || step === -1) {
+    if (step === 0) {
       const name = document.getElementById("name");
       const email = document.getElementById("email");
       const dateOfBirth = document.getElementById("dateOfBirth");
       const address = document.getElementById("address");
       const mobileNumber = document.getElementById("mobileNumber");
+      const applicantPhoto = document.getElementById("applicantPhoto");
 
       if (!name || !name.value || name.value.length < 2) {
         newErrors.name = {
           error: true,
-          message: "Please enter your full name (at least 2 characters)"
+          message: "Please enter your full name (at least 2 characters)",
         };
         isValid = false;
       } else {
@@ -107,7 +226,7 @@ export default function SignUp(props) {
       if (!email || !email.value || !/\S+@dtu\.ac\.in$/.test(email.value)) {
         newErrors.email = {
           error: true,
-          message: "Please enter a valid DTU email address"
+          message: "Please enter a valid DTU email address",
         };
         isValid = false;
       } else {
@@ -117,7 +236,7 @@ export default function SignUp(props) {
       if (!dateOfBirth || !dateOfBirth.value) {
         newErrors.dateOfBirth = {
           error: true,
-          message: "Date of birth is required"
+          message: "Date of birth is required",
         };
         isValid = false;
       } else {
@@ -127,17 +246,34 @@ export default function SignUp(props) {
       if (!address || !address.value || address.value.length < 5) {
         newErrors.address = {
           error: true,
-          message: "Please enter a valid address"
+          message: "Please enter a valid address",
         };
         isValid = false;
       } else {
         newErrors.address = { error: false, message: "" };
       }
+      if (
+        !applicantPhoto ||
+        !applicantPhoto.value ||
+        applicantPhoto.value.length < 5
+      ) {
+        newErrors.applicantPhoto = {
+          error: true,
+          message: "Please enter a valid photo link (drive link)",
+        };
+        isValid = false;
+      } else {
+        newErrors.applicantPhoto = { error: false, message: "" };
+      }
 
-      if (!mobileNumber || !mobileNumber.value || !/^\d{10}$/.test(mobileNumber.value)) {
+      if (
+        !mobileNumber ||
+        !mobileNumber.value ||
+        !/^\d{10}$/.test(mobileNumber.value)
+      ) {
         newErrors.mobileNumber = {
           error: true,
-          message: "Please enter a valid 10-digit mobile number"
+          message: "Please enter a valid 10-digit mobile number",
         };
         isValid = false;
       } else {
@@ -151,13 +287,13 @@ export default function SignUp(props) {
     }
 
     // Academic Details (Step 1)
-    if (step === 1 || step === -1) {
+    if (step === 1) {
       const employeeId = document.getElementById("employeeId");
 
       if (!employeeId || !employeeId.value) {
         newErrors.employeeId = {
           error: true,
-          message: "ID/Roll number is required"
+          message: "ID/Roll number is required",
         };
         isValid = false;
       } else {
@@ -171,7 +307,7 @@ export default function SignUp(props) {
     }
 
     // Banking Information (Step 2)
-    if (step === 2 || step === -1) {
+    if (step === 2) {
       const bankAccount = document.getElementById("bankAccount");
       const bankName = document.getElementById("bankName");
       const branchName = document.getElementById("branchName");
@@ -181,7 +317,7 @@ export default function SignUp(props) {
       if (!bankAccount || !bankAccount.value) {
         newErrors.bankAccount = {
           error: true,
-          message: "Bank account number is required"
+          message: "Bank account number is required",
         };
         isValid = false;
       } else {
@@ -191,7 +327,7 @@ export default function SignUp(props) {
       if (!bankName || !bankName.value) {
         newErrors.bankName = {
           error: true,
-          message: "Bank name is required"
+          message: "Bank name is required",
         };
         isValid = false;
       } else {
@@ -201,7 +337,7 @@ export default function SignUp(props) {
       if (!branchName || !branchName.value) {
         newErrors.branchName = {
           error: true,
-          message: "Branch name is required"
+          message: "Branch name is required",
         };
         isValid = false;
       } else {
@@ -211,7 +347,7 @@ export default function SignUp(props) {
       if (!ifsc || !ifsc.value) {
         newErrors.ifsc = {
           error: true,
-          message: "IFSC code is required"
+          message: "IFSC code is required",
         };
         isValid = false;
       } else {
@@ -221,7 +357,7 @@ export default function SignUp(props) {
       if (!accountHolderName || !accountHolderName.value) {
         newErrors.accountHolderName = {
           error: true,
-          message: "Account holder name is required"
+          message: "Account holder name is required",
         };
         isValid = false;
       } else {
@@ -235,7 +371,7 @@ export default function SignUp(props) {
     }
 
     // Password (Step 3)
-    if (step === 3 || step === -1) {
+    if (step === 3) {
       const password = document.getElementById("password");
       const confirmPassword = document.getElementById("confirmPassword");
       const terms = document.getElementById("terms");
@@ -250,17 +386,22 @@ export default function SignUp(props) {
       ) {
         newErrors.password = {
           error: true,
-          message: "Password must be at least 8 characters with letters, numbers, and symbols"
+          message:
+            "Password must be at least 8 characters with letters, numbers, and symbols",
         };
         isValid = false;
       } else {
         newErrors.password = { error: false, message: "" };
       }
 
-      if (!confirmPassword || !confirmPassword.value || password.value !== confirmPassword.value) {
+      if (
+        !confirmPassword ||
+        !confirmPassword.value ||
+        password.value !== confirmPassword.value
+      ) {
         newErrors.confirmPassword = {
           error: true,
-          message: "Passwords do not match"
+          message: "Passwords do not match",
         };
         isValid = false;
       } else {
@@ -268,7 +409,10 @@ export default function SignUp(props) {
       }
 
       if (!terms || !terms.checked) {
-        newErrors.terms = { error: true, message: "You must agree to the terms" };
+        newErrors.terms = {
+          error: true,
+          message: "You must agree to the terms",
+        };
         isValid = false;
       } else {
         newErrors.terms = { error: false, message: "" };
@@ -286,36 +430,50 @@ export default function SignUp(props) {
 
   const collectFormData = () => {
     const form = document.getElementById("signupForm");
-    const formData = new FormData(form);
-    
-    return {
-      name: formData.get("name"),
-      email: formData.get("email"),
-      userType: formData.get("userType"),
-      employeeId: formData.get("employeeId"),
-      department: formData.get("department"),
-      mobileNumber: formData.get("mobileNumber"),
-      password: formData.get("password"),
-      dateOfBirth: formData.get("dateOfBirth"),
-      address: formData.get("address"),
-      bankAccount: formData.get("bankAccount"),
-      bankName: formData.get("bankName"),
-      branchName: formData.get("branchName"),
-      ifsc: formData.get("ifsc"),
-      accountHolderName: formData.get("accountHolderName"),
+    const formDataObj = new FormData(form);
+
+    // Create an object that combines current form values with previously stored values
+    const newData = {
+      name: formDataObj.get("name") || formData.name || "",
+      email: formDataObj.get("email") || formData.email || "",
+      userType: formDataObj.get("userType") || formData.userType || "student",
+      employeeId: formDataObj.get("employeeId") || formData.employeeId || "",
+      department:
+        formDataObj.get("department") ||
+        formData.department ||
+        "computerScience",
+      mobileNumber:
+        formDataObj.get("mobileNumber") || formData.mobileNumber || "",
+      password: formDataObj.get("password") || formData.password || "",
+      dateOfBirth: formDataObj.get("dateOfBirth") || formData.dateOfBirth || "",
+      address: formDataObj.get("address") || formData.address || "",
+      bankAccount: formDataObj.get("bankAccount") || formData.bankAccount || "",
+      bankName: formDataObj.get("bankName") || formData.bankName || "",
+      branchName: formDataObj.get("branchName") || formData.branchName || "",
+      ifsc: formDataObj.get("ifsc") || formData.ifsc || "",
+      accountHolderName:
+        formDataObj.get("accountHolderName") ||
+        formData.accountHolderName ||
+        "",
+      applicantPhoto:
+        formDataObj.get("applicantPhoto") || formData.applicantPhoto || "",
     };
+
+    return newData;
   };
 
   const handleNext = () => {
     if (validateInputs(activeStep)) {
+      // Collect and store form data for the current step
       const newData = collectFormData();
+      console.log(`Step ${activeStep} data:`, newData);
+
+      // Store the form data
       setFormData({ ...formData, ...newData });
-      
-      if (activeStep === steps.length - 1) {
-        handleSubmit();
-      } else {
-        setActiveStep((prevStep) => prevStep + 1);
-      }
+      console.log("Updated form data:", { ...formData, ...newData });
+
+      // Move to next step
+      setActiveStep((prevStep) => prevStep + 1);
     }
   };
 
@@ -324,22 +482,67 @@ export default function SignUp(props) {
   };
 
   const handleSubmit = async () => {
+    console.log("handleSubmit called with formData:", formData);
+
+    // First, make sure we update the formData with the latest values from the current step
+    const currentStepData = collectFormData();
+    const updatedFormData = { ...formData, ...currentStepData };
+    setFormData(updatedFormData);
+
+    // Then validate all form data
     if (!validateInputs(-1)) {
+      console.log("Final validation failed");
       return;
     }
 
-    const userData = collectFormData();
+    // Use the combined data for submission
+    const userData = updatedFormData;
+    console.log("Final form data for submission:", userData);
+
+    // Double check that required fields are present
+    const requiredFields = [
+      "name",
+      "email",
+      "userType",
+      "employeeId",
+      "department",
+      "mobileNumber",
+      "password",
+    ];
+    const missingFields = requiredFields.filter((field) => !userData[field]);
+
+    if (missingFields.length > 0) {
+      console.log("Missing fields:", missingFields);
+      alert(`Please fill in all required fields: ${missingFields.join(", ")}`);
+      setFormSubmitted(false);
+      return;
+    }
+
     setFormSubmitted(true);
 
     try {
+      console.log("Attempting API call to register user");
       const response = await API.post("/auth/register", userData);
-      console.log(response.data);
+      console.log("Registration response:", response.data);
       alert("User registered successfully!");
       // Redirect to login page or show success message
+      window.location.href = "/signin";
     } catch (error) {
       console.error("Error registering user:", error);
+      console.error(
+        "Error details:",
+        error.response ? error.response.data : "No response data"
+      );
       setFormSubmitted(false);
-      alert("Failed to register user. Please try again.");
+      if (error.response && error.response.data) {
+        alert(
+          `Registration failed: ${
+            error.response.data.message || JSON.stringify(error.response.data)
+          }`
+        );
+      } else {
+        alert("Failed to register user. Please try again.");
+      }
     }
   };
 
@@ -349,23 +552,26 @@ export default function SignUp(props) {
       <ColorModeSelect sx={{ position: "fixed", top: "1rem", right: "1rem" }} />
       <SignUpContainer direction="column" justifyContent="space-between">
         <Card variant="outlined">
-          <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", mb: 2 }}>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              mb: 2,
+            }}
+          >
             <img
               src="/logo.png"
               alt="DTU Logo"
               style={{ height: 60, width: 60, marginRight: 16 }}
             />
-            <Typography
-              component="h1"
-              variant="h4"
-              sx={{ fontWeight: 600 }}
-            >
+            <Typography component="h1" variant="h4" sx={{ fontWeight: 600 }}>
               DTU Research Portal
             </Typography>
           </Box>
-          
+
           <Divider sx={{ mb: 3 }} />
-          
+
           <Stepper activeStep={activeStep} alternativeLabel sx={{ mb: 4 }}>
             {steps.map((label) => (
               <Step key={label}>
@@ -373,11 +579,16 @@ export default function SignUp(props) {
               </Step>
             ))}
           </Stepper>
-          
+
           <Box
             component="form"
             id="signupForm"
-            onSubmit={(e) => e.preventDefault()}
+            onSubmit={(e) => {
+              e.preventDefault();
+              if (activeStep === steps.length - 1) {
+                handleSubmit();
+              }
+            }}
             sx={{ display: "flex", flexDirection: "column", gap: 2 }}
           >
             {/* Step 1: Personal Information */}
@@ -386,7 +597,7 @@ export default function SignUp(props) {
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
                   Personal Information
                 </Typography>
-                
+
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
                     <FormControl fullWidth>
@@ -404,7 +615,7 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
                       <FormLabel htmlFor="email">Email Address *</FormLabel>
@@ -422,10 +633,12 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
-                      <FormLabel htmlFor="mobileNumber">Mobile Number *</FormLabel>
+                      <FormLabel htmlFor="mobileNumber">
+                        Mobile Number *
+                      </FormLabel>
                       <TextField
                         required
                         fullWidth
@@ -439,10 +652,12 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
-                      <FormLabel htmlFor="dateOfBirth">Date of Birth *</FormLabel>
+                      <FormLabel htmlFor="dateOfBirth">
+                        Date of Birth *
+                      </FormLabel>
                       <TextField
                         required
                         fullWidth
@@ -456,7 +671,7 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12}>
                     <FormControl fullWidth>
                       <FormLabel htmlFor="address">Address *</FormLabel>
@@ -474,17 +689,36 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <FormLabel htmlFor="applicantPhoto">
+                        Applicant Photo *
+                      </FormLabel>
+                      <TextField
+                        required
+                        fullWidth
+                        id="applicantPhoto"
+                        name="applicantPhoto"
+                        placeholder="https://drive.google.com/file/d/1"
+                        variant="outlined"
+                        multiline
+                        rows={2}
+                        error={formErrors.applicantPhoto.error}
+                        helperText={formErrors.applicantPhoto.message}
+                      />
+                    </FormControl>
+                  </Grid>
                 </Grid>
               </StyledFormSection>
             )}
-            
+
             {/* Step 2: Academic Details */}
             {activeStep === 1 && (
               <StyledFormSection>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
                   Academic Details
                 </Typography>
-                
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
@@ -500,16 +734,24 @@ export default function SignUp(props) {
                       >
                         <option value="faculty">Faculty</option>
                         <option value="student">Student (UG/PG)</option>
-                        <option value="researchScholar">Research Scholar</option>
-                        <option value="committeeMember">Committee Member</option>
-                        <option value="competentauthority">Competent Authority</option>
+                        <option value="researchScholar">
+                          Research Scholar
+                        </option>
+                        <option value="committeeMember">
+                          Committee Member
+                        </option>
+                        <option value="competentAuthority">
+                          Competent Authority
+                        </option>
                       </TextField>
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
-                      <FormLabel htmlFor="employeeId">Employee ID/Student Roll Number *</FormLabel>
+                      <FormLabel htmlFor="employeeId">
+                        Employee ID/Student Roll Number *
+                      </FormLabel>
                       <TextField
                         required
                         fullWidth
@@ -521,7 +763,7 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12}>
                     <FormControl fullWidth>
                       <FormLabel htmlFor="department">Department *</FormLabel>
@@ -534,15 +776,29 @@ export default function SignUp(props) {
                         defaultValue="computerScience"
                         SelectProps={{ native: true }}
                       >
-                        <option value="computerScience">Computer Science & Engineering</option>
-                        <option value="mechanicalEngineering">Mechanical Engineering</option>
-                        <option value="electricalEngineering">Electrical Engineering</option>
-                        <option value="electronicsCommunication">Electronics & Communication</option>
-                        <option value="civilEngineering">Civil Engineering</option>
+                        <option value="computerScience">
+                          Computer Science & Engineering
+                        </option>
+                        <option value="mechanicalEngineering">
+                          Mechanical Engineering
+                        </option>
+                        <option value="electricalEngineering">
+                          Electrical Engineering
+                        </option>
+                        <option value="electronicsCommunication">
+                          Electronics & Communication
+                        </option>
+                        <option value="civilEngineering">
+                          Civil Engineering
+                        </option>
                         <option value="biotechnology">Biotechnology</option>
-                        <option value="appliedMathematics">Applied Mathematics</option>
+                        <option value="appliedMathematics">
+                          Applied Mathematics
+                        </option>
                         <option value="appliedPhysics">Applied Physics</option>
-                        <option value="appliedChemistry">Applied Chemistry</option>
+                        <option value="appliedChemistry">
+                          Applied Chemistry
+                        </option>
                         <option value="management">Management Studies</option>
                       </TextField>
                     </FormControl>
@@ -550,22 +806,25 @@ export default function SignUp(props) {
                 </Grid>
               </StyledFormSection>
             )}
-            
+
             {/* Step 3: Banking Information */}
             {activeStep === 2 && (
               <StyledFormSection>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
                   Banking Information
                 </Typography>
-                
+
                 <Alert severity="info" sx={{ mb: 2 }}>
-                  Your banking information is required for research grants and project funding purposes.
+                  Your banking information is required for research grants and
+                  project funding purposes.
                 </Alert>
-                
+
                 <Grid container spacing={2}>
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
-                      <FormLabel htmlFor="accountHolderName">Account Holder Name *</FormLabel>
+                      <FormLabel htmlFor="accountHolderName">
+                        Account Holder Name *
+                      </FormLabel>
                       <TextField
                         required
                         fullWidth
@@ -578,10 +837,12 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
-                      <FormLabel htmlFor="bankAccount">Account Number *</FormLabel>
+                      <FormLabel htmlFor="bankAccount">
+                        Account Number *
+                      </FormLabel>
                       <TextField
                         required
                         fullWidth
@@ -594,7 +855,7 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
                       <FormLabel htmlFor="bankName">Bank Name *</FormLabel>
@@ -610,7 +871,7 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12} md={6}>
                     <FormControl fullWidth>
                       <FormLabel htmlFor="branchName">Branch Name *</FormLabel>
@@ -626,7 +887,7 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12}>
                     <FormControl fullWidth>
                       <FormLabel htmlFor="ifsc">IFSC Code *</FormLabel>
@@ -645,14 +906,14 @@ export default function SignUp(props) {
                 </Grid>
               </StyledFormSection>
             )}
-            
+
             {/* Step 4: Password */}
             {activeStep === 3 && (
               <StyledFormSection>
                 <Typography variant="h6" gutterBottom sx={{ fontWeight: 500 }}>
                   Set Password
                 </Typography>
-                
+
                 <Grid container spacing={2}>
                   <Grid item xs={12}>
                     <FormControl fullWidth>
@@ -672,10 +933,12 @@ export default function SignUp(props) {
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12}>
                     <FormControl fullWidth>
-                      <FormLabel htmlFor="confirmPassword">Confirm Password *</FormLabel>
+                      <FormLabel htmlFor="confirmPassword">
+                        Confirm Password *
+                      </FormLabel>
                       <TextField
                         required
                         fullWidth
@@ -687,14 +950,23 @@ export default function SignUp(props) {
                         variant="outlined"
                         error={formErrors.confirmPassword.error}
                         helperText={formErrors.confirmPassword.message}
-                        color={formErrors.confirmPassword.error ? "error" : "primary"}
+                        color={
+                          formErrors.confirmPassword.error ? "error" : "primary"
+                        }
                       />
                     </FormControl>
                   </Grid>
-                  
+
                   <Grid item xs={12}>
                     <FormControlLabel
-                      control={<Checkbox id="terms" name="terms" value="agree" color="primary" />}
+                      control={
+                        <Checkbox
+                          id="terms"
+                          name="terms"
+                          value="agree"
+                          color="primary"
+                        />
+                      }
                       label={
                         <Typography variant="body2">
                           I agree to the{" "}
@@ -704,9 +976,11 @@ export default function SignUp(props) {
                           of the DTU Research Portal.
                         </Typography>
                       }
-                      sx={{ 
-                        color: formErrors.terms.error ? "error.main" : "inherit",
-                        marginTop: 1 
+                      sx={{
+                        color: formErrors.terms.error
+                          ? "error.main"
+                          : "inherit",
+                        marginTop: 1,
                       }}
                     />
                     {formErrors.terms.error && (
@@ -718,8 +992,10 @@ export default function SignUp(props) {
                 </Grid>
               </StyledFormSection>
             )}
-            
-            <Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
+
+            <Box
+              sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}
+            >
               <Button
                 variant="outlined"
                 onClick={handleBack}
@@ -729,25 +1005,40 @@ export default function SignUp(props) {
                 Back
               </Button>
               <Box>
-                <Button
-                  variant="contained"
-                  onClick={handleNext}
-                  disabled={formSubmitted}
-                  sx={{ ml: 1 }}
-                >
-                  {activeStep === steps.length - 1 ? "Create Account" : "Next"}
-                </Button>
+                {activeStep === steps.length - 1 ? (
+                  <Button
+                    variant="contained"
+                    type="button"
+                    onClick={() => {
+                      console.log("Create Account button clicked");
+                      handleSubmit();
+                    }}
+                    disabled={formSubmitted}
+                    sx={{ ml: 1 }}
+                  >
+                    Create Account
+                  </Button>
+                ) : (
+                  <Button
+                    variant="contained"
+                    onClick={handleNext}
+                    disabled={formSubmitted}
+                    sx={{ ml: 1 }}
+                  >
+                    Next
+                  </Button>
+                )}
               </Box>
             </Box>
-            
+
             {formSubmitted && (
               <Alert severity="info" sx={{ mt: 2 }}>
                 Creating your account... Please wait.
               </Alert>
             )}
-            
+
             <Divider sx={{ my: 2 }} />
-            
+
             <Typography sx={{ textAlign: "center" }}>
               Already have an account?{" "}
               <Link href="/signin" variant="body2" sx={{ fontWeight: 500 }}>

@@ -8,6 +8,7 @@ const userSchema = new mongoose.Schema({
     enum: ['faculty', 'student', 'researchScholar', 'committeeMember', 'competentAuthority'], 
     required: true 
   },
+  applicantPhoto: { type: String, required: false },
   department: { type: String, required: true },
   employeeId: { type: String, required: true },
   mobileNumber: { type: String, required: true },
