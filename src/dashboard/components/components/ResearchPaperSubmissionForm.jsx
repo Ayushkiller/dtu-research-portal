@@ -24,6 +24,9 @@ import {
   Tooltip,
   Card,
   CardContent,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import API from "../../../api/axios";
@@ -45,6 +48,8 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
   const [activeStep, setActiveStep] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [user,setUser] = useState(null);
+  
   const [currentAuthor, setCurrentAuthor] = useState({
     name: "",
     email: "",
@@ -75,9 +80,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
         accountNo: "",
         ifscCode: "",
       },
-      isPaidJournal: "",
-      paperLink: "",
-      doi: "",
+      
       awardCategory: "OUTSTANDING", // Default to Outstanding Research Award
       totalAwardAmount: AWARD_CATEGORIES.OUTSTANDING.amount,
       authors: [],
@@ -88,6 +91,28 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
   const [questions, setQuestions] = useState([]);
   const steps = ["Paper & Authors", "Review"];
 
+  const fetchUser = async () => {
+    try {
+      const response = await API.get("/user/me");
+      console.log(response.data);
+
+      setUser(response.data);
+      
+      // setFormData((prev) => ({
+      //   ...prev,  
+      //   applicantName: response.data.name,
+      //   email: response.data.email,
+      //   mobileNo: response.data.mobileNumber,        
+      //   department: response.data.department,
+      //   applicantType: response.data.userType,
+      // }));
+
+    } catch (error) {
+      console.error("Failed to fetch user:", error);
+      setSnackbarMessage("Failed to fetch user.");
+      setSnackbarOpen(true);
+    } 
+  }
   useEffect(() => {
     // Fetch questions for the Paper Details section
     const fetchQuestions = async () => {
@@ -101,6 +126,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       }
     };
     fetchQuestions();
+    fetchUser();
   }, []);
 
   // New effect to add applicant as an internal author if not already added
@@ -409,19 +435,19 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
               </Grid>
 
               <Grid item xs={12} sm={6}>
+              <InputLabel>Paper Title</InputLabel>
                 <TextField
                   variant="outlined"
                   fullWidth
-                  label="Paper Title"
                   value={formData.paperTitle}
                   onChange={(e) => setFormData((prev) => ({ ...prev, paperTitle: e.target.value }))}
                   required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
+              <InputLabel>Publication Year</InputLabel>
                 <TextField
                   fullWidth
-                  label="Publication Year"
                   value={formData.pubYear}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, pubYear: e.target.value }))
@@ -432,14 +458,37 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
 
               {questions.map((question) => (
                 <Grid item xs={12} sm={6} key={question._id}>
-                  <TextField
+                  {question.questionType === "text" && (
+                    <>
+                    <InputLabel>{question.questionText + "*"}</InputLabel>
+                    <TextField
                     fullWidth
-                    label={question.questionText}
+                    // label={question.questionText}
                     name={question._id}
                     value={formData.paperDetails[question._id]?.answer || ""}
                     onChange={handleChange}
                     required={question.isRequired}
                   />
+                    </>
+                  )}
+                  {question.questionType === "dropdown" && (
+                    <>
+                      <InputLabel>{question.questionText + "*"}</InputLabel>
+                      <Select
+                        fullWidth
+                        name={question._id}
+                        value={formData.paperDetails[question._id]?.answer || ""}
+                        onChange={handleChange}
+                      >
+                       
+                        {question.options.map((option, index) => (
+                          <MenuItem key={index} value={option}>
+                            {option}
+                          </MenuItem>
+                        ))}
+                      </Select>
+                    </>
+                  )}
                 </Grid>
               ))}
 
@@ -508,9 +557,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
               <DialogContent>
                 <Grid container spacing={2} sx={{ mt: 1 }}>
                   <Grid item xs={12} md={6}>
+                  <InputLabel>Author Name</InputLabel>
                     <TextField
                       fullWidth
-                      label="Author Name"
                       name="name"
                       value={currentAuthor.name}
                       onChange={handleAuthorChange}
@@ -518,9 +567,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
+                  <InputLabel>Email</InputLabel>
                     <TextField
                       fullWidth
-                      label="Email"
                       name="email"
                       type="email"
                       value={currentAuthor.email}
@@ -541,9 +590,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
+                  <InputLabel>Bank Name</InputLabel>
                     <TextField
                       fullWidth
-                      label="Bank Name"
                       name="bankDetails.bankName"
                       value={currentAuthor.bankDetails.bankName}
                       onChange={handleAuthorChange}
@@ -551,9 +600,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
+                  <InputLabel>Branch</InputLabel>
                     <TextField
                       fullWidth
-                      label="Branch"
                       name="bankDetails.branch"
                       value={currentAuthor.bankDetails.branch}
                       onChange={handleAuthorChange}
@@ -561,9 +610,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
+                  <InputLabel>Account Number</InputLabel>
                     <TextField
                       fullWidth
-                      label="Account Number"
                       name="bankDetails.accountNo"
                       value={currentAuthor.bankDetails.accountNo}
                       onChange={handleAuthorChange}
@@ -571,9 +620,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
+                  <InputLabel>IFSC Code</InputLabel>
                     <TextField
                       fullWidth
-                      label="IFSC Code"
                       name="bankDetails.ifscCode"
                       value={currentAuthor.bankDetails.ifscCode}
                       onChange={handleAuthorChange}

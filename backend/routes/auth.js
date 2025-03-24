@@ -5,12 +5,12 @@ const jwt = require('jsonwebtoken');
 // Register User
 router.post('/register', async (req, res) => {
   try {
-    const { email, name, password, userType, employeeId, department, mobileNumber } = req.body;
+    const { email, name, password, userType, employeeId, department, mobileNumber, applicantPhoto } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) return res.status(400).send({ error: 'Email already in use.' });
 
-    const user = new User({ email, name, password, userType, employeeId, department, mobileNumber });
+    const user = new User({ email, name, password, userType, employeeId, department, mobileNumber, applicantPhoto });
     await user.save();
 
     res.status(201).send({ message: 'User registered successfully.' });

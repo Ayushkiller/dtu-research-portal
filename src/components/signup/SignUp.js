@@ -78,6 +78,7 @@ export default function SignUp(props) {
     accountHolderName: { error: false, message: "" },
     mobileNumber: { error: false, message: "" },
     employeeId: { error: false, message: "" },
+    applicantPhoto: { error: false, message: "" },
   });
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [formData, setFormData] = useState({});
@@ -93,6 +94,7 @@ export default function SignUp(props) {
       const dateOfBirth = document.getElementById("dateOfBirth");
       const address = document.getElementById("address");
       const mobileNumber = document.getElementById("mobileNumber");
+      const applicantPhoto = document.getElementById("applicantPhoto");
 
       if (!name || !name.value || name.value.length < 2) {
         newErrors.name = {
@@ -133,6 +135,15 @@ export default function SignUp(props) {
       } else {
         newErrors.address = { error: false, message: "" };
       }
+      if (!applicantPhoto || !applicantPhoto.value || applicantPhoto.value.length < 5) {
+        newErrors.applicantPhoto = {
+          error: true,
+          message: "Please enter a valid photo link (drive link)"
+        };
+        isValid = false;
+      } else {
+        newErrors.applicantPhoto = { error: false, message: "" };
+      }
 
       if (!mobileNumber || !mobileNumber.value || !/^\d{10}$/.test(mobileNumber.value)) {
         newErrors.mobileNumber = {
@@ -140,7 +151,8 @@ export default function SignUp(props) {
           message: "Please enter a valid 10-digit mobile number"
         };
         isValid = false;
-      } else {
+      }
+       else {
         newErrors.mobileNumber = { error: false, message: "" };
       }
 
@@ -471,6 +483,23 @@ export default function SignUp(props) {
                         rows={2}
                         error={formErrors.address.error}
                         helperText={formErrors.address.message}
+                      />
+                    </FormControl>
+                  </Grid>
+                  <Grid item xs={12}>
+                    <FormControl fullWidth>
+                      <FormLabel htmlFor="applicantPhoto">Applicant Photo *</FormLabel>
+                      <TextField
+                        required
+                        fullWidth
+                        id="applicantPhoto"
+                        name="applicantPhoto"
+                        placeholder="https://drive.google.com/file/d/1"
+                        variant="outlined"
+                        multiline
+                        rows={2}
+                        error={formErrors.applicantPhoto.error}
+                        helperText={formErrors.applicantPhoto.message}
                       />
                     </FormControl>
                   </Grid>
