@@ -33,7 +33,7 @@ function checkFileType(file, cb) {
   }
 }
 
-router.post('/', upload, async (req, res) => {
+router.post('/', async (req, res) => {
     try {
       const formData = {...req.body};
       
@@ -41,11 +41,9 @@ router.post('/', upload, async (req, res) => {
       if (typeof formData.authors === 'string') {
         formData.authors = JSON.parse(formData.authors);
       }
+      console.log(formData);
       
-      // Add photograph path if file was uploaded
-      if (req.file) {
-        formData.photograph = `/uploads/photographs/${req.file.filename}`;
-      }
+   
   
       const researchPaper = new ResearchPaper(formData);
       await researchPaper.save();
