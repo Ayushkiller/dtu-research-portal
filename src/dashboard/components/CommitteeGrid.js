@@ -310,10 +310,8 @@ export default function DeanGrid() {
   // Update paper status
   const handleUpdateStatus = async (status) => {
     if (!selectedPaper) return;
-    if (!selectedPaper) return;
     
-  
-    if (!me.userType !== "committeeMember") {
+    if (me.userType !== "committeeMember") {
       setError(
         `You don't have permission to ${status
           .replace(/([A-Z])/g, " $1")
@@ -676,22 +674,13 @@ export default function DeanGrid() {
               >
                 {["suspended", "underReview", "approved", "rejected"].map(
                   (status) => {
-                    const permissionMap = {
-                      suspended: "suspendResearchPaper",
-                      underReview: "putUnderReview",
-                      approved: "approveResearchPaper",
-                      rejected: "rejectResearchPaper",
-                    };
-
-                    const hasPermission = me?.powers?.includes(
-                      permissionMap[status]
-                    );
+                    const isCommitteeMember = me?.userType === "committeeMember";
 
                     return (
                       <Tooltip
                         key={status}
                         title={
-                          !hasPermission
+                          !isCommitteeMember
                             ? `You don't have permission to ${status} papers`
                             : ""
                         }
@@ -702,7 +691,7 @@ export default function DeanGrid() {
                             color={getButtonColor(status)}
                             onClick={() => handleUpdateStatus(status)}
                             disabled={
-                              !hasPermission || selectedPaper.status === status
+                              !isCommitteeMember || selectedPaper.status === status
                             }
                             startIcon={getButtonIcon(status)}
                             sx={{ minWidth: "120px" }}
