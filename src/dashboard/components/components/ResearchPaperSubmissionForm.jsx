@@ -30,7 +30,10 @@ import {
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import API from "../../../api/axios";
-import { calculateAuthorShares, AWARD_CATEGORIES } from "../utils/awardDistributionUtils";
+import {
+  calculateAuthorShares,
+  AWARD_CATEGORIES,
+} from "../utils/awardDistributionUtils";
 import AuthorsList from "./FormFields/AuthorsList";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
@@ -44,12 +47,15 @@ const FormButton = styled(Button)(({ theme }) => ({
   margin: theme.spacing(1),
 }));
 
-export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft = null }) {
+export default function ResearchPaperSubmissionForm({
+  onSaveDraft,
+  initialDraft = null,
+}) {
   const [activeStep, setActiveStep] = useState(0);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
-  const [user,setUser] = useState(null);
-  
+  const [user, setUser] = useState(null);
+
   const [currentAuthor, setCurrentAuthor] = useState({
     name: "",
     email: "",
@@ -80,7 +86,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
         accountNo: "",
         ifscCode: "",
       },
-      
+
       awardCategory: "OUTSTANDING", // Default to Outstanding Research Award
       totalAwardAmount: AWARD_CATEGORIES.OUTSTANDING.amount,
       authors: [],
@@ -97,22 +103,31 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       console.log(response.data);
 
       setUser(response.data);
-      
+
       setFormData((prev) => ({
-        ...prev,  
+        ...prev,
         applicantName: response.data.name,
         email: response.data.email,
-        mobileNo: response.data.mobileNumber,        
+        mobileNo: response.data.mobileNumber,
         department: response.data.department,
         applicantType: response.data.userType,
+        applicantBiography: response.data.applicantBiography,
+        employeeId: response.data.employeeId,
+        photograph: response.data.applicantPhoto,
+        bankDetails: {
+          bankName: response.data.bankName,
+          branch: response.data.branchName,
+          accountNo: response.data.bankAccount,
+          ifscCode: response.data.ifsc,
+        },
+       
       }));
-
     } catch (error) {
       console.error("Failed to fetch user:", error);
       setSnackbarMessage("Failed to fetch user.");
       setSnackbarOpen(true);
-    } 
-  }
+    }
+  };
   useEffect(() => {
     // Fetch questions for the Paper Details section
     const fetchQuestions = async () => {
@@ -135,9 +150,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
     if (formData.applicantName && formData.email) {
       // Check if the applicant is already in the authors list
       const applicantExists = formData.authors.some(
-        author => author.email === formData.email
+        (author) => author.email === formData.email
       );
-      
+
       // If not, add them as an internal author
       if (!applicantExists) {
         const applicantAuthor = {
@@ -145,16 +160,16 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
           email: formData.email,
           isExternal: false, // Applicant is always internal
           bankDetails: {
-            ...formData.bankDetails
+            ...formData.bankDetails,
           },
           confirmationToken: {
             token: Math.random().toString(36).substring(2, 12),
-          }
+          },
         };
-        
-        setFormData(prev => ({
+
+        setFormData((prev) => ({
           ...prev,
-          authors: [...prev.authors, applicantAuthor]
+          authors: [...prev.authors, applicantAuthor],
         }));
       }
     }
@@ -165,7 +180,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       case 0: // Paper Details
         return questions.every(
           (q) =>
-            !q.isRequired || (formData.paperDetails[q._id]?.answer && formData.paperDetails[q._id]?.answer.trim() !== "")
+            !q.isRequired ||
+            (formData.paperDetails[q._id]?.answer &&
+              formData.paperDetails[q._id]?.answer.trim() !== "")
         );
       case 1: // Authors
         return true; // Allow navigation even with no authors
@@ -256,7 +273,6 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       setSnackbarOpen(true);
     }
   };
-  
 
   const handleBack = () => {
     setActiveStep((prev) => prev - 1);
@@ -264,54 +280,86 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    
+
     // Find the question using the name (which is the question ID)
     const question = questions.find((q) => q._id === name);
-  
+
     setFormData((prev) => ({
       ...prev,
       paperDetails: {
         ...prev.paperDetails,
         [name]: {
-          answer: value,       // Store the answer
-          questionText: question?.questionText || "",  // Store the question text
+          answer: value, // Store the answer
+          questionText: question?.questionText || "", // Store the question text
         },
       },
     }));
   };
-  
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
       // Ensure applicant is included as an author
       const applicantExists = formData.authors.some(
-        author => author.email === formData.email
+        (author) => author.email === formData.email
       );
-      
+
       if (!applicantExists && formData.applicantName && formData.email) {
-        setSnackbarMessage("You must include yourself as an author. Please add your details to the authors list.");
+        setSnackbarMessage(
+          "You must include yourself as an author. Please add your details to the authors list."
+        );
         setSnackbarOpen(true);
         return;
       }
 
-      // Continue with form submission
-      console.log("Form data:", formData);
-      console.log(questions)
-      if(formData.authors.length === 0){
-        formData.status = "Submitted"
+      // Clean up bank details format for all authors
+      const formDataToSubmit = {
+        ...formData,
+        authors: formData.authors.map((author) => {
+          // Remove any flat bankDetails properties that might have been added incorrectly
+          const {
+            "bankDetails.bankName": bankName,
+            "bankDetails.branch": branch,
+            "bankDetails.accountNo": accountNo,
+            "bankDetails.ifscCode": ifscCode,
+            ...rest
+          } = author;
+
+          // Ensure bank details are properly structured
+          return {
+            ...rest,
+            bankDetails: {
+              bankName: author.bankDetails.bankName || bankName || "",
+              branch: author.bankDetails.branch || branch || "",
+              accountNo: author.bankDetails.accountNo || accountNo || "",
+              ifscCode: author.bankDetails.ifscCode || ifscCode || "",
+            },
+          };
+        }),
+      };
+
+      // Debug log to see the structure
+      console.log(
+        "Form data to submit:",
+        JSON.stringify(formDataToSubmit, null, 2)
+      );
+
+      if (formDataToSubmit.authors.length === 0) {
+        formDataToSubmit.status = "Submitted";
         setSnackbarMessage("Form submitted successfully!");
         setSnackbarOpen(true);
-        return
+        return;
       }
-      const response = await API.post("/research-paper-submission", formData);
-
+      const response = await API.post(
+        "/research-paper-submission",
+        formDataToSubmit
+      );
 
       console.log(response.data.data._id);
       const researchPaperId = response?.data?.data?._id;
       console.log(researchPaperId);
 
-      authorSendEmail(researchPaperId, formData.authors);
+      authorSendEmail(researchPaperId, formDataToSubmit.authors);
       setSnackbarMessage("Form submitted successfully!");
       setSnackbarOpen(true);
     } catch (error) {
@@ -324,7 +372,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
   const authorSendEmail = async (id, authors) => {
     try {
       // Send the form data to the backend
-      
+
       const authorEmailData = authors.map((author) => ({
         name: author.name,
         email: author.email,
@@ -332,19 +380,17 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
       }));
       const response = await API.post("/research-author-email/send", {
         authors: authorEmailData,
-        paperTitle : formData.paperDetails[questions[0]._id]?.answer,
-        submissionId : id,
+        paperTitle: formData.paperDetails[questions[0]._id]?.answer,
+        submissionId: id,
       });
 
       setSnackbarMessage("Emails sent successfully!");
-      console.log(response.results)
-      
+      console.log(response.results);
     } catch (error) {
-      console.log(error)
+      console.log(error);
     }
-  }
+  };
 
-  
   useEffect(() => {
     if (formData.authors.length > 0 && formData.totalAwardAmount > 0) {
       const authorShares = calculateAuthorShares(
@@ -358,9 +404,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
           ...author,
           shareValue: authorShares[index].shareValue,
           amount: authorShares[index].amount,
-          confirmationToken :{
-            token : Math.random().toString(36).substring(2, 12),
-          }
+          confirmationToken: {
+            token: Math.random().toString(36).substring(2, 12),
+          },
         })),
       }));
     }
@@ -392,7 +438,9 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
             <Grid container spacing={2}>
               {/* Award Category Selection */}
               <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>Award Category</Typography>
+                <Typography variant="h6" gutterBottom>
+                  Award Category
+                </Typography>
                 <FormControl component="fieldset">
                   <RadioGroup
                     name="awardCategory"
@@ -400,13 +448,15 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     onChange={handleAwardCategoryChange}
                   >
                     {Object.values(AWARD_CATEGORIES).map((category) => (
-                      <Card 
-                        key={category.value} 
-                        variant="outlined" 
-                        sx={{ 
-                          mb: 2, 
-                          border: formData.awardCategory === category.value ? 
-                                 '2px solid #3f51b5' : '1px solid rgba(0, 0, 0, 0.12)'
+                      <Card
+                        key={category.value}
+                        variant="outlined"
+                        sx={{
+                          mb: 2,
+                          border:
+                            formData.awardCategory === category.value
+                              ? "2px solid #3f51b5"
+                              : "1px solid rgba(0, 0, 0, 0.12)",
                         }}
                       >
                         <CardContent>
@@ -415,13 +465,24 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                             control={<Radio />}
                             label={
                               <Box>
-                                <Typography variant="subtitle1" component="span">
-                                  {category.label} - ₹{category.amount.toLocaleString()}
+                                <Typography
+                                  variant="subtitle1"
+                                  component="span"
+                                >
+                                  {category.label} - ₹
+                                  {category.amount.toLocaleString()}
                                 </Typography>
-                                <Typography variant="body2" color="textSecondary" sx={{ mt: 1 }}>
+                                <Typography
+                                  variant="body2"
+                                  color="textSecondary"
+                                  sx={{ mt: 1 }}
+                                >
                                   {category.description}
                                 </Typography>
-                                <Typography variant="body2" sx={{ fontStyle: 'italic', mt: 0.5 }}>
+                                <Typography
+                                  variant="body2"
+                                  sx={{ fontStyle: "italic", mt: 0.5 }}
+                                >
                                   Criteria: {category.criteria}
                                 </Typography>
                               </Box>
@@ -435,22 +496,30 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
               </Grid>
 
               <Grid item xs={12} sm={6}>
-              <InputLabel>Paper Title</InputLabel>
+                <InputLabel>Paper Title</InputLabel>
                 <TextField
                   variant="outlined"
                   fullWidth
                   value={formData.paperTitle}
-                  onChange={(e) => setFormData((prev) => ({ ...prev, paperTitle: e.target.value }))}
+                  onChange={(e) =>
+                    setFormData((prev) => ({
+                      ...prev,
+                      paperTitle: e.target.value,
+                    }))
+                  }
                   required
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-              <InputLabel>Publication Year</InputLabel>
+                <InputLabel>Publication Year</InputLabel>
                 <TextField
                   fullWidth
                   value={formData.pubYear}
                   onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, pubYear: e.target.value }))
+                    setFormData((prev) => ({
+                      ...prev,
+                      pubYear: e.target.value,
+                    }))
                   }
                   required
                 />
@@ -460,15 +529,17 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                 <Grid item xs={12} sm={6} key={question._id}>
                   {question.questionType === "text" && (
                     <>
-                    <InputLabel>{question.questionText + "*"}</InputLabel>
-                    <TextField
-                    fullWidth
-                    // label={question.questionText}
-                    name={question._id}
-                    value={formData.paperDetails[question._id]?.answer || ""}
-                    onChange={handleChange}
-                    required={question.isRequired}
-                  />
+                      <InputLabel>{question.questionText + "*"}</InputLabel>
+                      <TextField
+                        fullWidth
+                        // label={question.questionText}
+                        name={question._id}
+                        value={
+                          formData.paperDetails[question._id]?.answer || ""
+                        }
+                        onChange={handleChange}
+                        required={question.isRequired}
+                      />
                     </>
                   )}
                   {question.questionType === "dropdown" && (
@@ -477,10 +548,11 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                       <Select
                         fullWidth
                         name={question._id}
-                        value={formData.paperDetails[question._id]?.answer || ""}
+                        value={
+                          formData.paperDetails[question._id]?.answer || ""
+                        }
                         onChange={handleChange}
                       >
-                       
                         {question.options.map((option, index) => (
                           <MenuItem key={index} value={option}>
                             {option}
@@ -497,8 +569,11 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                 <Typography variant="subtitle1" gutterBottom>
                   Contribution Factor (Z): {formData.zFactor.toFixed(2)}
                 </Typography>
-                <Tooltip title="Z factor determines how the total award is distributed. Higher values distribute more evenly." placement="top">
-                  <Box sx={{ width: '100%' }}>
+                <Tooltip
+                  title="Z factor determines how the total award is distributed. Higher values distribute more evenly."
+                  placement="top"
+                >
+                  <Box sx={{ width: "100%" }}>
                     <input
                       type="range"
                       min="0.5"
@@ -506,9 +581,15 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                       step="0.01"
                       value={formData.zFactor}
                       onChange={handleZFactorChange}
-                      style={{ width: '100%' }}
+                      style={{ width: "100%" }}
                     />
-                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 1 }}>
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "space-between",
+                        mt: 1,
+                      }}
+                    >
                       <Typography variant="caption">0.5 (Minimum)</Typography>
                       <Typography variant="caption">1.0 (Maximum)</Typography>
                     </Box>
@@ -544,7 +625,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                 onRemoveAuthor={removeAuthor}
               />
             </Grid>
-             {/* Author Dialog */}
+            {/* Author Dialog */}
             <Dialog
               open={authorDialogOpen}
               onClose={() => setAuthorDialogOpen(false)}
@@ -557,7 +638,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
               <DialogContent>
                 <Grid container spacing={2} sx={{ mt: 1 }}>
                   <Grid item xs={12} md={6}>
-                  <InputLabel>Author Name</InputLabel>
+                    <InputLabel>Author Name</InputLabel>
                     <TextField
                       fullWidth
                       name="name"
@@ -567,7 +648,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
-                  <InputLabel>Email</InputLabel>
+                    <InputLabel>Email</InputLabel>
                     <TextField
                       fullWidth
                       name="email"
@@ -590,7 +671,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
-                  <InputLabel>Bank Name</InputLabel>
+                    <InputLabel>Bank Name</InputLabel>
                     <TextField
                       fullWidth
                       name="bankDetails.bankName"
@@ -600,7 +681,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
-                  <InputLabel>Branch</InputLabel>
+                    <InputLabel>Branch</InputLabel>
                     <TextField
                       fullWidth
                       name="bankDetails.branch"
@@ -610,7 +691,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
-                  <InputLabel>Account Number</InputLabel>
+                    <InputLabel>Account Number</InputLabel>
                     <TextField
                       fullWidth
                       name="bankDetails.accountNo"
@@ -620,7 +701,7 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                     />
                   </Grid>
                   <Grid item xs={12} md={6}>
-                  <InputLabel>IFSC Code</InputLabel>
+                    <InputLabel>IFSC Code</InputLabel>
                     <TextField
                       fullWidth
                       name="bankDetails.ifscCode"
@@ -632,10 +713,17 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
                 </Grid>
               </DialogContent>
               <DialogActions>
-                <Button onClick={() => setAuthorDialogOpen(false)} color="secondary">
+                <Button
+                  onClick={() => setAuthorDialogOpen(false)}
+                  color="secondary"
+                >
                   Cancel
                 </Button>
-                <Button onClick={saveAuthor} color="primary" variant="contained">
+                <Button
+                  onClick={saveAuthor}
+                  color="primary"
+                  variant="contained"
+                >
                   Save Author
                 </Button>
               </DialogActions>
@@ -644,32 +732,36 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
         );
       case 1:
         return (
-          
           <Grid container spacing={2}>
             <Grid item xs={12}>
               <Typography variant="h6">Review Your Submission</Typography>
             </Grid>
             <Grid item xs={12}>
               <Typography variant="subtitle1" gutterBottom>
-                <strong>Award Category:</strong> {AWARD_CATEGORIES[formData.awardCategory].label} - 
-                ₹{formData.totalAwardAmount.toLocaleString()}
+                <strong>Award Category:</strong>{" "}
+                {AWARD_CATEGORIES[formData.awardCategory].label} - ₹
+                {formData.totalAwardAmount.toLocaleString()}
               </Typography>
               {questions.map((question) => (
-              <Typography>{question.questionText}: {formData.paperDetails[question._id]?.answer}</Typography>
-              
-            ))}
+                <Typography>
+                  {question.questionText}:{" "}
+                  {formData.paperDetails[question._id]?.answer}
+                </Typography>
+              ))}
             </Grid>
             <Grid item xs={12}>
               <Typography variant="subtitle1">Authors</Typography>
               <AuthorsList authors={formData.authors} editable={false} />
-              {formData.authors.length > 0 && formData.awardCategory === "COMMENDABLE" && (
-                <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-                  Note: An author can claim the Commendable Research Award for a maximum of three papers per year.
-                </Typography>
-              )}
+              {formData.authors.length > 0 &&
+                formData.awardCategory === "COMMENDABLE" && (
+                  <Typography variant="body2" color="error" sx={{ mt: 1 }}>
+                    Note: An author can claim the Commendable Research Award for
+                    a maximum of three papers per year.
+                  </Typography>
+                )}
             </Grid>
           </Grid>
-        )// Review implementation
+        ); // Review implementation
       default:
         return "Unknown step";
     }
@@ -690,26 +782,42 @@ export default function ResearchPaperSubmissionForm({ onSaveDraft, initialDraft 
           ))}
         </Stepper>
 
-        <form >
+        <form>
           <Grid container spacing={2} sx={{ mt: 2 }}>
             {renderStepContent(activeStep)}
           </Grid>
 
           <Box sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}>
             <Box>
-              <FormButton disabled={activeStep === 0} onClick={handleBack} variant="outlined">
+              <FormButton
+                disabled={activeStep === 0}
+                onClick={handleBack}
+                variant="outlined"
+              >
                 Back
               </FormButton>
-              <FormButton variant="outlined" color="secondary" onClick={onSaveDraft}>
+              <FormButton
+                variant="outlined"
+                color="secondary"
+                onClick={onSaveDraft}
+              >
                 Save Draft
               </FormButton>
             </Box>
             {activeStep === steps.length - 1 ? (
-              <FormButton onClick={handleSubmit} variant="contained" color="primary">
+              <FormButton
+                onClick={handleSubmit}
+                variant="contained"
+                color="primary"
+              >
                 Submit
               </FormButton>
             ) : (
-              <FormButton variant="contained" color="primary" onClick={handleNext}>
+              <FormButton
+                variant="contained"
+                color="primary"
+                onClick={handleNext}
+              >
                 Next
               </FormButton>
             )}
