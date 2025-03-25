@@ -13,25 +13,24 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
 import API from "../../../api/axios";
 import { PaperDetailsModal } from "./Modals";
 
-const Approvals = () => {
-  const [approvedPapers, setApprovedPapers] = useState([]);
+const Rejected = () => {
+  const [rejectedPapers, setRejectedPapers] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [openPaperModal, setOpenPaperModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const fetchApprovedPapers = async () => {
+  const fetchRejectedPapers = async () => {
     setLoading(true);
     try {
       const response = await API.get("/dean/research-papers");
-      // Filter only approved papers
+      // Filter only rejected papers
       const papers = response.data
-        .filter((paper) => paper.status === "approved")
+        .filter((paper) => paper.status === "rejected")
         .map((paper) => {
           const paperDetails = paper.paperDetails;
           const researchPaperData = Object.entries(paperDetails).map(
@@ -52,16 +51,16 @@ const Approvals = () => {
           };
         });
 
-      setApprovedPapers(papers);
+      setRejectedPapers(papers);
     } catch (error) {
-      console.error("Error fetching approved papers:", error);
+      console.error("Error fetching rejected papers:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchApprovedPapers();
+    fetchRejectedPapers();
   }, []);
 
   const handleResearchRowClick = (params) => {
@@ -75,14 +74,14 @@ const Approvals = () => {
   };
 
   const filteredPapers = React.useMemo(() => {
-    return approvedPapers.filter(
+    return rejectedPapers.filter(
       (paper) =>
         !searchText ||
         paper.paperTitle.toLowerCase().includes(searchText.toLowerCase()) ||
         paper.applicantName.toLowerCase().includes(searchText.toLowerCase()) ||
         paper.department.toLowerCase().includes(searchText.toLowerCase())
     );
-  }, [approvedPapers, searchText]);
+  }, [rejectedPapers, searchText]);
 
   const columns = [
     { field: "applicantName", headerName: "Applicant Name", flex: 1 },
@@ -95,10 +94,10 @@ const Approvals = () => {
       flex: 1,
       renderCell: () => (
         <Box
-          sx={{ display: "flex", alignItems: "center", color: "success.main" }}
+          sx={{ display: "flex", alignItems: "center", color: "error.main" }}
         >
-          <CheckCircleIcon sx={{ mr: 0.5 }} />
-          Approved
+          <CancelIcon sx={{ mr: 0.5 }} />
+          Rejected
         </Box>
       ),
     },
@@ -115,17 +114,17 @@ const Approvals = () => {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <ThumbUpIcon sx={{ fontSize: 28, mr: 1, color: "#4caf50" }} />
+          <CancelIcon sx={{ fontSize: 28, mr: 1, color: "#f44336" }} />
           <Typography
             component="h2"
             variant="h5"
-            sx={{ fontWeight: "medium", color: "#4caf50" }}
+            sx={{ fontWeight: "medium", color: "#f44336" }}
           >
-            Approved Research Papers
+            Rejected Research Papers
           </Typography>
         </Box>
         <TextField
-          placeholder="Search approved papers..."
+          placeholder="Search rejected papers..."
           size="small"
           variant="outlined"
           value={searchText}
@@ -152,9 +151,9 @@ const Approvals = () => {
         <Grid item xs={12}>
           <Card
             sx={{
-              bgcolor: "#f0f7f0",
+              bgcolor: "#ffebee",
               boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-              borderLeft: "4px solid #4caf50",
+              borderLeft: "4px solid #f44336",
             }}
           >
             <CardContent
@@ -167,14 +166,14 @@ const Approvals = () => {
             >
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Total Approved Papers
+                  Total Rejected Papers
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: "medium", mt: 0.5 }}>
-                  {approvedPapers.length}
+                  {rejectedPapers.length}
                 </Typography>
               </Box>
-              <CheckCircleIcon
-                sx={{ fontSize: 40, color: "#4caf50", opacity: 0.8 }}
+              <CancelIcon
+                sx={{ fontSize: 40, color: "#f44336", opacity: 0.8 }}
               />
             </CardContent>
           </Card>
@@ -198,7 +197,7 @@ const Approvals = () => {
               "&:nth-of-type(odd)": {
                 backgroundColor: "rgba(0, 0, 0, 0.02)",
               },
-              borderLeft: "4px solid #4caf50",
+              borderLeft: "4px solid #f44336",
             },
           }}
           disableSelectionOnClick
@@ -214,10 +213,10 @@ const Approvals = () => {
                 }}
               >
                 <Typography variant="h6" color="text.secondary">
-                  No Approved Papers
+                  No Rejected Papers
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  There are no approved research papers yet
+                  There are no rejected research papers yet
                 </Typography>
               </Box>
             ),
@@ -231,11 +230,11 @@ const Approvals = () => {
           openPaperModal={openPaperModal}
           handleClosePaperModal={handleClosePaperModal}
           selectedPaper={selectedPaper}
-          // No need for handleUpdateStatus as these are already approved
+          // No need for handleUpdateStatus as these are already rejected
         />
       )}
     </Paper>
   );
 };
 
-export default Approvals;
+export default Rejected;

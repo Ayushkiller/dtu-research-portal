@@ -13,25 +13,24 @@ import {
 import { DataGrid } from "@mui/x-data-grid";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
-import ThumbUpIcon from "@mui/icons-material/ThumbUp";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import PendingIcon from "@mui/icons-material/Pending";
 import API from "../../../api/axios";
 import { PaperDetailsModal } from "./Modals";
 
-const Approvals = () => {
-  const [approvedPapers, setApprovedPapers] = useState([]);
+const Pending = () => {
+  const [pendingPapers, setPendingPapers] = useState([]);
   const [searchText, setSearchText] = useState("");
   const [selectedPaper, setSelectedPaper] = useState(null);
   const [openPaperModal, setOpenPaperModal] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  const fetchApprovedPapers = async () => {
+  const fetchPendingPapers = async () => {
     setLoading(true);
     try {
       const response = await API.get("/dean/research-papers");
-      // Filter only approved papers
+      // Filter only pending papers
       const papers = response.data
-        .filter((paper) => paper.status === "approved")
+        .filter((paper) => paper.status === "Submitted")
         .map((paper) => {
           const paperDetails = paper.paperDetails;
           const researchPaperData = Object.entries(paperDetails).map(
@@ -52,16 +51,16 @@ const Approvals = () => {
           };
         });
 
-      setApprovedPapers(papers);
+      setPendingPapers(papers);
     } catch (error) {
-      console.error("Error fetching approved papers:", error);
+      console.error("Error fetching pending papers:", error);
     } finally {
       setLoading(false);
     }
   };
 
   useEffect(() => {
-    fetchApprovedPapers();
+    fetchPendingPapers();
   }, []);
 
   const handleResearchRowClick = (params) => {
@@ -74,15 +73,33 @@ const Approvals = () => {
     setSelectedPaper(null);
   };
 
+  const handleUpdateStatus = async (status) => {
+    if (!selectedPaper) return;
+
+    try {
+      await API.put(`/dean/research-papers/${selectedPaper.id}/status`, {
+        status,
+        comments: null, // You can allow the user to add comments if needed
+      });
+
+      fetchPendingPapers();
+      alert(`Research paper ${status}`);
+      setOpenPaperModal(false); // Close modal after action
+    } catch (error) {
+      console.error("Failed to update research paper status:", error);
+      alert("Failed to update status. Please try again.");
+    }
+  };
+
   const filteredPapers = React.useMemo(() => {
-    return approvedPapers.filter(
+    return pendingPapers.filter(
       (paper) =>
         !searchText ||
         paper.paperTitle.toLowerCase().includes(searchText.toLowerCase()) ||
         paper.applicantName.toLowerCase().includes(searchText.toLowerCase()) ||
         paper.department.toLowerCase().includes(searchText.toLowerCase())
     );
-  }, [approvedPapers, searchText]);
+  }, [pendingPapers, searchText]);
 
   const columns = [
     { field: "applicantName", headerName: "Applicant Name", flex: 1 },
@@ -95,10 +112,10 @@ const Approvals = () => {
       flex: 1,
       renderCell: () => (
         <Box
-          sx={{ display: "flex", alignItems: "center", color: "success.main" }}
+          sx={{ display: "flex", alignItems: "center", color: "warning.main" }}
         >
-          <CheckCircleIcon sx={{ mr: 0.5 }} />
-          Approved
+          <PendingIcon sx={{ mr: 0.5 }} />
+          Pending
         </Box>
       ),
     },
@@ -115,17 +132,17 @@ const Approvals = () => {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <ThumbUpIcon sx={{ fontSize: 28, mr: 1, color: "#4caf50" }} />
+          <PendingIcon sx={{ fontSize: 28, mr: 1, color: "#ff9800" }} />
           <Typography
             component="h2"
             variant="h5"
-            sx={{ fontWeight: "medium", color: "#4caf50" }}
+            sx={{ fontWeight: "medium", color: "#ff9800" }}
           >
-            Approved Research Papers
+            Pending Research Papers
           </Typography>
         </Box>
         <TextField
-          placeholder="Search approved papers..."
+          placeholder="Search pending papers..."
           size="small"
           variant="outlined"
           value={searchText}
@@ -152,9 +169,9 @@ const Approvals = () => {
         <Grid item xs={12}>
           <Card
             sx={{
-              bgcolor: "#f0f7f0",
+              bgcolor: "#fff8e1",
               boxShadow: "0 2px 8px rgba(0,0,0,0.08)",
-              borderLeft: "4px solid #4caf50",
+              borderLeft: "4px solid #ff9800",
             }}
           >
             <CardContent
@@ -167,14 +184,14 @@ const Approvals = () => {
             >
               <Box>
                 <Typography variant="subtitle2" color="text.secondary">
-                  Total Approved Papers
+                  Total Pending Papers
                 </Typography>
                 <Typography variant="h4" sx={{ fontWeight: "medium", mt: 0.5 }}>
-                  {approvedPapers.length}
+                  {pendingPapers.length}
                 </Typography>
               </Box>
-              <CheckCircleIcon
-                sx={{ fontSize: 40, color: "#4caf50", opacity: 0.8 }}
+              <PendingIcon
+                sx={{ fontSize: 40, color: "#ff9800", opacity: 0.8 }}
               />
             </CardContent>
           </Card>
@@ -198,7 +215,7 @@ const Approvals = () => {
               "&:nth-of-type(odd)": {
                 backgroundColor: "rgba(0, 0, 0, 0.02)",
               },
-              borderLeft: "4px solid #4caf50",
+              borderLeft: "4px solid #ff9800",
             },
           }}
           disableSelectionOnClick
@@ -214,10 +231,10 @@ const Approvals = () => {
                 }}
               >
                 <Typography variant="h6" color="text.secondary">
-                  No Approved Papers
+                  No Pending Papers
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  There are no approved research papers yet
+                  There are no pending research papers yet
                 </Typography>
               </Box>
             ),
@@ -231,11 +248,11 @@ const Approvals = () => {
           openPaperModal={openPaperModal}
           handleClosePaperModal={handleClosePaperModal}
           selectedPaper={selectedPaper}
-          // No need for handleUpdateStatus as these are already approved
+          handleUpdateStatus={handleUpdateStatus}
         />
       )}
     </Paper>
   );
 };
 
-export default Approvals;
+export default Pending;
