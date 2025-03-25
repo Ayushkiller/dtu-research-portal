@@ -30,9 +30,7 @@ export default function AuthorsList({
   onEditAuthor, 
   onRemoveAuthor,
   totalAwardAmount = 0,
-  onUpdateShareValues = null,
-  calculatedShares = []
-}) {
+  onUpdateShareValues = null}) {
   const [manualMode, setManualMode] = useState(false);
   const [shareValues, setShareValues] = useState(() => 
     authors.map(author => ({
