@@ -5,20 +5,35 @@ import {
   DialogContent,
   DialogActions,
   Button,
+  FormControl,
+  FormGroup,
+  FormControlLabel,
+  Checkbox,
+  Radio,
+  RadioGroup,
   Typography,
+  Divider,
   Box,
+  TextField,
+  Select,
+  MenuItem,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   IconButton,
+  InputLabel,
+  Grid,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import PrintIcon from "@mui/icons-material/Print";
-import { PrintOptionsDialog } from "./PrintOptionsDialog";
+import ArticleIcon from "@mui/icons-material/Article";
+import PersonIcon from "@mui/icons-material/Person";
 
-const PrintResearchPapers = ({
-  open,
-  onClose,
-  researchPapersData,
-  columns,
-}) => {
+const PrintResearchPapers = ({ open, onClose, researchPapersData, columns }) => {
   const printRef = useRef(null);
   const [printOptions, setPrintOptions] = useState({
     showShareAmount: false,
@@ -26,22 +41,10 @@ const PrintResearchPapers = ({
     filterByStatus: false,
     filterByYear: false,
     filterByDepartment: false,
-    filterByAwardAmount: false,
-    filterByAuthorCount: false,
-    filterByKeywords: false,
-    filterByAuthorType: false,
-    limitTopPapersPerUser: false,
-    topPapersCount: 3,
     userId: "",
     status: "all",
     year: "",
     department: "",
-    minAwardAmount: 0,
-    maxAwardAmount: 1000000,
-    minAuthors: 1,
-    maxAuthors: 10,
-    keywords: "",
-    authorType: "all", // "all", "internal", "external"
     includeAllDetails: true,
     paperDetailsToInclude: {
       title: true,
@@ -49,302 +52,455 @@ const PrintResearchPapers = ({
       department: true,
       year: true,
       status: true,
-      totalAwardAmount: true,
-      authorCount: false,
     },
-    sortBy: "awardAmount", // "awardAmount", "year", "title"
-    sortDirection: "desc", // "asc", "desc"
   });
 
   // Extract unique users, departments, and years from data
-  const uniqueUsers = [
-    ...new Set(researchPapersData.map((paper) => paper.applicantName)),
-  ];
-  const uniqueDepartments = [
-    ...new Set(researchPapersData.map((paper) => paper.department)),
-  ];
-  const uniqueYears = [
-    ...new Set(researchPapersData.map((paper) => paper.pubYear)),
-  ];
-
-  // Calculate max award amount for slider
-  const maxPossibleAward = Math.max(
-    ...researchPapersData.map((paper) => paper.totalAwardAmount || 0),
-    100000
-  );
-
-  // Calculate max author count for slider
-  const maxPossibleAuthors = Math.max(
-    ...researchPapersData.map((paper) =>
-      paper.authors ? paper.authors.length : 1
-    ),
-    10
-  );
+  const uniqueUsers = [...new Set(researchPapersData.map(paper => paper.applicantName))];
+  const uniqueDepartments = [...new Set(researchPapersData.map(paper => paper.department))];
+  const uniqueYears = [...new Set(researchPapersData.map(paper => paper.pubYear))];
 
   const handleOptionChange = (event) => {
     const { name, checked, value } = event.target;
-
-    if (name.includes(".")) {
-      const [parent, child] = name.split(".");
-      setPrintOptions((prev) => ({
+    
+    if (name.includes('.')) {
+      const [parent, child] = name.split('.');
+      setPrintOptions(prev => ({
         ...prev,
         [parent]: {
           ...prev[parent],
-          [child]: checked !== undefined ? checked : value,
-        },
+          [child]: checked
+        }
       }));
-    } else if (
-      [
-        "status",
-        "userId",
-        "year",
-        "department",
-        "authorType",
-        "sortBy",
-        "sortDirection",
-        "topPapersCount",
-      ].includes(name)
-    ) {
-      setPrintOptions((prev) => ({
+    } else if (name === "status" || name === "userId" || name === "year" || name === "department") {
+      setPrintOptions(prev => ({
         ...prev,
-        [name]: value,
+        [name]: value
       }));
     } else {
-      setPrintOptions((prev) => ({
+      setPrintOptions(prev => ({
         ...prev,
-        [name]: checked !== undefined ? checked : value,
+        [name]: checked !== undefined ? checked : value
       }));
     }
   };
 
-  const handleSliderChange = (name, newValue) => {
-    setPrintOptions((prev) => ({
-      ...prev,
-      [name]: newValue,
-    }));
-  };
-
-  // Group papers by user (either main applicant or any author)
-  const groupPapersByUser = (papers) => {
-    const userPapers = {};
-
-    papers.forEach((paper) => {
-      // Add paper to main applicant's group
-      if (!userPapers[paper.applicantName]) {
-        userPapers[paper.applicantName] = [];
-      }
-      userPapers[paper.applicantName].push(paper);
-
-      // Also add paper to each author's group if they're different from applicant
-      if (paper.authors && paper.authors.length > 0) {
-        paper.authors.forEach((author) => {
-          if (author.name && author.name !== paper.applicantName) {
-            if (!userPapers[author.name]) {
-              userPapers[author.name] = [];
-            }
-            // Add the paper if it's not already in this user's list
-            if (!userPapers[author.name].some((p) => p.id === paper.id)) {
-              userPapers[author.name].push(paper);
-            }
-          }
-        });
-      }
-    });
-
-    return userPapers;
-  };
-
-  // Get top N papers for each user by award amount
-  const getTopPapersPerUser = (papers, topCount) => {
-    const userPapers = groupPapersByUser(papers);
-
-    // For each user, sort their papers by award amount and take top N
-    const topPapersPerUser = {};
-    Object.keys(userPapers).forEach((user) => {
-      const sortedPapers = [...userPapers[user]].sort(
-        (a, b) => (b.totalAwardAmount || 0) - (a.totalAwardAmount || 0)
-      );
-      topPapersPerUser[user] = sortedPapers.slice(0, topCount);
-    });
-
-    // Flatten the results while removing duplicates
-    const seen = new Set();
-    const result = [];
-
-    Object.values(topPapersPerUser)
-      .flat()
-      .forEach((paper) => {
-        if (!seen.has(paper.id)) {
-          seen.add(paper.id);
-          result.push(paper);
-        }
-      });
-
-    return result;
-  };
-
-  // Main function to filter papers based on all criteria
   const filteredPapers = () => {
-    let filtered = [...researchPapersData];
-
-    // Apply user filter
-    if (printOptions.filterByUser && printOptions.userId) {
-      filtered = filtered.filter((paper) => {
-        if (paper.applicantName === printOptions.userId) return true;
-        if (
-          paper.authors &&
-          paper.authors.some((author) => author.name === printOptions.userId)
-        )
-          return true;
+    return researchPapersData.filter(paper => {
+      // Apply user filter
+      if (printOptions.filterByUser && printOptions.userId && paper.applicantName !== printOptions.userId) {
         return false;
-      });
-    }
-
-    // Apply status filter
-    if (printOptions.filterByStatus && printOptions.status !== "all") {
-      filtered = filtered.filter(
-        (paper) => paper.status === printOptions.status
-      );
-    }
-
-    // Apply year filter
-    if (printOptions.filterByYear && printOptions.year) {
-      filtered = filtered.filter(
-        (paper) => paper.pubYear === printOptions.year
-      );
-    }
-
-    // Apply department filter
-    if (printOptions.filterByDepartment && printOptions.department) {
-      filtered = filtered.filter(
-        (paper) => paper.department === printOptions.department
-      );
-    }
-
-    // Apply award amount filter
-    if (printOptions.filterByAwardAmount) {
-      filtered = filtered.filter((paper) => {
-        const amount = paper.totalAwardAmount || 0;
-        return (
-          amount >= printOptions.minAwardAmount &&
-          amount <= printOptions.maxAwardAmount
-        );
-      });
-    }
-
-    // Apply author count filter
-    if (printOptions.filterByAuthorCount) {
-      filtered = filtered.filter((paper) => {
-        const authorCount = paper.authors ? paper.authors.length : 1;
-        return (
-          authorCount >= printOptions.minAuthors &&
-          authorCount <= printOptions.maxAuthors
-        );
-      });
-    }
-
-    // Apply keywords filter
-    if (printOptions.filterByKeywords && printOptions.keywords.trim()) {
-      const keywords = printOptions.keywords
-        .toLowerCase()
-        .split(",")
-        .map((k) => k.trim());
-      filtered = filtered.filter((paper) => {
-        // Search in paper title
-        if (
-          paper.paperTitle &&
-          keywords.some((keyword) =>
-            paper.paperTitle.toLowerCase().includes(keyword)
-          )
-        ) {
-          return true;
-        }
-
-        // Search in paper details
-        if (paper.researchPaperData) {
-          for (const data of paper.researchPaperData) {
-            if (
-              data.questionText &&
-              keywords.some((keyword) =>
-                data.questionText.toLowerCase().includes(keyword)
-              )
-            ) {
-              return true;
-            }
-            if (
-              data.answer &&
-              keywords.some((keyword) =>
-                data.answer.toLowerCase().includes(keyword)
-              )
-            ) {
-              return true;
-            }
-          }
-        }
-
-        return false;
-      });
-    }
-
-    // Apply author type filter
-    if (printOptions.filterByAuthorType && printOptions.authorType !== "all") {
-      filtered = filtered.filter((paper) => {
-        if (!paper.authors || paper.authors.length === 0) return false;
-
-        if (printOptions.authorType === "internal") {
-          return paper.authors.some((author) => !author.isExternal);
-        } else if (printOptions.authorType === "external") {
-          return paper.authors.some((author) => author.isExternal);
-        }
-        return true;
-      });
-    }
-
-    // Apply sorting
-    filtered.sort((a, b) => {
-      if (printOptions.sortBy === "awardAmount") {
-        return printOptions.sortDirection === "asc"
-          ? (a.totalAwardAmount || 0) - (b.totalAwardAmount || 0)
-          : (b.totalAwardAmount || 0) - (a.totalAwardAmount || 0);
-      } else if (printOptions.sortBy === "year") {
-        return printOptions.sortDirection === "asc"
-          ? a.pubYear.localeCompare(b.pubYear)
-          : b.pubYear.localeCompare(a.pubYear);
-      } else if (printOptions.sortBy === "title") {
-        return printOptions.sortDirection === "asc"
-          ? a.paperTitle.localeCompare(b.paperTitle)
-          : b.paperTitle.localeCompare(a.paperTitle);
       }
-      return 0;
+      
+      // Apply status filter
+      if (printOptions.filterByStatus && printOptions.status !== "all" && paper.status !== printOptions.status) {
+        return false;
+      }
+      
+      // Apply year filter
+      if (printOptions.filterByYear && printOptions.year && paper.pubYear !== printOptions.year) {
+        return false;
+      }
+      
+      // Apply department filter
+      if (printOptions.filterByDepartment && printOptions.department && paper.department !== printOptions.department) {
+        return false;
+      }
+      
+      return true;
     });
+  };
 
-    // Apply top papers per user limit if share amount is shown
-    if (printOptions.showShareAmount && printOptions.limitTopPapersPerUser) {
-      filtered = getTopPapersPerUser(filtered, printOptions.topPapersCount);
+  const handlePrint = () => {
+    const printContent = printRef.current;
+    const originalContents = document.body.innerHTML;
+    
+    if (printContent) {
+      const printWindow = window.open('', '_blank', 'width=800,height=600');
+      printWindow.document.write('<html><head><title>Research Papers Report</title>');
+      printWindow.document.write('<style>');
+      printWindow.document.write(`
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        .header { display: flex; align-items: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; color: #1976d2; }
+        .status-approved { color: green; }
+        .status-pending { color: orange; }
+        .status-rejected { color: red; }
+        .print-date { margin-top: 10px; font-size: 12px; text-align: right; color: #666; }
+        @media print {
+          button { display: none; }
+        }
+      `);
+      printWindow.document.write('</style></head><body>');
+      
+      // Add header with title and date
+      printWindow.document.write('<div class="header">');
+      printWindow.document.write('<h1>Research Papers Report</h1>');
+      printWindow.document.write('</div>');
+      
+      // Add filters applied
+      printWindow.document.write('<div class="filters">');
+      printWindow.document.write('<p><strong>Filters applied:</strong> ');
+      if (printOptions.filterByUser) printWindow.document.write(`User: ${printOptions.userId}, `);
+      if (printOptions.filterByStatus) printWindow.document.write(`Status: ${printOptions.status}, `);
+      if (printOptions.filterByYear) printWindow.document.write(`Year: ${printOptions.year}, `);
+      if (printOptions.filterByDepartment) printWindow.document.write(`Department: ${printOptions.department}, `);
+      printWindow.document.write('</p></div>');
+      
+      // Get filtered papers
+      const papers = filteredPapers();
+      
+      // Add table with papers
+      printWindow.document.write('<table>');
+      
+      // Table header
+      printWindow.document.write('<thead><tr>');
+      if (printOptions.paperDetailsToInclude.title) 
+        printWindow.document.write('<th>Paper Title</th>');
+      if (printOptions.paperDetailsToInclude.applicant) 
+        printWindow.document.write('<th>Applicant</th>');
+      if (printOptions.paperDetailsToInclude.department) 
+        printWindow.document.write('<th>Department</th>');
+      if (printOptions.paperDetailsToInclude.year) 
+        printWindow.document.write('<th>Year</th>');
+      if (printOptions.paperDetailsToInclude.status) 
+        printWindow.document.write('<th>Status</th>');
+      if (printOptions.showShareAmount) 
+        printWindow.document.write('<th>Authors</th><th>Share Amount</th>');
+      printWindow.document.write('</tr></thead>');
+      
+      // Table body
+      printWindow.document.write('<tbody>');
+      papers.forEach(paper => {
+        printWindow.document.write('<tr>');
+        if (printOptions.paperDetailsToInclude.title) 
+          printWindow.document.write(`<td>${paper.paperTitle}</td>`);
+        if (printOptions.paperDetailsToInclude.applicant) 
+          printWindow.document.write(`<td>${paper.applicantName}</td>`);
+        if (printOptions.paperDetailsToInclude.department) 
+          printWindow.document.write(`<td>${paper.department}</td>`);
+        if (printOptions.paperDetailsToInclude.year) 
+          printWindow.document.write(`<td>${paper.pubYear}</td>`);
+        if (printOptions.paperDetailsToInclude.status) 
+          printWindow.document.write(`<td class="status-${paper.status}">${paper.status}</td>`);
+        
+        if (printOptions.showShareAmount && paper.authors) {
+          printWindow.document.write('<td>');
+          paper.authors.forEach((author, index) => {
+            printWindow.document.write(`${author.name}${index < paper.authors.length - 1 ? ', ' : ''}`);
+          });
+          printWindow.document.write('</td>');
+          
+          printWindow.document.write('<td>');
+          paper.authors.forEach((author, index) => {
+            if (author.amount || author.shareValue) {
+              printWindow.document.write(`${author.name}: ₹${author.amount || 'N/A'} (${author.shareValue || 'N/A'}%)${index < paper.authors.length - 1 ? '<br>' : ''}`);
+            } else {
+              printWindow.document.write('N/A');
+            }
+          });
+          printWindow.document.write('</td>');
+        }
+        
+        printWindow.document.write('</tr>');
+      });
+      printWindow.document.write('</tbody></table>');
+      
+      // Add print date
+      const now = new Date();
+      printWindow.document.write(`<div class="print-date">Generated on: ${now.toLocaleDateString()} ${now.toLocaleTimeString()}</div>`);
+      
+      // Add print button
+      printWindow.document.write('<button onclick="window.print()">Print Report</button>');
+      
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
     }
-
-    return filtered;
   };
 
   return (
     <>
-      <PrintOptionsDialog
+      <Dialog
         open={open}
         onClose={onClose}
-        printOptions={printOptions}
-        setPrintOptions={setPrintOptions}
-        uniqueUsers={uniqueUsers}
-        uniqueDepartments={uniqueDepartments}
-        uniqueYears={uniqueYears}
-        maxPossibleAward={maxPossibleAward}
-        maxPossibleAuthors={maxPossibleAuthors}
-        filteredPapers={filteredPapers}
-        printRef={printRef} // Pass the printRef to the dialog
-      />
-
-      <div ref={printRef} style={{ display: "none" }}>
-        {/* Print content will be generated dynamically */}
-      </div>
+        maxWidth="md"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            boxShadow: '0 8px 24px rgba(0,0,0,0.15)',
+          }
+        }}
+      >
+        <DialogTitle sx={{ borderBottom: '1px solid #e0e0e0', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Box sx={{ display: 'flex', alignItems: 'center' }}>
+            <PrintIcon sx={{ mr: 1, color: 'primary.main' }} />
+            <Typography variant="h6">Research Papers Print Options</Typography>
+          </Box>
+          <IconButton edge="end" onClick={onClose}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+        
+        <DialogContent dividers>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6}>
+              <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                <ArticleIcon sx={{ mr: 1, fontSize: 20, color: 'primary.main' }} />
+                Content Options
+              </Typography>
+              <FormGroup>
+                <FormControlLabel
+                  control={
+                    <Checkbox 
+                      checked={printOptions.showShareAmount}
+                      onChange={handleOptionChange}
+                      name="showShareAmount"
+                    />
+                  }
+                  label="Include Author Share Amounts"
+                />
+                <Typography variant="caption" color="text.secondary" sx={{ ml: 4, mb: 1 }}>
+                  Will show each author's share amount and percentage
+                </Typography>
+                
+                <Typography variant="subtitle2" sx={{ mt: 2, mb: 1 }}>Details to Include:</Typography>
+                <Box sx={{ ml: 2 }}>
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={printOptions.paperDetailsToInclude.title}
+                        onChange={handleOptionChange}
+                        name="paperDetailsToInclude.title"
+                      />
+                    }
+                    label="Paper Title"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={printOptions.paperDetailsToInclude.applicant}
+                        onChange={handleOptionChange}
+                        name="paperDetailsToInclude.applicant"
+                      />
+                    }
+                    label="Applicant Name"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={printOptions.paperDetailsToInclude.department}
+                        onChange={handleOptionChange}
+                        name="paperDetailsToInclude.department"
+                      />
+                    }
+                    label="Department"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={printOptions.paperDetailsToInclude.year}
+                        onChange={handleOptionChange}
+                        name="paperDetailsToInclude.year"
+                      />
+                    }
+                    label="Publication Year"
+                  />
+                  <FormControlLabel
+                    control={
+                      <Checkbox 
+                        checked={printOptions.paperDetailsToInclude.status}
+                        onChange={handleOptionChange}
+                        name="paperDetailsToInclude.status"
+                      />
+                    }
+                    label="Status"
+                  />
+                </Box>
+              </FormGroup>
+            </Grid>
+            
+            <Grid item xs={12} sm={6}>
+              <Typography variant="subtitle1" gutterBottom sx={{ display: 'flex', alignItems: 'center' }}>
+                <PersonIcon sx={{ mr: 1, fontSize: 20, color: 'primary.main' }} />
+                Filter Options
+              </Typography>
+              
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={printOptions.filterByUser}
+                    onChange={handleOptionChange}
+                    name="filterByUser"
+                  />
+                }
+                label="Filter by User"
+              />
+              {printOptions.filterByUser && (
+                <FormControl fullWidth sx={{ mt: 1, mb: 2 }}>
+                  <InputLabel id="user-select-label">Select User</InputLabel>
+                  <Select
+                    labelId="user-select-label"
+                    value={printOptions.userId}
+                    label="Select User"
+                    onChange={(e) => handleOptionChange({ target: { name: 'userId', value: e.target.value } })}
+                    size="small"
+                  >
+                    {uniqueUsers.map(user => (
+                      <MenuItem key={user} value={user}>{user}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={printOptions.filterByStatus}
+                    onChange={handleOptionChange}
+                    name="filterByStatus"
+                  />
+                }
+                label="Filter by Status"
+              />
+              {printOptions.filterByStatus && (
+                <FormControl component="fieldset" sx={{ ml: 4, mb: 2 }}>
+                  <RadioGroup
+                    name="status"
+                    value={printOptions.status}
+                    onChange={handleOptionChange}
+                  >
+                    <FormControlLabel value="all" control={<Radio size="small" />} label="All" />
+                    <FormControlLabel value="approved" control={<Radio size="small" />} label="Approved" />
+                    <FormControlLabel value="pending" control={<Radio size="small" />} label="Pending" />
+                    <FormControlLabel value="rejected" control={<Radio size="small" />} label="Rejected" />
+                  </RadioGroup>
+                </FormControl>
+              )}
+              
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={printOptions.filterByYear}
+                    onChange={handleOptionChange}
+                    name="filterByYear"
+                  />
+                }
+                label="Filter by Year"
+              />
+              {printOptions.filterByYear && (
+                <FormControl fullWidth sx={{ mt: 1, mb: 2 }}>
+                  <InputLabel id="year-select-label">Select Year</InputLabel>
+                  <Select
+                    labelId="year-select-label"
+                    value={printOptions.year}
+                    label="Select Year"
+                    onChange={(e) => handleOptionChange({ target: { name: 'year', value: e.target.value } })}
+                    size="small"
+                  >
+                    {uniqueYears.map(year => (
+                      <MenuItem key={year} value={year}>{year}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+              
+              <FormControlLabel
+                control={
+                  <Checkbox 
+                    checked={printOptions.filterByDepartment}
+                    onChange={handleOptionChange}
+                    name="filterByDepartment"
+                  />
+                }
+                label="Filter by Department"
+              />
+              {printOptions.filterByDepartment && (
+                <FormControl fullWidth sx={{ mt: 1, mb: 2 }}>
+                  <InputLabel id="dept-select-label">Select Department</InputLabel>
+                  <Select
+                    labelId="dept-select-label"
+                    value={printOptions.department}
+                    label="Select Department"
+                    onChange={(e) => handleOptionChange({ target: { name: 'department', value: e.target.value } })}
+                    size="small"
+                  >
+                    {uniqueDepartments.map(dept => (
+                      <MenuItem key={dept} value={dept}>{dept}</MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              )}
+            </Grid>
+          </Grid>
+          
+          <Box sx={{ mt: 3 }}>
+            <Typography variant="subtitle1" gutterBottom>
+              Preview ({filteredPapers().length} papers match your criteria)
+            </Typography>
+            <Paper variant="outlined" sx={{ maxHeight: 200, overflow: 'auto' }}>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      {printOptions.paperDetailsToInclude.title && <TableCell>Title</TableCell>}
+                      {printOptions.paperDetailsToInclude.applicant && <TableCell>Applicant</TableCell>}
+                      {printOptions.paperDetailsToInclude.department && <TableCell>Department</TableCell>}
+                      {printOptions.paperDetailsToInclude.year && <TableCell>Year</TableCell>}
+                      {printOptions.paperDetailsToInclude.status && <TableCell>Status</TableCell>}
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {filteredPapers().slice(0, 5).map((paper) => (
+                      <TableRow key={paper.id}>
+                        {printOptions.paperDetailsToInclude.title && 
+                          <TableCell>{paper.paperTitle}</TableCell>}
+                        {printOptions.paperDetailsToInclude.applicant && 
+                          <TableCell>{paper.applicantName}</TableCell>}
+                        {printOptions.paperDetailsToInclude.department && 
+                          <TableCell>{paper.department}</TableCell>}
+                        {printOptions.paperDetailsToInclude.year && 
+                          <TableCell>{paper.pubYear}</TableCell>}
+                        {printOptions.paperDetailsToInclude.status && 
+                          <TableCell>{paper.status}</TableCell>}
+                      </TableRow>
+                    ))}
+                    {filteredPapers().length > 5 && (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">
+                          ...and {filteredPapers().length - 5} more
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Paper>
+          </Box>
+          
+          <div ref={printRef} style={{ display: 'none' }}>
+            {/* Print content will be generated dynamically */}
+          </div>
+        </DialogContent>
+        
+        <DialogActions sx={{ borderTop: '1px solid #e0e0e0', p: 2 }}>
+          <Button onClick={onClose} color="secondary">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handlePrint} 
+            variant="contained" 
+            color="primary" 
+            startIcon={<PrintIcon />}
+            disabled={filteredPapers().length === 0}
+          >
+            Generate Print View
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 };
