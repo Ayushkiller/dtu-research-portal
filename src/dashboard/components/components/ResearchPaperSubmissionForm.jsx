@@ -20,7 +20,6 @@ import {
   RadioGroup,
   Radio,
   FormControl,
-  FormLabel,
   Tooltip,
   Card,
   CardContent,
@@ -35,6 +34,7 @@ import {
   AWARD_CATEGORIES,
 } from "../utils/awardDistributionUtils";
 import AuthorsList from "./FormFields/AuthorsList";
+import InfoIcon from '@mui/icons-material/Info';
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -121,7 +121,6 @@ export default function ResearchPaperSubmissionForm({
           accountNo: response.data.bankAccount,
           ifscCode: response.data.ifsc,
         },
-       
       }));
     } catch (error) {
       console.error("Failed to fetch user:", error);
@@ -345,13 +344,19 @@ export default function ResearchPaperSubmissionForm({
         JSON.stringify(formDataToSubmit, null, 2)
       );
 
-      if (formDataToSubmit.authors.length === 1 && formDataToSubmit.authors[0].name === formDataToSubmit.applicantName) {
+      if (
+        formDataToSubmit.authors.length === 1 &&
+        formDataToSubmit.authors[0].name === formDataToSubmit.applicantName
+      ) {
         formDataToSubmit.status = "Submitted";
         setSnackbarMessage("Form submitted successfully!");
         setSnackbarOpen(true);
         return;
       }
-      if(formDataToSubmit.authors.length > 1 && formDataToSubmit.authors[0].name === formDataToSubmit.applicantName){
+      if (
+        formDataToSubmit.authors.length > 1 &&
+        formDataToSubmit.authors[0].name === formDataToSubmit.applicantName
+      ) {
         formDataToSubmit.authors[0].confirmationStatus = true;
         formDataToSubmit.authors[0].confirmationToken.used = true;
       }
@@ -379,7 +384,10 @@ export default function ResearchPaperSubmissionForm({
     try {
       // Send the form data to the backend
       const filteredAuthors = authors.filter(
-        (author) => author.name !== formData.applicantName && author.isExternal === false && author.email !== formData.email
+        (author) =>
+          author.name !== formData.applicantName &&
+          author.isExternal === false &&
+          author.email !== formData.email
       );
 
       const authorEmailData = filteredAuthors.map((author) => ({
@@ -401,6 +409,14 @@ export default function ResearchPaperSubmissionForm({
     }
   };
 
+  // Add an updated handler for manual share adjustment
+  const handleManualShareUpdate = (updatedAuthors) => {
+    setFormData((prev) => ({
+      ...prev,
+      authors: updatedAuthors,
+    }));
+  };
+  
   useEffect(() => {
     if (formData.authors.length > 0 && formData.totalAwardAmount > 0) {
       const authorShares = calculateAuthorShares(
@@ -408,19 +424,21 @@ export default function ResearchPaperSubmissionForm({
         formData.totalAwardAmount,
         formData.zFactor // Pass the Z factor
       );
+      
       setFormData((prev) => ({
         ...prev,
         authors: prev.authors.map((author, index) => ({
           ...author,
           shareValue: authorShares[index].shareValue,
           amount: authorShares[index].amount,
-          confirmationToken: {
+          calculatedMinShare: authorShares[index].shareValue * 0.5, // Store minimum value as 50% of calculated share
+          confirmationToken: author.confirmationToken || {
             token: Math.random().toString(36).substring(2, 12),
           },
         })),
       }));
     }
-  }, [formData.authors, formData.totalAwardAmount, formData.zFactor]);
+  }, [formData.authors.length, formData.totalAwardAmount, formData.zFactor]);
 
   const handleAwardCategoryChange = (e) => {
     const category = e.target.value;
@@ -576,35 +594,53 @@ export default function ResearchPaperSubmissionForm({
 
               {/* Add Z Factor slider */}
               <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Contribution Factor (Z): {formData.zFactor.toFixed(2)}
-                </Typography>
                 <Tooltip
-                  title="Z factor determines how the total award is distributed. Higher values distribute more evenly."
+                  title={
+                    <Box>
+                      <Typography variant="body2" gutterBottom>
+                        Z factor determines how the total award is distributed:
+                      </Typography>
+                      <Typography variant="body2">
+                        • Higher Z (1.0): More equal distribution among authors
+                      </Typography>
+                      <Typography variant="body2">
+                        • Lower Z (0.5): Rewards first authors more than others
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        You can also manually adjust shares after setting this value.
+                      </Typography>
+                    </Box>
+                  }
                   placement="top"
                 >
-                  <Box sx={{ width: "100%" }}>
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="1"
-                      step="0.01"
-                      value={formData.zFactor}
-                      onChange={handleZFactorChange}
-                      style={{ width: "100%" }}
-                    />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mt: 1,
-                      }}
-                    >
-                      <Typography variant="caption">0.5 (Minimum)</Typography>
-                      <Typography variant="caption">1.0 (Maximum)</Typography>
-                    </Box>
+                  <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Contribution Factor (Z): {formData.zFactor.toFixed(2)}
+                    </Typography>
+                    <InfoIcon fontSize="small" color="action" sx={{ ml: 1 }} />
                   </Box>
                 </Tooltip>
+                <Box sx={{ width: "100%" }}>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="1"
+                    step="0.01"
+                    value={formData.zFactor}
+                    onChange={handleZFactorChange}
+                    style={{ width: "100%" }}
+                  />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mt: 1,
+                    }}
+                  >
+                    <Typography variant="caption">0.5 (Minimum)</Typography>
+                    <Typography variant="caption">1.0 (Maximum)</Typography>
+                  </Box>
+                </Box>
               </Grid>
             </Grid>
 
@@ -633,6 +669,8 @@ export default function ResearchPaperSubmissionForm({
                 editable
                 onEditAuthor={editAuthor}
                 onRemoveAuthor={removeAuthor}
+                totalAwardAmount={formData.totalAwardAmount}
+                onUpdateShareValues={handleManualShareUpdate}
               />
             </Grid>
             {/* Author Dialog */}
@@ -761,7 +799,11 @@ export default function ResearchPaperSubmissionForm({
             </Grid>
             <Grid item xs={12}>
               <Typography variant="subtitle1">Authors</Typography>
-              <AuthorsList authors={formData.authors} editable={false} />
+              <AuthorsList 
+                authors={formData.authors} 
+                editable={false}
+                totalAwardAmount={formData.totalAwardAmount}
+              />
               {formData.authors.length > 0 &&
                 formData.awardCategory === "COMMENDABLE" && (
                   <Typography variant="body2" color="error" sx={{ mt: 1 }}>
