@@ -23,6 +23,11 @@ import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import PendingIcon from "@mui/icons-material/Pending";
 import CloseIcon from "@mui/icons-material/Close";
+import Dialog from "@mui/material/Dialog";
+import DialogActions from "@mui/material/DialogActions";
+import DialogContent from "@mui/material/DialogContent";
+import DialogContentText from "@mui/material/DialogContentText";
+import DialogTitle from "@mui/material/DialogTitle";
 
 export default function DeanGrid() {
   const [usersData, setUsersData] = React.useState([]);
@@ -31,6 +36,8 @@ export default function DeanGrid() {
   const [selectedUser, setSelectedUser] = React.useState(null);
   const [openPaperModal, setOpenPaperModal] = React.useState(false);
   const [openModal, setOpenModal] = React.useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = React.useState(false);
+  const [actionToConfirm, setActionToConfirm] = React.useState(null);
 
   const [me, setMe] = React.useState(null);
   const [loading, setLoading] = React.useState(true);
@@ -106,15 +113,6 @@ export default function DeanGrid() {
         const response = await API.get("/committee/research-papers");
 
         const papers = response.data.map((paper) => {
-          const paperDetails = paper.paperDetails;
-
-          const researchPaperData = Object.entries(paperDetails).map(
-            ([key, value]) => ({
-              questionText: value.questionText,
-              answer: value.answer,
-            })
-          );
-
           return {
             id: paper._id,
             applicantName: paper.applicantName,
@@ -122,7 +120,6 @@ export default function DeanGrid() {
             paperTitle: paper.paperTitle,
             status: paper.status,
             pubYear: paper.pubYear,
-            researchPaperData: researchPaperData,
           };
         });
 
@@ -191,6 +188,82 @@ export default function DeanGrid() {
     }
   };
 
+  // Update paper status
+  const handleUpdateStatus = async (status) => {
+    if (!selectedPaper) return;
+
+    if (me.userType !== "committeeMember") {
+      setError(
+        `You don't have permission to ${status
+          .replace(/([A-Z])/g, " $1")
+          .toLowerCase()} research paper`
+      );
+      return;
+    }
+
+    try {
+      const response = await API.put(
+        `/committee/research-papers/${selectedPaper.id}/status`,
+        {
+          status,
+          comments: null,
+        }
+      );
+
+      console.log(response.data.message);
+
+      // Update the local state to reflect the change
+      setResearchPapersData((prevPapers) =>
+        prevPapers.map((paper) =>
+          paper.id === selectedPaper.id ? { ...paper, status } : paper
+        )
+      );
+
+      setError(null);
+      setOpenPaperModal(false);
+
+      // Show success message (you can use a snackbar here instead)
+      alert(`Research paper status updated to: ${status}`);
+    } catch (error) {
+      console.error("Failed to update research paper status:", error);
+      setError("Failed to update status. Please try again.");
+    }
+  };
+
+  // New confirmation handling functions
+  const handleConfirmAction = (status) => {
+    setActionToConfirm(status);
+    setConfirmDialogOpen(true);
+  };
+
+  const handleConfirmDialogClose = () => {
+    setConfirmDialogOpen(false);
+    setActionToConfirm(null);
+  };
+
+  const handleConfirmDialogConfirm = () => {
+    if (actionToConfirm) {
+      handleUpdateStatus(actionToConfirm);
+      setConfirmDialogOpen(false);
+      setActionToConfirm(null);
+    }
+  };
+
+  const getStatusDescription = (status) => {
+    switch (status) {
+      case "approved":
+        return "This paper has been approved and published";
+      case "rejected":
+        return "This paper has been rejected";
+      case "suspended":
+        return "This paper has been suspended pending further review";
+      case "underReview":
+        return "This paper is currently under review";
+      default:
+        return "";
+    }
+  };
+
   // DataGrid columns
   const columns = [
     {
@@ -214,7 +287,7 @@ export default function DeanGrid() {
     {
       field: "userType",
       headerName: "User Type",
-      flex: 1,
+      flex:1,
       renderCell: (params) => (
         <Chip
           size="small"
@@ -306,80 +379,6 @@ export default function DeanGrid() {
       ),
     },
   ];
-
-  // Update paper status
-  const handleUpdateStatus = async (status) => {
-    if (!selectedPaper) return;
-    
-    if (me.userType !== "committeeMember") {
-      setError(
-        `You don't have permission to ${status
-          .replace(/([A-Z])/g, " $1")
-          .toLowerCase()} research paper`
-      );
-      return;
-    }
-
-    try {
-      const response = await API.put(
-        `/committee/research-papers/${selectedPaper.id}/status`,
-        {
-          status,
-          comments: null,
-        }
-      );
-
-      console.log(response.data.message);
-
-      // Update the local state to reflect the change
-      setResearchPapersData((prevPapers) =>
-        prevPapers.map((paper) =>
-          paper.id === selectedPaper.id ? { ...paper, status } : paper
-        )
-      );
-
-      setError(null);
-      setOpenPaperModal(false);
-
-      // Show success message (you can use a snackbar here instead)
-      alert(`Research paper status updated to: ${status}`);
-    } catch (error) {
-      console.error("Failed to update research paper status:", error);
-      setError("Failed to update status. Please try again.");
-    }
-  };
-
-  // Get button color based on action
-  const getButtonColor = (action) => {
-    switch (action) {
-      case "suspended":
-        return "warning";
-      case "underReview":
-        return "info";
-      case "approved":
-        return "success";
-      case "rejected":
-        return "error";
-      default:
-        return "primary";
-    }
-  };
-
-  // Get button icon based on action
-  const getButtonIcon = (action) => {
-    switch (action) {
-      case "suspended":
-        return <WarningIcon />;
-      case "underReview":
-        return <PendingIcon />;
-      case "approved":
-        return <CheckCircleIcon />;
-      case "rejected":
-        return <CancelIcon />;
-      default:
-        return null;
-    }
-  };
 
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
@@ -635,6 +634,16 @@ export default function DeanGrid() {
                     {selectedPaper.pubYear}
                   </Typography>
                 </Grid>
+                <Grid item xs={12}>
+                  <Box sx={{ mt: 1, mb: 2 }}>
+                    <Alert 
+                      icon={getStatusIcon(selectedPaper.status)} 
+                      severity={getStatusColor(selectedPaper.status)}
+                    >
+                      {getStatusDescription(selectedPaper.status)}
+                    </Alert>
+                  </Box>
+                </Grid>
               </Grid>
 
               <Typography
@@ -644,18 +653,6 @@ export default function DeanGrid() {
                 Paper Information
               </Typography>
               <Divider sx={{ mb: 2 }} />
-
-              <Stack spacing={2}>
-                {selectedPaper.researchPaperData.map((data, index) => (
-                  <Box key={index} sx={{ mb: 1 }}>
-                    <Typography variant="subtitle2" color="text.secondary">
-                      {data.questionText}
-                    </Typography>
-                    <Typography variant="body2">{data.answer}</Typography>
-                  </Box>
-                ))}
-              </Stack>
-
               <Typography
                 variant="subtitle1"
                 sx={{ mt: 4, mb: 1, fontWeight: "medium" }}
@@ -667,50 +664,109 @@ export default function DeanGrid() {
               <Box
                 sx={{
                   display: "flex",
+                  flexDirection: { xs: "column", sm: "row" },
                   flexWrap: "wrap",
                   gap: 2,
-                  justifyContent: "space-between",
+                  mt: 3,
                 }}
               >
-                {["suspended", "underReview", "approved", "rejected"].map(
-                  (status) => {
-                    const isCommitteeMember = me?.userType === "committeeMember";
-
-                    return (
-                      <Tooltip
-                        key={status}
-                        title={
-                          !isCommitteeMember
-                            ? `You don't have permission to ${status} papers`
-                            : ""
-                        }
+                <Box sx={{ display: "flex", gap: 2, flexGrow: 1, justifyContent: "center" }}>
+                  <Tooltip title={me?.userType !== "committeeMember" ? "You don't have permission" : "Set paper under review"}>
+                    <span>
+                      <Button
+                        variant="outlined"
+                        color="info"
+                        onClick={() => handleUpdateStatus("underReview")}
+                        disabled={!me?.userType === "committeeMember" || selectedPaper.status === "underReview"}
+                        startIcon={<PendingIcon />}
+                        fullWidth
                       >
-                        <span>
-                          <Button
-                            variant="contained"
-                            color={getButtonColor(status)}
-                            onClick={() => handleUpdateStatus(status)}
-                            disabled={
-                              !isCommitteeMember || selectedPaper.status === status
-                            }
-                            startIcon={getButtonIcon(status)}
-                            sx={{ minWidth: "120px" }}
-                          >
-                            {status === "underReview"
-                              ? "Review"
-                              : status.charAt(0).toUpperCase() +
-                                status.slice(1)}
-                          </Button>
-                        </span>
-                      </Tooltip>
-                    );
-                  }
-                )}
+                        Under Review
+                      </Button>
+                    </span>
+                  </Tooltip>
+                  
+                  <Tooltip title={me?.userType !== "committeeMember" ? "You don't have permission" : "Mark as suspended"}>
+                    <span>
+                      <Button
+                        variant="outlined"
+                        color="warning"
+                        onClick={() => handleUpdateStatus("suspended")}
+                        disabled={!me?.userType === "committeeMember" || selectedPaper.status === "suspended"}
+                        startIcon={<WarningIcon />}
+                        fullWidth
+                      >
+                        Suspend
+                      </Button>
+                    </span>
+                  </Tooltip>
+                </Box>
+                
+                <Divider flexItem sx={{ display: { xs: 'block', sm: 'none' } }} />
+                
+                <Box sx={{ display: "flex", gap: 2, flexGrow: 1, justifyContent: "center" }}>
+                  <Tooltip title={me?.userType !== "committeeMember" ? "You don't have permission" : "Approve this paper"}>
+                    <span>
+                      <Button
+                        variant="contained"
+                        color="success"
+                        onClick={() => handleConfirmAction("approved")}
+                        disabled={!me?.userType === "committeeMember" || selectedPaper.status === "approved"}
+                        startIcon={<CheckCircleIcon />}
+                        fullWidth
+                      >
+                        Approve
+                      </Button>
+                    </span>
+                  </Tooltip>
+                  
+                  <Tooltip title={me?.userType !== "committeeMember" ? "You don't have permission" : "Reject this paper"}>
+                    <span>
+                      <Button
+                        variant="contained"
+                        color="error"
+                        onClick={() => handleConfirmAction("rejected")}
+                        disabled={!me?.userType === "committeeMember" || selectedPaper.status === "rejected"}
+                        startIcon={<CancelIcon />}
+                        fullWidth
+                      >
+                        Reject
+                      </Button>
+                    </span>
+                  </Tooltip>
+                </Box>
               </Box>
             </>
           )}
         </Paper>
       </Modal>
+      
+      {/* Confirmation Dialog */}
+      <Dialog
+        open={confirmDialogOpen}
+        onClose={handleConfirmDialogClose}
+      >
+        <DialogTitle>
+          {actionToConfirm === "approved" ? "Approve Paper?" : "Reject Paper?"}
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText>
+            Are you sure you want to {actionToConfirm === "approved" ? "approve" : "reject"} this research paper?
+            This action cannot be easily undone.
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleConfirmDialogClose}>Cancel</Button>
+          <Button 
+            onClick={handleConfirmDialogConfirm}
+            color={actionToConfirm === "approved" ? "success" : "error"}
+            variant="contained"
+            autoFocus
+          >
+            Confirm {actionToConfirm === "approved" ? "Approval" : "Rejection"}
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Copyright sx={{ mt: 4, pb: 4 }} />
     </Container>

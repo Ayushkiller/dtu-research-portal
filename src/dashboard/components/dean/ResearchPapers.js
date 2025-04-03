@@ -6,7 +6,6 @@ import {
   Grid,
   Card,
   CardContent,
-  Chip,
   Tabs,
   Tab,
   InputAdornment,
@@ -22,7 +21,6 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import SearchIcon from "@mui/icons-material/Search";
 import CloseIcon from "@mui/icons-material/Close";
 import PrintIcon from "@mui/icons-material/Print";
-import PrintResearchPapers from "./PrintResearchPapers";
 
 export const ResearchPapers = ({
   researchPapersData,
@@ -362,13 +360,6 @@ export const ResearchPapers = ({
           }}
         />
       </Box>
-
-      <PrintResearchPapers
-        open={printModalOpen}
-        onClose={() => setPrintModalOpen(false)}
-        researchPapersData={researchPapersData}
-        columns={enhancedPaperColumns}
-      />
     </Paper>
   );
 };

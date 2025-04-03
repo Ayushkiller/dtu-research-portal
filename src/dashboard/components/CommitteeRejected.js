@@ -1,6 +1,15 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { Typography, CircularProgress, Box, Grid, Modal, Paper, Button, CssBaseline } from "@mui/material";
+import {
+  Typography,
+  CircularProgress,
+  Box,
+  Grid,
+  Modal,
+  Paper,
+  Button,
+  CssBaseline,
+} from "@mui/material";
 import { useParams } from "react-router-dom";
 import API from "../../api/axios";
 import { DataGrid } from "@mui/x-data-grid";
@@ -25,122 +34,100 @@ const xThemeComponents = {
   ...treeViewCustomizations,
 };
 
-
 const CommitteeRejected = () => {
   const { userId } = useParams(); // Get ID from URL params
   const [approval, setApproval] = useState(null);
   const [loading, setLoading] = useState(true);
-    const token = Cookies.get("token");
-    const [me, setMe] = useState({});
-    const navigate = useNavigate();
-  
+  const token = Cookies.get("token");
+  const [me, setMe] = useState({});
+  const navigate = useNavigate();
+
   const [error, setError] = useState(null);
-    const [researchPapersData, setResearchPapersData] = React.useState([]);
-    const [selectedPaper, setSelectedPaper] = React.useState(null);
-    const [openPaperModal, setOpenPaperModal] = React.useState(false);
+  const [researchPapersData, setResearchPapersData] = React.useState([]);
+  const [selectedPaper, setSelectedPaper] = React.useState(null);
+  const [openPaperModal, setOpenPaperModal] = React.useState(false);
 
-    React.useEffect(() => {
-        const fetchMe = async () => {
-          try {
-            const response = await API.get("/user/me");
-            // console.log("-----------------",response.data);
-            setMe(response.data);
-          } catch (error) {
-            console.error("Error fetching user:", error);
-          }
-        };
-        fetchMe();
-      }, []);
+  React.useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const response = await API.get("/user/me");
+        // console.log("-----------------",response.data);
+        setMe(response.data);
+      } catch (error) {
+        console.error("Error fetching user:", error);
+      }
+    };
+    fetchMe();
+  }, []);
 
-     React.useEffect(() => {
-        if (token) {
-          try {
-            const decodedToken = jwtDecode(token);
-            if (decodedToken.userType !== "committeeMember") {
-              alert("You are not authorized to view this page");
-              navigate("/signin");
-            }
-          } catch (error) {
-            console.error("Error decoding token:", error);
-            navigate("/signin");
-          }
-        } else {
+  React.useEffect(() => {
+    if (token) {
+      try {
+        const decodedToken = jwtDecode(token);
+        if (decodedToken.userType !== "committeeMember") {
+          alert("You are not authorized to view this page");
           navigate("/signin");
         }
-      }, [token, navigate]);
-  
+      } catch (error) {
+        console.error("Error decoding token:", error);
+        navigate("/signin");
+      }
+    } else {
+      navigate("/signin");
+    }
+  }, [token, navigate]);
 
   useEffect(() => {
-   const fetchApprovals = async () => {
-        try {
-            await API
-            .get(`/research-paper-submission/rejected/${userId}`)
-            .then((response) => {
-                const papers = response.data.map((paper) => {
-                    const paperDetails = paper.paperDetails;
-                    console.log(paperDetails);
-                    // Map questionText to answer
-                    const researchPaperData = Object.entries(paperDetails).map(
-                      ([key, value], index) => {
-                        console.log(`Processing entry ${index}:`, value);
-                        return {
-                          questionText: value.questionText,
-                          answer: value.answer,
-                        };
-                      }
-                    );
-                    console.log("research paper data ", researchPaperData);
-          
-          
-                    return {
-                      id: paper._id,
-                      applicantName: paper.applicantName,
-                      department: paper.department,
-                      paperTitle: paper.paperTitle,
-                      status: paper.status,
-                      pubYear: paper.pubYear,
-                      researchPaperData: researchPaperData,
-                    };
-                  });
-          
-                  setResearchPapersData(papers);
-              setLoading(false);
-            })
-            .catch((error) => {
-              console.error("Error fetching approval data:", error);
-              setError("Failed to load approval details");
-              setLoading(false);
+    const fetchApprovals = async () => {
+      try {
+        await API.get(`/research-paper-submission/rejected/${userId}`)
+          .then((response) => {
+            const papers = response.data.map((paper) => {
+              const paperDetails = paper.paperDetails;
+              console.log(paperDetails);
+
+              return {
+                id: paper._id,
+                applicantName: paper.applicantName,
+                department: paper.department,
+                paperTitle: paper.paperTitle,
+                status: paper.status,
+                pubYear: paper.pubYear,
+              };
             });
-        } catch (error) {
+
+            setResearchPapersData(papers);
+            setLoading(false);
+          })
+          .catch((error) => {
+            console.error("Error fetching approval data:", error);
+            setError("Failed to load approval details");
+            setLoading(false);
+          });
+      } catch (error) {
         setError(error.response.data.error);
         setLoading(false);
-        }
-
-   }
-   fetchApprovals();
+      }
+    };
+    fetchApprovals();
   }, [userId]);
-
-
 
   const handleResearchRowClick = (params) => {
     setSelectedPaper(params.row);
     setOpenPaperModal(true);
   };
 
-
   const handleClosePaperModal = () => {
     setOpenPaperModal(false);
     setSelectedPaper(null);
   };
 
-  
   const handleUpdateStatus = async (status) => {
     if (!selectedPaper) return;
     if (me.userType !== "committeeMember") {
       alert("You don't have permission to perform this action");
       return;
     }
-    
 
     try {
       const response = await API.put(
@@ -172,92 +159,90 @@ const CommitteeRejected = () => {
   if (error) return <Typography color="error">{error}</Typography>;
 
   return (
-
-     <AppTheme themeComponents={xThemeComponents}>
-          <CssBaseline enableColorScheme />
-          <Box sx={{ display: "flex" }}>
-            <SideMenu />
-            <AppNavbar />
-      <Grid container spacing={2} columns={12}>
-      <Typography component="h2" variant="h6" sx={{ mb: 2, mt: 2 }}>
-        Research Papers
-      </Typography>
-        <Grid item xs={12} lg={9}>
-          <div style={{ height: 400, width: "700px" }}>
-            <DataGrid
-              rows={researchPapersData}
-              columns={paperColumns}
-              pageSize={5}
-              rowsPerPageOptions={[5]}
-              onRowClick={handleResearchRowClick}
-            />
-          </div>
-        </Grid>
-      </Grid>
-
-      <Modal open={openPaperModal} onClose={handleClosePaperModal}>
-        <Paper sx={{ p: 4, width: 400, mx: "auto", my: "10%" }}>
-          <Typography variant="h6" sx={{ mb: 2 }}>
-            Paper Details
+    <AppTheme themeComponents={xThemeComponents}>
+      <CssBaseline enableColorScheme />
+      <Box sx={{ display: "flex" }}>
+        <SideMenu />
+        <AppNavbar />
+        <Grid container spacing={2} columns={12}>
+          <Typography component="h2" variant="h6" sx={{ mb: 2, mt: 2 }}>
+            Research Papers
           </Typography>
+          <Grid item xs={12} lg={9}>
+            <div style={{ height: 400, width: "700px" }}>
+              <DataGrid
+                rows={researchPapersData}
+                columns={paperColumns}
+                pageSize={5}
+                rowsPerPageOptions={[5]}
+                onRowClick={handleResearchRowClick}
+              />
+            </div>
+          </Grid>
+        </Grid>
 
-          {selectedPaper && (
-            <>
-              <Typography>Paper Title: {selectedPaper.paperTitle}</Typography>
-              <Typography>
-                Applicant Name: {selectedPaper.applicantName}
-              </Typography>
-              <Typography>Department: {selectedPaper.department}</Typography>
-              <Typography>Publication Year: {selectedPaper.pubYear}</Typography>
-              <Typography>
-                Impact Factor Of Journal: {selectedPaper.impactFactor}
-              </Typography>
-              {selectedPaper.researchPaperData.map((data, index) => (
-                <div key={index}>
-                  <Typography>
-                    {data.questionText}: {data.answer}
-                  </Typography>
-                </div>
-              ))}
+        <Modal open={openPaperModal} onClose={handleClosePaperModal}>
+          <Paper sx={{ p: 4, width: 400, mx: "auto", my: "10%" }}>
+            <Typography variant="h6" sx={{ mb: 2 }}>
+              Paper Details
+            </Typography>
 
-              {/* Approve and Reject Buttons */}
-              <Box
-                sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}
-              >
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => handleUpdateStatus("suspended")}
+            {selectedPaper && (
+              <>
+                <Typography>Paper Title: {selectedPaper.paperTitle}</Typography>
+                <Typography>
+                  Applicant Name: {selectedPaper.applicantName}
+                </Typography>
+                <Typography>Department: {selectedPaper.department}</Typography>
+                <Typography>
+                  Publication Year: {selectedPaper.pubYear}
+                </Typography>
+                <Typography>
+                  Impact Factor Of Journal: {selectedPaper.impactFactor}
+                </Typography>
+            
+                {/* Approve and Reject Buttons */}
+                <Box
+                  sx={{
+                    mt: 4,
+                    display: "flex",
+                    justifyContent: "space-between",
+                  }}
                 >
-                  Suspend
-                </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => handleUpdateStatus("underReview")}
-                >
-                  Review
-                </Button>
-                <Button
-                  variant="contained"
-                  color="secondary"
-                  onClick={() => handleUpdateStatus("approved")}
-                >
-                  Approve
-                </Button>
-                <Button
-                  variant="contained"
-                  color="error"
-                  onClick={() => handleUpdateStatus("rejected")}
-                >
-                  Reject
-                </Button>
-              </Box>
-            </>
-          )}
-        </Paper>
-      </Modal>
-    </Box>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handleUpdateStatus("suspended")}
+                  >
+                    Suspend
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handleUpdateStatus("underReview")}
+                  >
+                    Review
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    onClick={() => handleUpdateStatus("approved")}
+                  >
+                    Approve
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="error"
+                    onClick={() => handleUpdateStatus("rejected")}
+                  >
+                    Reject
+                  </Button>
+                </Box>
+              </>
+            )}
+          </Paper>
+        </Modal>
+      </Box>
     </AppTheme>
   );
 };

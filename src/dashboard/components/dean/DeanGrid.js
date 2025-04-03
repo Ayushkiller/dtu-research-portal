@@ -1,57 +1,68 @@
 import * as React from "react";
-import Box from "@mui/material/Box";
+import { 
+  Box, 
+  Chip, 
+  Typography, 
+  Paper, 
+  Container, 
+  Divider,
+  Tabs,
+  Tab,
+  TextField,
+  InputAdornment,
+  Button,
+  useTheme
+} from "@mui/material";
 import Copyright from "../../internals/components/Copyright";
 import API from "../../../api/axios";
-import { Chip } from "@mui/material";
 import CancelIcon from "@mui/icons-material/Cancel";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import PendingIcon from "@mui/icons-material/Pending";
+import SearchIcon from "@mui/icons-material/Search";
+import RefreshIcon from "@mui/icons-material/Refresh";
 import { UserManagement } from "./UserManagement";
 import { ResearchPapers } from "./ResearchPapers";
-import { QuestionManagement } from "./QuestionManagement";
-import { PaperDetailsModal, QuestionDetailsModal } from "./Modals";
+import { PaperDetailsModal} from "./Modals";
 import {
   getStatusColor,
   columns,
-  paperColumns, // Make sure paperColumns is imported
-  questionColumns,
-  questionTypeOptions,
+  paperColumns,
 } from "./deanGridHelper";
 
+// Custom Tab Panel for better organization
+function TabPanel(props) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`dean-tabpanel-${index}`}
+      aria-labelledby={`dean-tab-${index}`}
+      {...other}
+    >
+      {value === index && (
+        <Box sx={{ pt: 3 }}>
+          {children}
+        </Box>
+      )}
+    </div>
+  );
+}
+
 export default function DeanGrid() {
+  const theme = useTheme();
   const [usersData, setUsersData] = React.useState([]);
   const [researchPapersData, setResearchPapersData] = React.useState([]);
   const [selectedPaper, setSelectedPaper] = React.useState(null);
   const [openPaperModal, setOpenPaperModal] = React.useState(false);
-  const [questions, setQuestions] = React.useState([]);
-  const [openQuestionModal, setOpenQuestionModal] = React.useState(false);
-  const [selectedQuestion, setSelectedQuestion] = React.useState(null);
-  const [questionUpdateModel, setQuestionUpdateModel] = React.useState(null);
-  const [dropdownOptions, setDropdownOptions] = React.useState([]);
   const [searchText, setSearchText] = React.useState("");
   const [paperFilter, setPaperFilter] = React.useState("all");
   const [tabValue, setTabValue] = React.useState(0);
-
-  const fetchQuestions = async () => {
-    try {
-      const response = await API.get("/dean/question");
-      console.log(response.data);
-
-      const questions = await response.data.map((question) => ({
-        id: question._id,
-        options: question.options,
-        questionText: question.questionText,
-        questionType: question.questionType,
-        required: question.isRequired,
-      }));
-
-      setQuestions(questions);
-    } catch (error) {
-      console.error("Error fetching users:", error);
-    }
-  };
+  const [isLoading, setIsLoading] = React.useState(false);
 
   const fetchUsers = async () => {
+    setIsLoading(true);
     try {
       const response = await API.get("/dean/accounts");
       const users = response.data.map((user) => ({
@@ -71,27 +82,17 @@ export default function DeanGrid() {
       setUsersData(updatedUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
   const fetchPapers = async () => {
+    setIsLoading(true);
     try {
       const response = await API.get("/dean/research-papers");
 
       const papers = response.data.map((paper) => {
-        const paperDetails = paper.paperDetails;
-        // Map questionText to answer
-        const researchPaperData = Object.entries(paperDetails).map(
-          ([key, value], index) => {
-            return {
-              questionText: value.questionText,
-              answer: value.answer,
-            };
-          }
-        );
-
-        console.log(researchPaperData);
-
         return {
           id: paper._id,
           applicantName: paper.applicantName,
@@ -99,81 +100,39 @@ export default function DeanGrid() {
           paperTitle: paper.paperTitle,
           status: paper.status,
           pubYear: paper.pubYear,
-          researchPaperData: researchPaperData,
         };
       });
 
       setResearchPapersData(papers);
     } catch (error) {
-      console.error("Error fetching users:", error);
+      console.error("Error fetching papers:", error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  React.useEffect(() => {
-    fetchQuestions();
-  }, []);
   // Fetch users data from backend
   React.useEffect(() => {
     fetchUsers();
+    fetchPapers();
   }, []);
 
   React.useEffect(() => {
-    fetchPapers();
-  }, [selectedPaper]);
+    if (selectedPaper === null && openPaperModal === false) {
+      fetchPapers();
+    }
+  }, [selectedPaper, openPaperModal]);
 
   const handleResearchRowClick = (params) => {
     setSelectedPaper(params.row);
     setOpenPaperModal(true);
-  };
-  const handleQuestionRowClick = (params) => {
-    console.log(params.row);
-    setSelectedQuestion(params?.row);
-    setOpenQuestionModal(true);
   };
 
   const handleClosePaperModal = () => {
     setOpenPaperModal(false);
     setSelectedPaper(null);
   };
-  const handleCloseQuestionModal = () => {
-    setOpenQuestionModal(false);
-    setSelectedQuestion(null);
-  };
-  const handleCloseUpdateQuestionModal = () => {
-    setQuestionUpdateModel(false);
-  };
-
-  const handleQuestionTypeChange = (event) => {
-    setSelectedQuestion({
-      ...selectedQuestion,
-      questionType: event.target.value,
-    });
-  };
-
-  const handleOptionChange = (index, event) => {
-    const updatedOptions = [...dropdownOptions];
-    updatedOptions[index] = event.target.value;
-    setDropdownOptions(updatedOptions);
-    setSelectedQuestion({
-      ...selectedQuestion,
-      options: updatedOptions,
-    });
-  };
-
-  const handleAddOption = () => {
-    setDropdownOptions([...dropdownOptions, ""]);
-  };
-
-  const handleRemoveOption = (index) => {
-    const updatedOptions = [...dropdownOptions];
-    updatedOptions.splice(index, 1);
-    setDropdownOptions(updatedOptions);
-    setSelectedQuestion({
-      ...selectedQuestion,
-      options: updatedOptions,
-    });
-  };
-
+ 
   const handleUpdateStatus = async (status) => {
     if (!selectedPaper) return;
 
@@ -182,13 +141,36 @@ export default function DeanGrid() {
         status,
         comments: null, // You can allow the user to add comments if needed
       });
-      fetchPapers();
+      
+      // Update local state first for immediate feedback
+      setResearchPapersData(prevData => 
+        prevData.map(paper => 
+          paper.id === selectedPaper.id ? {...paper, status} : paper
+        )
+      );
 
-      alert(`Research paper ${status}`);
+      // Show toast notification instead of alert
+      // Replace with your toast library of choice
+      // toast.success(`Research paper ${status}`);
+      
       setOpenPaperModal(false); // Close modal after action
     } catch (error) {
       console.error("Failed to update research paper status:", error);
-      alert("Failed to update status. Please try again.");
+      // toast.error("Failed to update status. Please try again.");
+    }
+  };
+
+  const handleTabChange = (event, newValue) => {
+    setTabValue(newValue);
+    setSearchText("");
+    setPaperFilter("all");
+  };
+
+  const handleRefresh = () => {
+    if (tabValue === 0) {
+      fetchUsers();
+    } else {
+      fetchPapers();
     }
   };
 
@@ -216,54 +198,102 @@ export default function DeanGrid() {
                 <CancelIcon />
               )
             }
+            sx={{ 
+              fontWeight: 500,
+              minWidth: '90px',
+              justifyContent: 'center'
+            }}
           />
         ),
       },
     ];
   }, []);
+
   return (
-    <Box sx={{ flexGrow: 1, p: 3 }}>
-      {/* Users Section */}
-      <UserManagement
-        usersData={usersData}
-        setUsersData={setUsersData}
-        columns={columns}
-        fetchUsers={fetchUsers}
-        searchText={searchText}
-        setSearchText={setSearchText}
-      />
+    <Container maxWidth="xl" sx={{ mt: 2 }}>
+      <Paper 
+        elevation={3} 
+        sx={{ 
+          p: 3, 
+          borderRadius: 2,
+          mb: 4
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
+            Administration Dashboard
+          </Typography>
+          <Button 
+            variant="outlined" 
+            startIcon={<RefreshIcon />}
+            onClick={handleRefresh}
+            disabled={isLoading}
+          >
+            Refresh
+          </Button>
+        </Box>
+        
+        <Divider sx={{ mb: 3 }} />
 
-      {/* Research Papers Section */}
-      <ResearchPapers
-        researchPapersData={researchPapersData}
-        handleResearchRowClick={handleResearchRowClick}
-        searchText={searchText}
-        setSearchText={setSearchText}
-        paperFilter={paperFilter}
-        setPaperFilter={setPaperFilter}
-        tabValue={tabValue}
-        setTabValue={setTabValue}
-        getStatusColor={getStatusColor}
-        enhancedPaperColumns={enhancedPaperColumns}
-      />
+        <Box sx={{ borderBottom: 1, borderColor: 'divider' }}>
+          <Tabs 
+            value={tabValue} 
+            onChange={handleTabChange} 
+            aria-label="admin tabs"
+            indicatorColor="primary"
+            textColor="primary"
+            variant="fullWidth"
+            sx={{ mb: 2 }}
+          >
+            <Tab label="User Management" />
+            <Tab label="Research Papers" />
+          </Tabs>
+        </Box>
 
-      {/* Question Management Section */}
-      <QuestionManagement
-        questions={questions}
-        questionColumns={questionColumns}
-        handleQuestionRowClick={handleQuestionRowClick}
-        selectedQuestion={selectedQuestion}
-        setSelectedQuestion={setSelectedQuestion}
-        dropdownOptions={dropdownOptions}
-        setDropdownOptions={setDropdownOptions}
-        questionTypeOptions={questionTypeOptions}
-        handleQuestionTypeChange={handleQuestionTypeChange}
-        handleOptionChange={handleOptionChange}
-        handleAddOption={handleAddOption}
-        handleRemoveOption={handleRemoveOption}
-        fetchQuestions={fetchQuestions}
-        API={API}
-      />
+        <Box sx={{ mb: 3 }}>
+          <TextField
+            fullWidth
+            variant="outlined"
+            placeholder={tabValue === 0 ? "Search users..." : "Search research papers..."}
+            value={searchText}
+            onChange={(e) => setSearchText(e.target.value)}
+            InputProps={{
+              startAdornment: (
+                <InputAdornment position="start">
+                  <SearchIcon />
+                </InputAdornment>
+              ),
+            }}
+            size="small"
+          />
+        </Box>
+
+        <TabPanel value={tabValue} index={0}>
+          <UserManagement
+            usersData={usersData}
+            setUsersData={setUsersData}
+            columns={columns}
+            fetchUsers={fetchUsers}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            isLoading={isLoading}
+          />
+        </TabPanel>
+
+        <TabPanel value={tabValue} index={1}>
+          <ResearchPapers
+            researchPapersData={researchPapersData}
+            handleResearchRowClick={handleResearchRowClick}
+            searchText={searchText}
+            setSearchText={setSearchText}
+            paperFilter={paperFilter}
+            setPaperFilter={setPaperFilter}
+            getStatusColor={getStatusColor}
+            enhancedPaperColumns={enhancedPaperColumns}
+            isLoading={isLoading}
+          />
+        </TabPanel>
+      </Paper>
 
       {/* Paper Details Modal */}
       <PaperDetailsModal
@@ -273,28 +303,9 @@ export default function DeanGrid() {
         handleUpdateStatus={handleUpdateStatus}
       />
 
-      {/* Question Details Modal */}
-      <QuestionDetailsModal
-        openQuestionModal={openQuestionModal}
-        handleCloseQuestionModal={handleCloseQuestionModal}
-        selectedQuestion={selectedQuestion}
-        setQuestionUpdateModel={setQuestionUpdateModel}
-        setDropdownOptions={setDropdownOptions}
-        fetchQuestions={fetchQuestions}
-        API={API}
-        questionUpdateModel={questionUpdateModel}
-        handleCloseUpdateQuestionModal={handleCloseUpdateQuestionModal}
-        questionTypeOptions={questionTypeOptions}
-        handleQuestionTypeChange={handleQuestionTypeChange}
-        handleOptionChange={handleOptionChange}
-        handleAddOption={handleAddOption}
-        handleRemoveOption={handleRemoveOption}
-        dropdownOptions={dropdownOptions}
-        setSelectedQuestion={setSelectedQuestion}
-        setOpenQuestionModal={setOpenQuestionModal} // Add this line
-      />
-
-      <Copyright sx={{ mt: 6, mb: 4, textAlign: "center" }} />
-    </Box>
+      <Box sx={{ mt: 4, mb: 2, textAlign: "center" }}>
+        <Copyright />
+      </Box>
+    </Container>
   );
 }
