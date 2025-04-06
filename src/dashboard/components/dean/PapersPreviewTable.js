@@ -1,60 +1,63 @@
 import React from 'react';
-import {
-  Typography,
-  Paper,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
-  Box,
-} from "@mui/material";
+import { 
+  Table, 
+  TableBody, 
+  TableCell, 
+  TableContainer, 
+  TableHead, 
+  TableRow, 
+  Paper 
+} from '@mui/material';
 
 export const PapersPreviewTable = ({ filteredPapers, printOptions }) => {
+  const papers = filteredPapers();
+  
+  // Get the first 5 papers for preview
+  const previewPapers = papers.slice(0, 5);
+
   return (
-    <Box sx={{ mt: 3 }}>
-      <Typography variant="subtitle1" gutterBottom>
-        Preview ({filteredPapers().length} papers match your criteria)
-      </Typography>
-      <Paper variant="outlined" sx={{ maxHeight: 200, overflow: 'auto' }}>
-        <TableContainer>
-          <Table size="small">
-            <TableHead>
-              <TableRow>
-                {printOptions.paperDetailsToInclude.title && <TableCell>Title</TableCell>}
-                {printOptions.paperDetailsToInclude.applicant && <TableCell>Applicant</TableCell>}
-                {printOptions.paperDetailsToInclude.department && <TableCell>Department</TableCell>}
-                {printOptions.paperDetailsToInclude.year && <TableCell>Year</TableCell>}
-                {printOptions.paperDetailsToInclude.status && <TableCell>Status</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredPapers().slice(0, 5).map((paper) => (
-                <TableRow key={paper.id}>
-                  {printOptions.paperDetailsToInclude.title && 
-                    <TableCell>{paper.paperTitle}</TableCell>}
-                  {printOptions.paperDetailsToInclude.applicant && 
-                    <TableCell>{paper.applicantName}</TableCell>}
-                  {printOptions.paperDetailsToInclude.department && 
-                    <TableCell>{paper.department}</TableCell>}
-                  {printOptions.paperDetailsToInclude.year && 
-                    <TableCell>{paper.pubYear}</TableCell>}
-                  {printOptions.paperDetailsToInclude.status && 
-                    <TableCell>{paper.status}</TableCell>}
-                </TableRow>
-              ))}
-              {filteredPapers().length > 5 && (
-                <TableRow>
-                  <TableCell colSpan={5} align="center">
-                    ...and {filteredPapers().length - 5} more
-                  </TableCell>
-                </TableRow>
+    <TableContainer component={Paper} variant="outlined" sx={{ maxHeight: 300 }}>
+      <Table size="small" aria-label="preview table">
+        <TableHead>
+          <TableRow sx={{ backgroundColor: '#f5f5f5' }}>
+            {printOptions.paperDetailsToInclude.title && <TableCell><strong>Paper Title</strong></TableCell>}
+            {printOptions.paperDetailsToInclude.applicant && <TableCell><strong>Applicant</strong></TableCell>}
+            {printOptions.paperDetailsToInclude.department && <TableCell><strong>Department</strong></TableCell>}
+            {printOptions.paperDetailsToInclude.year && <TableCell><strong>Year</strong></TableCell>}
+            {printOptions.paperDetailsToInclude.status && <TableCell><strong>Status</strong></TableCell>}
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {previewPapers.map((paper, index) => (
+            <TableRow key={index} sx={{ 
+              '&:nth-of-type(odd)': { backgroundColor: 'rgba(0,0,0,0.02)' }
+            }}>
+              {printOptions.paperDetailsToInclude.title && (
+                <TableCell>{paper.paperTitle}</TableCell>
               )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      </Paper>
-    </Box>
+              {printOptions.paperDetailsToInclude.applicant && (
+                <TableCell>{paper.applicantName}</TableCell>
+              )}
+              {printOptions.paperDetailsToInclude.department && (
+                <TableCell>{paper.department}</TableCell>
+              )}
+              {printOptions.paperDetailsToInclude.year && (
+                <TableCell>{paper.pubYear}</TableCell>
+              )}
+              {printOptions.paperDetailsToInclude.status && (
+                <TableCell>{paper.status}</TableCell>
+              )}
+            </TableRow>
+          ))}
+          {papers.length > 5 && (
+            <TableRow>
+              <TableCell colSpan={Object.values(printOptions.paperDetailsToInclude).filter(v => v).length}>
+                <em>...and {papers.length - 5} more papers</em>
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };

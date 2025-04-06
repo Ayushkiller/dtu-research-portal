@@ -11,7 +11,8 @@ import {
   TextField,
   InputAdornment,
   Button,
-  useTheme
+  useTheme,
+  Tooltip
 } from "@mui/material";
 import Copyright from "../../internals/components/Copyright";
 import API from "../../../api/axios";
@@ -23,6 +24,7 @@ import RefreshIcon from "@mui/icons-material/Refresh";
 import { UserManagement } from "./UserManagement";
 import { ResearchPapers } from "./ResearchPapers";
 import { PaperDetailsModal} from "./Modals";
+import { exportToExcel } from "./exportUtils";
 import {
   getStatusColor,
   columns,
@@ -60,6 +62,7 @@ export default function DeanGrid() {
   const [paperFilter, setPaperFilter] = React.useState("all");
   const [tabValue, setTabValue] = React.useState(0);
   const [isLoading, setIsLoading] = React.useState(false);
+  const [researchTabValue, setResearchTabValue] = React.useState(0); // Add this state for nested tabs
 
   const fetchUsers = async () => {
     setIsLoading(true);
@@ -111,7 +114,15 @@ export default function DeanGrid() {
     }
   };
 
-  // Fetch users data from backend
+  const handleExportToExcel = async () => {
+    setIsLoading(true);
+    try {
+      await exportToExcel();
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   React.useEffect(() => {
     fetchUsers();
     fetchPapers();
@@ -139,24 +150,18 @@ export default function DeanGrid() {
     try {
       await API.put(`/dean/research-papers/${selectedPaper.id}/status`, {
         status,
-        comments: null, // You can allow the user to add comments if needed
+        comments: null,
       });
       
-      // Update local state first for immediate feedback
       setResearchPapersData(prevData => 
         prevData.map(paper => 
           paper.id === selectedPaper.id ? {...paper, status} : paper
         )
       );
-
-      // Show toast notification instead of alert
-      // Replace with your toast library of choice
-      // toast.success(`Research paper ${status}`);
       
-      setOpenPaperModal(false); // Close modal after action
+      setOpenPaperModal(false);
     } catch (error) {
       console.error("Failed to update research paper status:", error);
-      // toast.error("Failed to update status. Please try again.");
     }
   };
 
@@ -223,14 +228,16 @@ export default function DeanGrid() {
           <Typography variant="h4" component="h1" sx={{ fontWeight: 600, color: theme.palette.primary.main }}>
             Administration Dashboard
           </Typography>
-          <Button 
-            variant="outlined" 
-            startIcon={<RefreshIcon />}
-            onClick={handleRefresh}
-            disabled={isLoading}
-          >
-            Refresh
-          </Button>
+          <Box sx={{ display: 'flex', gap: 2 }}>
+            <Button 
+              variant="outlined" 
+              startIcon={<RefreshIcon />}
+              onClick={handleRefresh}
+              disabled={isLoading}
+            >
+              Refresh
+            </Button>
+          </Box>
         </Box>
         
         <Divider sx={{ mb: 3 }} />
@@ -291,11 +298,13 @@ export default function DeanGrid() {
             getStatusColor={getStatusColor}
             enhancedPaperColumns={enhancedPaperColumns}
             isLoading={isLoading}
+            tabValue={researchTabValue} // Pass the proper state
+            setTabValue={setResearchTabValue} // Pass the proper state setter
+            exportToExcel={handleExportToExcel} // Pass the export function to ResearchPapers
           />
         </TabPanel>
       </Paper>
 
-      {/* Paper Details Modal */}
       <PaperDetailsModal
         openPaperModal={openPaperModal}
         handleClosePaperModal={handleClosePaperModal}

@@ -133,4 +133,50 @@ router.put("/accounts/demote/:userId", authorizeDean, async (req, res) => {
   }
 });
 
+/**
+ * @route GET /api/dean/research-papers/export
+ * @description Get all research papers with complete details for export
+ * @access Private (Dean only)
+ */
+router.get('/research-papers/export', authorizeDean, async (req, res) => {
+  try {
+    // Fetch research papers with complete data including authors
+    const papers = await ResearchPaper.find()
+      .select('-__v')
+      .sort({ submittedAt: -1 });
+    
+    console.log(`Sending ${papers.length} papers for export`);
+    
+    // Ensure all papers have the necessary fields
+    const validatedPapers = papers.map(paper => {
+      const paperObj = paper.toObject();
+      
+      // Add default values for potentially missing fields
+      return {
+        ...paperObj,
+        paperTitle: paperObj.paperTitle || 'Untitled',
+        department: paperObj.department || 'Not specified',
+        pubYear: paperObj.pubYear || 'N/A',
+        status: paperObj.status || 'Unknown',
+        impactFactor: paperObj.impactFactor || 'N/A',
+        totalAwardAmount: paperObj.totalAwardAmount || 0,
+        awardCategory: paperObj.awardCategory || 'Unknown',
+        authors: Array.isArray(paperObj.authors) ? paperObj.authors.map(author => ({
+          ...author,
+          name: author.name || 'Unknown',
+          email: author.email || `unknown-${Math.random().toString(36).substring(7)}@example.com`,
+          isExternal: author.isExternal || false,
+          amount: author.amount || 0,
+          shareValue: author.shareValue || 0
+        })) : []
+      };
+    });
+
+    res.status(200).json(validatedPapers);
+  } catch (error) {
+    console.error('Error fetching research papers for export:', error);
+    res.status(500).json({ error: 'Failed to fetch research papers' });
+  }
+});
+
 module.exports = router;

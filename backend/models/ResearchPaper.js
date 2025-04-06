@@ -29,6 +29,17 @@ const researchPaperSchema = new mongoose.Schema(
     employeeId: { type: String, required: true },
     photograph: { type: String },
     totalAwardAmount: { type: Number, required: true },
+    awardCategory: { 
+      type: String, 
+      enum: ["OUTSTANDING", "PREMIER", "COMMENDABLE"], 
+      required: true 
+    },
+    zFactor: { 
+      type: Number, 
+      min: 0.5, 
+      max: 1, 
+      default: 1 
+    },
     journalName: { type: String, required: true },
     authorType: { type: String, required: true },
     impactFactor: { type: String, required: true },

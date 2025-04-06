@@ -71,12 +71,6 @@ export default function ResearchPaperSubmissionForm({
       department: "",
       applicantType: "",
       photograph: null,
-      bankDetails: {
-        bankName: "",
-        branch: "",
-        accountNo: "",
-        ifscCode: "",
-      },
       awardCategory: "OUTSTANDING",
       totalAwardAmount: AWARD_CATEGORIES.OUTSTANDING.amount,
       authors: [],

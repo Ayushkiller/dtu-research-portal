@@ -3,25 +3,13 @@ import {
   Box,
   Typography,
   Grid,
-  List,
-  ListItem,
   IconButton,
   Button,
   Modal,
   Paper,
-  Divider,
-  FormControl,
-  FormLabel,
-  TextField,
-  Select,
-  MenuItem,
-  Dialog,
-  Chip,
+  Divider
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import DeleteIcon from "@mui/icons-material/Delete";
-import EditIcon from "@mui/icons-material/Edit";
-import AddIcon from "@mui/icons-material/Add";
 import ArticleIcon from "@mui/icons-material/Article";
 
 export const PaperDetailsModal = ({
