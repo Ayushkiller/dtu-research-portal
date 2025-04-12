@@ -79,27 +79,13 @@ const CommitteePending = () => {
                 const papers = response.data.map((paper) => {
                     const paperDetails = paper.paperDetails;
                     console.log(paperDetails);
-                    // Map questionText to answer
-                    const researchPaperData = Object.entries(paperDetails).map(
-                      ([key, value], index) => {
-                        console.log(`Processing entry ${index}:`, value);
-                        return {
-                          questionText: value.questionText,
-                          answer: value.answer,
-                        };
-                      }
-                    );
-                    console.log("research paper data ", researchPaperData);
-          
-          
                     return {
                       id: paper._id,
                       applicantName: paper.applicantName,
                       department: paper.department,
                       paperTitle: paper.paperTitle,
                       status: paper.status,
-                      pubYear: paper.pubYear,
-                      researchPaperData: researchPaperData,
+                      pubYear: paper.pubYear
                     };
                   });
           
@@ -212,14 +198,6 @@ const CommitteePending = () => {
               <Typography>
                 Impact Factor Of Journal: {selectedPaper.impactFactor}
               </Typography>
-              {selectedPaper.researchPaperData.map((data, index) => (
-                <div key={index}>
-                  <Typography>
-                    {data.questionText}: {data.answer}
-                  </Typography>
-                </div>
-              ))}
-
               {/* Approve and Reject Buttons */}
               <Box
                 sx={{ mt: 4, display: "flex", justifyContent: "space-between" }}

@@ -1,28 +1,25 @@
-const FormQuestion = require("../models/FormQuestion"); // Assuming the model is in the models folder
-const express = require('express');
+const express = require("express");
 const router = express.Router();
-const { authorizeDean } = require('../middlewares/authMiddleware'); // Middleware to check if user is a Dean
-const User = require('../models/User');
-const ResearchPaper = require('../models/ResearchPaper');
-const { default: mongoose } = require("mongoose");
-
+const { authorizeDean } = require("../middlewares/authMiddleware"); // Middleware to check if user is a Dean
+const User = require("../models/User");
+const ResearchPaper = require("../models/ResearchPaper");
 
 // Route to fetch all user accounts
-router.get('/accounts', authorizeDean, async (req, res) => {
-    try {
-        const users = await User.find();
-        res.status(200).json(users);
-    } catch (error) {
-        res.status(500).json({ error: 'Failed to fetch user accounts' });
-    }
+router.get("/accounts", authorizeDean, async (req, res) => {
+  try {
+    const users = await User.find();
+    res.status(200).json(users);
+  } catch (error) {
+    res.status(500).json({ error: "Failed to fetch user accounts" });
+  }
 });
 
 // Route to ban or remove an account
-router.put('/accounts/ban/:userId', authorizeDean, async (req, res) => {
+router.put("/accounts/ban/:userId", authorizeDean, async (req, res) => {
   const { userId } = req.params;
   try {
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     // Soft delete: deactivate account
     user.isBanned = true; // Add an `isBanned` field in the User schema if not already present
@@ -30,202 +27,156 @@ router.put('/accounts/ban/:userId', authorizeDean, async (req, res) => {
 
     res.status(200).json({ message: `User ${user.name} banned successfully` });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to ban user' });
+    res.status(500).json({ error: "Failed to ban user" });
   }
 });
 
 // Route to unban a user account
-router.put('/accounts/unban/:userId', authorizeDean, async (req, res) => {
+router.put("/accounts/unban/:userId", authorizeDean, async (req, res) => {
   const { userId } = req.params;
   try {
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
     user.isBanned = false; // Reactivate account
     await user.save();
 
-    res.status(200).json({ message: `User ${user.name} unbanned successfully` });
+    res
+      .status(200)
+      .json({ message: `User ${user.name} unbanned successfully` });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to unban user' });
+    res.status(500).json({ error: "Failed to unban user" });
   }
 });
 
-
 // Route to review research papers
-router.get('/research-papers', authorizeDean, async (req, res) => {
+router.get("/research-papers", authorizeDean, async (req, res) => {
   try {
     const researchPapers = await ResearchPaper.find({
-      status: { $ne: 'authorshipConfirmationPending' }
+      status: { $ne: "authorshipConfirmationPending" },
     });
     res.status(200).json(researchPapers);
   } catch (error) {
-    res.status(500).json({ error: 'Failed to fetch research papers' });
+    res.status(500).json({ error: "Failed to fetch research papers" });
   }
 });
 
 // Route to approve or reject a research paper
-router.put('/research-papers/:paperId/status', authorizeDean, async (req, res) => {
-  const { paperId } = req.params;
-  const { status, comments } = req.body; // status can be 'approved' or 'rejected'
+router.put(
+  "/research-papers/:paperId/status",
+  authorizeDean,
+  async (req, res) => {
+    const { paperId } = req.params;
+    const { status, comments } = req.body; // status can be 'approved' or 'rejected'
 
-  try {
-    const paper = await ResearchPaper.findById(paperId);
-    if (!paper) return res.status(404).json({ error: 'Research paper not found' });
-    
-    paper.status = status; // Add a `status` field in the ResearchPaper schema
-    paper.comments = comments || null; // Add a `comments` field in the schema if needed
-    await paper.save();
+    try {
+      const paper = await ResearchPaper.findById(paperId);
+      if (!paper)
+        return res.status(404).json({ error: "Research paper not found" });
 
-    res.status(200).json({ message: `Research paper ${status}` });
-  } catch (error) {
-    res.status(500).json({ error: 'Failed to update research paper status' });
+      paper.status = status; // Add a `status` field in the ResearchPaper schema
+      paper.comments = comments || null; // Add a `comments` field in the schema if needed
+      await paper.save();
+
+      res.status(200).json({ message: `Research paper ${status}` });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to update research paper status" });
+    }
   }
-});
+);
 
 // Route to promote a user to committee member
-router.put('/accounts/promote/:userId', authorizeDean, async (req, res) => {
+router.put("/accounts/promote/:userId", authorizeDean, async (req, res) => {
   const { userId } = req.params;
   try {
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ error: "User not found" });
     // Check if user is already a committee member
-    if (user.userType === 'committeeMember') {
-      return res.status(400).json({ error: 'User is already a committee member' });
+    if (user.userType === "committeeMember") {
+      return res
+        .status(400)
+        .json({ error: "User is already a committee member" });
     }
     // Save the previous role in case we need to revert
     const previousRole = user.userType;
     // Update user type to committee member
-    user.userType = 'committeeMember';
+    user.userType = "committeeMember";
     await user.save();
-    res.status(200).json({ 
+    res.status(200).json({
       message: `User ${user.name} promoted to committee member successfully`,
-      previousRole
+      previousRole,
     });
   } catch (error) {
-    console.error('Error promoting user:', error);
-    res.status(500).json({ error: 'Failed to promote user' });
+    console.error("Error promoting user:", error);
+    res.status(500).json({ error: "Failed to promote user" });
   }
 });
 
 // Route to demote a user from committee member
-router.put('/accounts/demote/:userId', authorizeDean, async (req, res) => {
+router.put("/accounts/demote/:userId", authorizeDean, async (req, res) => {
   const { userId } = req.params;
   try {
     const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: 'User not found' });
+    if (!user) return res.status(404).json({ error: "User not found" });
     // Check if user is actually a committee member
-    if (user.userType !== 'committeeMember') {
-      return res.status(400).json({ error: 'User is not a committee member' });
+    if (user.userType !== "committeeMember") {
+      return res.status(400).json({ error: "User is not a committee member" });
     }
-    user.userType = 'faculty';
+    user.userType = "faculty";
     await user.save();
-    res.status(200).json({ 
-      message: `User ${user.name} demoted from committee member successfully` 
+    res.status(200).json({
+      message: `User ${user.name} demoted from committee member successfully`,
     });
   } catch (error) {
-    console.error('Error demoting user:', error);
-    res.status(500).json({ error: 'Failed to demote user' });
+    console.error("Error demoting user:", error);
+    res.status(500).json({ error: "Failed to demote user" });
   }
 });
 
 /**
- * @route   POST /questions
- * @desc    Add a new question to the database
- * @access  Public
+ * @route GET /api/dean/research-papers/export
+ * @description Get all research papers with complete details for export
+ * @access Private (Dean only)
  */
-//
-//get all questions
-router.get("/question", async (req, res) => {
+router.get('/research-papers/export', authorizeDean, async (req, res) => {
   try {
-    const questions = await FormQuestion.find();
-    res.status(200).json(questions);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.post("/question", async (req, res) => {
-  try {
-    const { questionText, questionType = "text", options = [], isRequired = false } = req.body;
-
-    // Validate required fields
-    if (!questionText) {
-      return res.status(400).json({ error: "Question text is required" });
-    }
-
-    // Create a new question
-    const newQuestion = new FormQuestion({
-      questionText,
-      questionType,
-      options,
-      isRequired,
+    // Fetch research papers with complete data including authors
+    const papers = await ResearchPaper.find()
+      .select('-__v')
+      .sort({ submittedAt: -1 });
+    
+    console.log(`Sending ${papers.length} papers for export`);
+    
+    // Ensure all papers have the necessary fields
+    const validatedPapers = papers.map(paper => {
+      const paperObj = paper.toObject();
+      
+      // Add default values for potentially missing fields
+      return {
+        ...paperObj,
+        paperTitle: paperObj.paperTitle || 'Untitled',
+        department: paperObj.department || 'Not specified',
+        pubYear: paperObj.pubYear || 'N/A',
+        status: paperObj.status || 'Unknown',
+        impactFactor: paperObj.impactFactor || 'N/A',
+        totalAwardAmount: paperObj.totalAwardAmount || 0,
+        awardCategory: paperObj.awardCategory || 'Unknown',
+        authors: Array.isArray(paperObj.authors) ? paperObj.authors.map(author => ({
+          ...author,
+          name: author.name || 'Unknown',
+          email: author.email || `unknown-${Math.random().toString(36).substring(7)}@example.com`,
+          isExternal: author.isExternal || false,
+          amount: author.amount || 0,
+          shareValue: author.shareValue || 0
+        })) : []
+      };
     });
 
-    await newQuestion.save();
-    res.status(201).json({ message: "Question added successfully", question: newQuestion });
+    res.status(200).json(validatedPapers);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-/**
- * @route   DELETE /questions/:id
- * @desc    Remove a question by ID
- * @access  Public
- */
-router.delete("/question/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Check if the ID is valid
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Invalid question ID" });
-    }
-
-    // Delete the question
-    const deletedQuestion = await FormQuestion.findByIdAndDelete(id);
-
-    if (!deletedQuestion) {
-      return res.status(404).json({ error: "Question not found" });
-    }
-
-    res.status(200).json({ message: "Question removed successfully", question: deletedQuestion });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-});
-
-router.put("/question/:id", async (req, res) => {
-  try {
-    const { id } = req.params;
-    const { questionText, questionType = "text", options = [], isRequired = false } = req.body;
-
-    // Check if the ID is valid
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ error: "Invalid question ID" });
-    }
-
-    // Update the question
-    const updatedQuestion = await FormQuestion.findByIdAndUpdate(
-      id,
-      { questionText, questionType, options, isRequired },
-      { new: true }
-    );
-
-    if (!updatedQuestion) {
-      return res.status(404).json({ error: "Question not found" });
-    }
-
-    res.status(200).json({ message: "Question updated successfully", question: updatedQuestion });
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Error fetching research papers for export:', error);
+    res.status(500).json({ error: 'Failed to fetch research papers' });
   }
 });
 
 module.exports = router;
-
-

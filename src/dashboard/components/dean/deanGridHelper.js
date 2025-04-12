@@ -28,17 +28,3 @@ export const paperColumns = [
   { field: "pubYear", headerName: "Publication Year", flex: 1 },
   { field: "status", headerName: "Status", flex: 1 },
 ];
-
-export const questionColumns = [
-  { field: "questionText", headerName: "Question Text", flex: 1 },
-  { field: "questionType", headerName: "Question Type", flex: 1 },
-  { field: "required", headerName: "Required", flex: 1 },
-];
-
-export const questionTypeOptions = [
-  { value: "text", label: "Text" },
-  { value: "dropdown", label: "Dropdown" },
-  { value: "checkbox", label: "Checkbox" },
-  { value: "radio", label: "Radio" },
-  { value: "multiple_select", label: "Multiple Select" },
-];

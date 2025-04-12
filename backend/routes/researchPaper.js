@@ -10,10 +10,10 @@ router.post('/', async (req, res) => {
       if (typeof formData.authors === 'string') {
         formData.authors = JSON.parse(formData.authors);
       }
+      
+      // No need to parse researchPaperData as we're using direct fields now
       console.log(formData);
       
-   
-  
       const researchPaper = new ResearchPaper(formData);
       await researchPaper.save();
   
@@ -21,7 +21,6 @@ router.post('/', async (req, res) => {
         success: true,
         message: 'Research paper submitted successfully',
         data: researchPaper,
-
       });
     } catch (error) {
       console.error('Error submitting research paper:', error);

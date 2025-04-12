@@ -10,23 +10,10 @@ import {
   StepLabel,
   Box,
   Snackbar,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
+  Divider,
   TextField,
-  Checkbox,
-  FormControlLabel,
-  RadioGroup,
-  Radio,
-  FormControl,
-  FormLabel,
   Tooltip,
-  Card,
-  CardContent,
   InputLabel,
-  Select,
-  MenuItem,
 } from "@mui/material";
 import { styled } from "@mui/material/styles";
 import API from "../../../api/axios";
@@ -35,6 +22,11 @@ import {
   AWARD_CATEGORIES,
 } from "../utils/awardDistributionUtils";
 import AuthorsList from "./FormFields/AuthorsList";
+import InfoIcon from "@mui/icons-material/Info";
+import PaperDetailsForm from "./PaperDetailsForm";
+import AwardCategorySelection from "./AwardCategorySelection";
+import AuthorDialog from "./AuthorDialog";
+import ReviewStep from "./ReviewStep";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   padding: theme.spacing(4),
@@ -79,31 +71,32 @@ export default function ResearchPaperSubmissionForm({
       department: "",
       applicantType: "",
       photograph: null,
-      paperDetails: {}, // Store dynamically fetched questions here
-      bankDetails: {
-        bankName: "",
-        branch: "",
-        accountNo: "",
-        ifscCode: "",
-      },
-
-      awardCategory: "OUTSTANDING", // Default to Outstanding Research Award
+      awardCategory: "OUTSTANDING",
       totalAwardAmount: AWARD_CATEGORIES.OUTSTANDING.amount,
       authors: [],
-      zFactor: 1, // Default Z factor is 1 (max)
+      zFactor: 1,
+      journalName: "",
+      authorType: "",
+      impactFactor: "",
+      indexing: "",
+      volumeNo: "",
+      pageNo: "",
+      year: "",
+      publisher: "",
+      isPaidJournal: "",
+      paperLink: "",
+      doi: "",
+      hasMorePapers: "",
+      isEligible: "",
     }
   );
 
-  const [questions, setQuestions] = useState([]);
   const steps = ["Paper & Authors", "Review"];
 
   const fetchUser = async () => {
     try {
       const response = await API.get("/user/me");
-      console.log(response.data);
-
       setUser(response.data);
-
       setFormData((prev) => ({
         ...prev,
         applicantName: response.data.name,
@@ -114,60 +107,38 @@ export default function ResearchPaperSubmissionForm({
         applicantBiography: response.data.applicantBiography,
         employeeId: response.data.employeeId,
         photograph: response.data.applicantPhoto,
-
         bankDetails: {
-          bankName: response.data.bankName,
-          branch: response.data.branchName,
-          accountNo: response.data.bankAccount,
-          ifscCode: response.data.ifsc,
+          bankName: response.data.bankName || "",
+          branch: response.data.branchName || "",
+          accountNo: response.data.bankAccount || "",
+          ifscCode: response.data.ifsc || "",
         },
-       
       }));
     } catch (error) {
-      console.error("Failed to fetch user:", error);
       setSnackbarMessage("Failed to fetch user.");
       setSnackbarOpen(true);
     }
   };
+
   useEffect(() => {
-    // Fetch questions for the Paper Details section
-    const fetchQuestions = async () => {
-      try {
-        const response = await API.get("/dean/question");
-        setQuestions(response.data);
-      } catch (error) {
-        console.error("Failed to fetch questions:", error);
-        setSnackbarMessage("Failed to fetch questions.");
-        setSnackbarOpen(true);
-      }
-    };
-    fetchQuestions();
     fetchUser();
   }, []);
 
-  // New effect to add applicant as an internal author if not already added
   useEffect(() => {
-    // Check if form has been initialized with applicant data
     if (formData.applicantName && formData.email) {
-      // Check if the applicant is already in the authors list
       const applicantExists = formData.authors.some(
         (author) => author.email === formData.email
       );
-
-      // If not, add them as an internal author
       if (!applicantExists) {
         const applicantAuthor = {
           name: formData.applicantName,
           email: formData.email,
-          isExternal: false, // Applicant is always internal
-          bankDetails: {
-            ...formData.bankDetails,
-          },
+          isExternal: false,
+          bankDetails: { ...formData.bankDetails },
           confirmationToken: {
             token: Math.random().toString(36).substring(2, 12),
           },
         };
-
         setFormData((prev) => ({
           ...prev,
           authors: [...prev.authors, applicantAuthor],
@@ -178,22 +149,15 @@ export default function ResearchPaperSubmissionForm({
 
   const validateStep = (step) => {
     switch (step) {
-      case 0: // Paper Details
-        return questions.every(
-          (q) =>
-            !q.isRequired ||
-            (formData.paperDetails[q._id]?.answer &&
-              formData.paperDetails[q._id]?.answer.trim() !== "")
-        );
-      case 1: // Authors
-        return true; // Allow navigation even with no authors
-      case 2: // Review
+      case 0:
+        return true;
+      case 1:
         return true;
       default:
         return false;
     }
   };
-  // Author Management Methods
+
   const openAuthorDialog = () => {
     setCurrentAuthor({
       name: "",
@@ -216,8 +180,6 @@ export default function ResearchPaperSubmissionForm({
       ...currentAuthor,
       [name]: type === "checkbox" ? checked : value,
     };
-
-    // Handle nested bank details
     if (name.startsWith("bankDetails.")) {
       const bankDetailKey = name.split(".")[1];
       updatedAuthor.bankDetails = {
@@ -225,27 +187,23 @@ export default function ResearchPaperSubmissionForm({
         [bankDetailKey]: value,
       };
     }
-
     setCurrentAuthor(updatedAuthor);
   };
+
   const saveAuthor = () => {
     const updatedAuthors = [...formData.authors];
-
     if (editingAuthorIndex !== null) {
-      // Editing existing author
       updatedAuthors[editingAuthorIndex] = currentAuthor;
     } else {
-      // Adding new author
       updatedAuthors.push(currentAuthor);
     }
-
     setFormData((prev) => ({
       ...prev,
       authors: updatedAuthors,
     }));
-
     setAuthorDialogOpen(false);
   };
+
   const editAuthor = (index) => {
     setCurrentAuthor(formData.authors[index]);
     setEditingAuthorIndex(index);
@@ -261,10 +219,8 @@ export default function ResearchPaperSubmissionForm({
   };
 
   const handleNext = () => {
-    // Only move to the next step if validation passes
     if (validateStep(activeStep)) {
       if (activeStep === steps.length - 1) {
-        // If it's the last step, don't increment step, let the Submit button handle the form submission
         setActiveStep((prev) => prev);
       } else {
         setActiveStep((prev) => prev + 1);
@@ -279,32 +235,31 @@ export default function ResearchPaperSubmissionForm({
     setActiveStep((prev) => prev - 1);
   };
 
-  const handleChange = (e) => {
+  const handleInputChange = (e) => {
     const { name, value } = e.target;
-
-    // Find the question using the name (which is the question ID)
-    const question = questions.find((q) => q._id === name);
-
     setFormData((prev) => ({
       ...prev,
-      paperDetails: {
-        ...prev.paperDetails,
-        [name]: {
-          answer: value, // Store the answer
-          questionText: question?.questionText || "", // Store the question text
-        },
-      },
+      [name]: value,
     }));
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Ensure applicant is included as an author
+      const totalShares = formData.authors.reduce(
+        (sum, author) => sum + (author.shareValue || 0),
+        0
+      );
+      if (Math.round(totalShares) !== 100) {
+        setSnackbarMessage(
+          "Total share distribution must equal 100%. Please adjust the shares before submitting."
+        );
+        setSnackbarOpen(true);
+        return;
+      }
       const applicantExists = formData.authors.some(
         (author) => author.email === formData.email
       );
-
       if (!applicantExists && formData.applicantName && formData.email) {
         setSnackbarMessage(
           "You must include yourself as an author. Please add your details to the authors list."
@@ -312,12 +267,9 @@ export default function ResearchPaperSubmissionForm({
         setSnackbarOpen(true);
         return;
       }
-
-      // Clean up bank details format for all authors
       const formDataToSubmit = {
         ...formData,
         authors: formData.authors.map((author) => {
-          // Remove any flat bankDetails properties that might have been added incorrectly
           const {
             "bankDetails.bankName": bankName,
             "bankDetails.branch": branch,
@@ -325,8 +277,6 @@ export default function ResearchPaperSubmissionForm({
             "bankDetails.ifscCode": ifscCode,
             ...rest
           } = author;
-
-          // Ensure bank details are properly structured
           return {
             ...rest,
             bankDetails: {
@@ -338,38 +288,31 @@ export default function ResearchPaperSubmissionForm({
           };
         }),
       };
-
-      // Debug log to see the structure
-      console.log(
-        "Form data to submit:",
-        JSON.stringify(formDataToSubmit, null, 2)
-      );
-
-      if (formDataToSubmit.authors.length === 1 && formDataToSubmit.authors[0].name === formDataToSubmit.applicantName) {
+      if (
+        formDataToSubmit.authors.length === 1 &&
+        formDataToSubmit.authors[0].name === formDataToSubmit.applicantName
+      ) {
         formDataToSubmit.status = "Submitted";
         setSnackbarMessage("Form submitted successfully!");
         setSnackbarOpen(true);
         return;
       }
-      if(formDataToSubmit.authors.length > 1 && formDataToSubmit.authors[0].name === formDataToSubmit.applicantName){
+      if (
+        formDataToSubmit.authors.length > 1 &&
+        formDataToSubmit.authors[0].name === formDataToSubmit.applicantName
+      ) {
         formDataToSubmit.authors[0].confirmationStatus = true;
         formDataToSubmit.authors[0].confirmationToken.used = true;
       }
-
       const response = await API.post(
         "/research-paper-submission",
         formDataToSubmit
       );
-
-      console.log(response.data.data._id);
       const researchPaperId = response?.data?.data?._id;
-      console.log(researchPaperId);
-
       authorSendEmail(researchPaperId, formDataToSubmit.authors);
       setSnackbarMessage("Form submitted successfully!");
       setSnackbarOpen(true);
     } catch (error) {
-      console.error("Failed to submit the form:", error);
       setSnackbarMessage("Failed to submit the form.");
       setSnackbarOpen(true);
     }
@@ -377,28 +320,33 @@ export default function ResearchPaperSubmissionForm({
 
   const authorSendEmail = async (id, authors) => {
     try {
-      // Send the form data to the backend
       const filteredAuthors = authors.filter(
-        (author) => author.name !== formData.applicantName && author.isExternal === false && author.email !== formData.email
+        (author) =>
+          author.name !== formData.applicantName &&
+          author.isExternal === false &&
+          author.email !== formData.email
       );
-
       const authorEmailData = filteredAuthors.map((author) => ({
         name: author.name,
         email: author.email,
         token: author.confirmationToken.token,
       }));
-
-      const response = await API.post("/research-author-email/send", {
+      await API.post("/research-author-email/send", {
         authors: authorEmailData,
-        paperTitle: formData.paperDetails[questions[0]._id]?.answer,
+        paperTitle: formData.paperTitle,
         submissionId: id,
       });
-
       setSnackbarMessage("Emails sent successfully!");
-      console.log(response.results);
     } catch (error) {
       console.log(error);
     }
+  };
+
+  const handleManualShareUpdate = (updatedAuthors) => {
+    setFormData((prev) => ({
+      ...prev,
+      authors: updatedAuthors,
+    }));
   };
 
   useEffect(() => {
@@ -406,7 +354,7 @@ export default function ResearchPaperSubmissionForm({
       const authorShares = calculateAuthorShares(
         formData.authors,
         formData.totalAwardAmount,
-        formData.zFactor // Pass the Z factor
+        formData.zFactor
       );
       setFormData((prev) => ({
         ...prev,
@@ -414,13 +362,14 @@ export default function ResearchPaperSubmissionForm({
           ...author,
           shareValue: authorShares[index].shareValue,
           amount: authorShares[index].amount,
-          confirmationToken: {
+          calculatedMinShare: authorShares[index].shareValue * 0.5,
+          confirmationToken: author.confirmationToken || {
             token: Math.random().toString(36).substring(2, 12),
           },
         })),
       }));
     }
-  }, [formData.authors, formData.totalAwardAmount, formData.zFactor]);
+  }, [formData.authors.length, formData.totalAwardAmount, formData.zFactor]);
 
   const handleAwardCategoryChange = (e) => {
     const category = e.target.value;
@@ -431,7 +380,6 @@ export default function ResearchPaperSubmissionForm({
     }));
   };
 
-  // Add handler for Z factor changes
   const handleZFactorChange = (e) => {
     const zFactor = parseFloat(e.target.value);
     setFormData((prev) => ({
@@ -446,63 +394,11 @@ export default function ResearchPaperSubmissionForm({
         return (
           <>
             <Grid container spacing={2}>
-              {/* Award Category Selection */}
               <Grid item xs={12}>
-                <Typography variant="h6" gutterBottom>
-                  Award Category
-                </Typography>
-                <FormControl component="fieldset">
-                  <RadioGroup
-                    name="awardCategory"
-                    value={formData.awardCategory}
-                    onChange={handleAwardCategoryChange}
-                  >
-                    {Object.values(AWARD_CATEGORIES).map((category) => (
-                      <Card
-                        key={category.value}
-                        variant="outlined"
-                        sx={{
-                          mb: 2,
-                          border:
-                            formData.awardCategory === category.value
-                              ? "2px solid #3f51b5"
-                              : "1px solid rgba(0, 0, 0, 0.12)",
-                        }}
-                      >
-                        <CardContent>
-                          <FormControlLabel
-                            value={category.value}
-                            control={<Radio />}
-                            label={
-                              <Box>
-                                <Typography
-                                  variant="subtitle1"
-                                  component="span"
-                                >
-                                  {category.label} - ₹
-                                  {category.amount.toLocaleString()}
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  color="textSecondary"
-                                  sx={{ mt: 1 }}
-                                >
-                                  {category.description}
-                                </Typography>
-                                <Typography
-                                  variant="body2"
-                                  sx={{ fontStyle: "italic", mt: 0.5 }}
-                                >
-                                  Criteria: {category.criteria}
-                                </Typography>
-                              </Box>
-                            }
-                          />
-                        </CardContent>
-                      </Card>
-                    ))}
-                  </RadioGroup>
-                </FormControl>
+                <AwardCategorySelection
+                  awardCategory={formData.awardCategory}
+                  handleAwardCategoryChange={handleAwardCategoryChange}
+                />
               </Grid>
 
               <Grid item xs={12} sm={6}>
@@ -535,76 +431,67 @@ export default function ResearchPaperSubmissionForm({
                 />
               </Grid>
 
-              {questions.map((question) => (
-                <Grid item xs={12} sm={6} key={question._id}>
-                  {question.questionType === "text" && (
-                    <>
-                      <InputLabel>{question.questionText + "*"}</InputLabel>
-                      <TextField
-                        fullWidth
-                        // label={question.questionText}
-                        name={question._id}
-                        value={
-                          formData.paperDetails[question._id]?.answer || ""
-                        }
-                        onChange={handleChange}
-                        required={question.isRequired}
-                      />
-                    </>
-                  )}
-                  {question.questionType === "dropdown" && (
-                    <>
-                      <InputLabel>{question.questionText + "*"}</InputLabel>
-                      <Select
-                        fullWidth
-                        name={question._id}
-                        value={
-                          formData.paperDetails[question._id]?.answer || ""
-                        }
-                        onChange={handleChange}
-                      >
-                        {question.options.map((option, index) => (
-                          <MenuItem key={index} value={option}>
-                            {option}
-                          </MenuItem>
-                        ))}
-                      </Select>
-                    </>
-                  )}
-                </Grid>
-              ))}
-
-              {/* Add Z Factor slider */}
               <Grid item xs={12}>
-                <Typography variant="subtitle1" gutterBottom>
-                  Contribution Factor (Z): {formData.zFactor.toFixed(2)}
+                <Divider sx={{ my: 3 }} />
+                <Typography variant="h6" gutterBottom>
+                  Paper Details
                 </Typography>
+              </Grid>
+
+              <PaperDetailsForm
+                formData={formData}
+                handleInputChange={handleInputChange}
+              />
+
+              <Grid item xs={12}>
                 <Tooltip
-                  title="Z factor determines how the total award is distributed. Higher values distribute more evenly."
+                  title={
+                    <Box>
+                      <Typography variant="body2" gutterBottom>
+                        Z factor determines how the total award is distributed:
+                      </Typography>
+                      <Typography variant="body2">
+                        • Higher Z (1.0): More equal distribution among authors
+                      </Typography>
+                      <Typography variant="body2">
+                        • Lower Z (0.5): Rewards first authors more than others
+                      </Typography>
+                      <Typography variant="body2" sx={{ mt: 1 }}>
+                        You can also manually adjust shares after setting this
+                        value.
+                      </Typography>
+                    </Box>
+                  }
                   placement="top"
                 >
-                  <Box sx={{ width: "100%" }}>
-                    <input
-                      type="range"
-                      min="0.5"
-                      max="1"
-                      step="0.01"
-                      value={formData.zFactor}
-                      onChange={handleZFactorChange}
-                      style={{ width: "100%" }}
-                    />
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        mt: 1,
-                      }}
-                    >
-                      <Typography variant="caption">0.5 (Minimum)</Typography>
-                      <Typography variant="caption">1.0 (Maximum)</Typography>
-                    </Box>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Typography variant="subtitle1" gutterBottom>
+                      Contribution Factor (Z): {formData.zFactor.toFixed(2)}
+                    </Typography>
+                    <InfoIcon fontSize="small" color="action" sx={{ ml: 1 }} />
                   </Box>
                 </Tooltip>
+                <Box sx={{ width: "100%" }}>
+                  <input
+                    type="range"
+                    min="0.5"
+                    max="1"
+                    step="0.01"
+                    value={formData.zFactor}
+                    onChange={handleZFactorChange}
+                    style={{ width: "100%" }}
+                  />
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mt: 1,
+                    }}
+                  >
+                    <Typography variant="caption">0.5 (Minimum)</Typography>
+                    <Typography variant="caption">1.0 (Maximum)</Typography>
+                  </Box>
+                </Box>
               </Grid>
             </Grid>
 
@@ -633,145 +520,24 @@ export default function ResearchPaperSubmissionForm({
                 editable
                 onEditAuthor={editAuthor}
                 onRemoveAuthor={removeAuthor}
+                totalAwardAmount={formData.totalAwardAmount}
+                onUpdateShareValues={handleManualShareUpdate}
               />
             </Grid>
-            {/* Author Dialog */}
-            <Dialog
+            <AuthorDialog
               open={authorDialogOpen}
               onClose={() => setAuthorDialogOpen(false)}
-              maxWidth="md"
-              fullWidth
-            >
-              <DialogTitle>
-                {editingAuthorIndex !== null ? "Edit Author" : "Add New Author"}
-              </DialogTitle>
-              <DialogContent>
-                <Grid container spacing={2} sx={{ mt: 1 }}>
-                  <Grid item xs={12} md={6}>
-                    <InputLabel>Author Name</InputLabel>
-                    <TextField
-                      fullWidth
-                      name="name"
-                      value={currentAuthor.name}
-                      onChange={handleAuthorChange}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <InputLabel>Email</InputLabel>
-                    <TextField
-                      fullWidth
-                      name="email"
-                      type="email"
-                      value={currentAuthor.email}
-                      onChange={handleAuthorChange}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12}>
-                    <FormControlLabel
-                      control={
-                        <Checkbox
-                          checked={currentAuthor.isExternal}
-                          onChange={handleAuthorChange}
-                          name="isExternal"
-                        />
-                      }
-                      label="External Author"
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <InputLabel>Bank Name</InputLabel>
-                    <TextField
-                      fullWidth
-                      name="bankDetails.bankName"
-                      value={currentAuthor.bankDetails.bankName}
-                      onChange={handleAuthorChange}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <InputLabel>Branch</InputLabel>
-                    <TextField
-                      fullWidth
-                      name="bankDetails.branch"
-                      value={currentAuthor.bankDetails.branch}
-                      onChange={handleAuthorChange}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <InputLabel>Account Number</InputLabel>
-                    <TextField
-                      fullWidth
-                      name="bankDetails.accountNo"
-                      value={currentAuthor.bankDetails.accountNo}
-                      onChange={handleAuthorChange}
-                      required
-                    />
-                  </Grid>
-                  <Grid item xs={12} md={6}>
-                    <InputLabel>IFSC Code</InputLabel>
-                    <TextField
-                      fullWidth
-                      name="bankDetails.ifscCode"
-                      value={currentAuthor.bankDetails.ifscCode}
-                      onChange={handleAuthorChange}
-                      required
-                    />
-                  </Grid>
-                </Grid>
-              </DialogContent>
-              <DialogActions>
-                <Button
-                  onClick={() => setAuthorDialogOpen(false)}
-                  color="secondary"
-                >
-                  Cancel
-                </Button>
-                <Button
-                  onClick={saveAuthor}
-                  color="primary"
-                  variant="contained"
-                >
-                  Save Author
-                </Button>
-              </DialogActions>
-            </Dialog>
+              currentAuthor={currentAuthor}
+              handleAuthorChange={handleAuthorChange}
+              saveAuthor={saveAuthor}
+              editingAuthorIndex={editingAuthorIndex}
+            />
           </>
         );
       case 1:
         return (
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Typography variant="h6">Review Your Submission</Typography>
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1" gutterBottom>
-                <strong>Award Category:</strong>{" "}
-                {AWARD_CATEGORIES[formData.awardCategory].label} - ₹
-                {formData.totalAwardAmount.toLocaleString()}
-              </Typography>
-              {questions.map((question) => (
-                <Typography>
-                  {question.questionText}:{" "}
-                  {formData.paperDetails[question._id]?.answer}
-                </Typography>
-              ))}
-            </Grid>
-            <Grid item xs={12}>
-              <Typography variant="subtitle1">Authors</Typography>
-              <AuthorsList authors={formData.authors} editable={false} />
-              {formData.authors.length > 0 &&
-                formData.awardCategory === "COMMENDABLE" && (
-                  <Typography variant="body2" color="error" sx={{ mt: 1 }}>
-                    Note: An author can claim the Commendable Research Award for
-                    a maximum of three papers per year.
-                  </Typography>
-                )}
-            </Grid>
-          </Grid>
-        ); // Review implementation
+          <ReviewStep formData={formData} AWARD_CATEGORIES={AWARD_CATEGORIES} />
+        );
       default:
         return "Unknown step";
     }

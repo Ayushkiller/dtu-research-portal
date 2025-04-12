@@ -33,22 +33,13 @@ const Approvals = () => {
       const papers = response.data
         .filter((paper) => paper.status === "approved")
         .map((paper) => {
-          const paperDetails = paper.paperDetails;
-          const researchPaperData = Object.entries(paperDetails).map(
-            ([key, value]) => ({
-              questionText: value.questionText,
-              answer: value.answer,
-            })
-          );
-
           return {
             id: paper._id,
             applicantName: paper.applicantName,
             department: paper.department,
             paperTitle: paper.paperTitle,
             status: paper.status,
-            pubYear: paper.pubYear,
-            researchPaperData: researchPaperData,
+            pubYear: paper.pubYear
           };
         });
 
