@@ -3,7 +3,7 @@ import Cookies from "js-cookie";
 
 const API = axios.create({
   // baseURL: 'https://dtubackend.something.vyvsai.com', // Backend base URL
-  baseURL: 'https://dtu-research-portal.onrender.com', // Backend base URL
+  baseURL: 'http://localhost:9000', // Backend base URL
 });
 
 API.interceptors.request.use((config) => {

@@ -125,16 +125,16 @@ export default function ResearchPaperSubmissionForm({
   }, []);
 
   useEffect(() => {
-    if (formData.applicantName && formData.email) {
-      const applicantExists = formData.authors.some(
-        (author) => author.email === formData.email
+    if (formData?.applicantName && formData?.email) {
+      const applicantExists = formData?.authors?.some(
+        (author) => author?.email === formData?.email
       );
       if (!applicantExists) {
         const applicantAuthor = {
-          name: formData.applicantName,
-          email: formData.email,
+          name: formData?.applicantName,
+          email: formData?.email,
           isExternal: false,
-          bankDetails: { ...formData.bankDetails },
+          bankDetails: { ...formData?.bankDetails },
           confirmationToken: {
             token: Math.random().toString(36).substring(2, 12),
           },
@@ -145,7 +145,7 @@ export default function ResearchPaperSubmissionForm({
         }));
       }
     }
-  }, [formData.applicantName, formData.email, formData.bankDetails.bankName]);
+  }, [formData?.applicantName, formData?.email, formData?.bankDetails?.bankName]);
 
   const validateStep = (step) => {
     switch (step) {
