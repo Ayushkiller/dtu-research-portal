@@ -26,11 +26,48 @@ router.get('/research-papers', authorizeCommitteeMember, async (req, res) => {
     }
   });
 
+  router.get('/research-papers/:status', authorizeCommitteeMember, async (req, res) => {
+    const { status } = req.params;
+    const userId = req.user.id;
+    console.log(status)
+    // Map status to the corresponding "by" field
+    const statusByFieldMap = {
+      approved: 'approvedBy',
+      rejected: 'rejectedBy',
+      underReview: 'reviewedBy',
+      suspended: 'suspendedBy'
+    };
+  
+    const statusBy = statusByFieldMap[status];
+  
+    if (!statusBy) {
+      return res.status(400).json({ error: 'Invalid status type' });
+    }
+  
+    try {
+      const researchPapers = await ResearchPaper.find({
+        $and: [
+          { status },
+          { status: { $ne: 'authorshipConfirmationPending' } },
+          { [statusBy]: userId } // dynamic field key
+        ]
+      });
+  
+      res.status(200).json(researchPapers);
+    } catch (error) {
+      res.status(500).json({ error: 'Failed to fetch research papers' });
+    }
+  });
+  
+  
+
 
   router.put('/research-papers/:paperId/status', authorizeCommitteeMember, async (req, res) => {
     const { paperId } = req.params;
     const { status, comments } = req.body; // status can be 'approved' or 'rejected'
     console.log(status);
+    const {user} = req;
+    // console.log("committee userr=============",user)
     try {
       const paper = await ResearchPaper.findById(paperId);
       if (!paper) return res.status(404).json({ error: 'Research paper not found' });

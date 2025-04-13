@@ -27,10 +27,9 @@ const Rejected = () => {
   const fetchRejectedPapers = async () => {
     setLoading(true);
     try {
-      const response = await API.get("/dean/research-papers");
+      const response = await API.get("/dean/research-papers/rejected");
       // Filter only rejected papers
       const papers = response.data
-        .filter((paper) => paper.status === "rejected")
         .map((paper) => {
         
           return {

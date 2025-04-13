@@ -31,6 +31,41 @@ router.put("/accounts/ban/:userId", authorizeDean, async (req, res) => {
   }
 });
 
+router.get('/research-papers/:status', authorizeDean, async (req, res) => {
+  const { status } = req.params;
+  const userId = req.user.id;
+  console.log(status)
+  // Map status to the corresponding "by" field
+  const statusByFieldMap = {
+    approved: 'approvedBy',
+    rejected: 'rejectedBy',
+    underReview: 'reviewedBy',
+    suspended: 'suspendedBy'
+  };
+
+  const statusBy = statusByFieldMap[status];
+
+  if (!statusBy) {
+    return res.status(400).json({ error: 'Invalid status type' });
+  }
+
+  try {
+    const researchPapers = await ResearchPaper.find({
+      $and: [
+        { status },
+        { status: { $ne: 'authorshipConfirmationPending' } },
+        { [statusBy]: userId } // dynamic field key
+      ]
+    });
+
+    res.status(200).json(researchPapers);
+  } catch (error) {
+    res.status(500).json({ error: 'Failed to fetch research papers' });
+  }
+});
+
+
+
 // Route to unban a user account
 router.put("/accounts/unban/:userId", authorizeDean, async (req, res) => {
   const { userId } = req.params;
@@ -75,6 +110,21 @@ router.put(
         return res.status(404).json({ error: "Research paper not found" });
 
       paper.status = status; // Add a `status` field in the ResearchPaper schema
+      if(status === 'approved'){
+        paper.approvedBy = req.user.id;
+        paper.status = 'approved';
+      }else if(status === 'suspended'){
+        paper.suspendedBy = req.user.id;
+        paper.status = 'suspended';
+      }
+      else if(status === 'underReview'){
+        paper.reviewedBy = req.user.id;
+        paper.status = 'underReview';
+      }
+      else if(status === 'rejected'){
+        paper.rejectedBy = req.user.id;
+        paper.status = 'rejected';
+      }
       paper.comments = comments || null; // Add a `comments` field in the schema if needed
       await paper.save();
 

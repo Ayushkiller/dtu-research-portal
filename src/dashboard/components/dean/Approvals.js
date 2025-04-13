@@ -28,10 +28,10 @@ const Approvals = () => {
   const fetchApprovedPapers = async () => {
     setLoading(true);
     try {
-      const response = await API.get("/dean/research-papers");
+      const response = await API.get("/dean/research-papers/approved");
       // Filter only approved papers
-      const papers = response.data
-        .filter((paper) => paper.status === "approved")
+
+      const papers = await response.data
         .map((paper) => {
           return {
             id: paper._id,
@@ -42,6 +42,8 @@ const Approvals = () => {
             pubYear: paper.pubYear
           };
         });
+
+        console.log(papers)
 
       setApprovedPapers(papers);
     } catch (error) {

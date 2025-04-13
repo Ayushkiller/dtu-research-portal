@@ -55,9 +55,6 @@ function App() {
                       path="/committee-dashboard"
                       element={<CommitteeDashboard />}
                     />
-                    <Route path="/approvals/:userId" element={<CommitteeApprovals />} />
-                    <Route path="/rejected/:userId" element={<CommitteeRejected />} />
-                    <Route path="/pending/:userId" element={<CommitteePending />} />
                     <Route
                       path="/confirm-authorship"
                       element={<ConfirmAuthorship />}

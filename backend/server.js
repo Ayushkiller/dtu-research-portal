@@ -20,7 +20,7 @@ app.use(morgan("combined"));
 app.use((req, res, next) => {
   const originalSend = res.send;
   res.send = function (body) {
-    console.log(`Outgoing response: ${body}`);
+    // console.log(`Outgoing response: ${body}`);
     originalSend.call(this, body);
   };
   next();
