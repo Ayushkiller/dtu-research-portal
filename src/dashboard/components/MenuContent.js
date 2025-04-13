@@ -16,6 +16,9 @@ import HelpRoundedIcon from "@mui/icons-material/HelpRounded";
 import Tooltip from "@mui/material/Tooltip";
 import Cookies from "js-cookie";
 import { jwtDecode } from "jwt-decode";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import PendingIcon from "@mui/icons-material/Pending";
 
 export default function MenuContent() {
   const navigate = useNavigate();
@@ -44,18 +47,15 @@ export default function MenuContent() {
     { text: "Home", icon: <HomeRoundedIcon /> },
     {
       text: "Approvals",
-      icon: <AnalyticsRoundedIcon />,
-      link: `/approvals/${userId}`,
+      icon: <CheckCircleIcon />,
     },
     {
       text: "Rejected",
-      icon: <PeopleRoundedIcon />,
-      link: `/rejected/${userId}`,
+      icon: <CancelIcon />,
     },
     {
       text: "Pending List",
-      icon: <AssignmentRoundedIcon />,
-      link: `/pending/${userId}`,
+      icon: <PendingIcon />,
     },
   ];
 
@@ -184,42 +184,14 @@ export default function MenuContent() {
                   {item.icon}
                 </ListItemIcon>
 
-                {item.link ? (
-                  <a
-                    href={item.link}
-                    style={{
-                      textDecoration: "none",
-                      color: "inherit",
-                      width: "100%",
-                      display: "flex",
-                      alignItems: "center",
-                    }}
-                  >
-                    <ListItemText
-                      primary={item.text}
-                      primaryTypographyProps={{
-                        fontSize: "0.875rem",
-                        fontWeight: selectedIndex === index ? "500" : "400",
-                        letterSpacing: "0.01em",
-                      }}
-                    />
-                    <Box
-                      component="span"
-                      sx={{ ml: "auto", fontSize: "1rem", opacity: 0.7 }}
-                    >
-                      →
-                    </Box>
-                  </a>
-                ) : (
-                  <ListItemText
-                    primary={item.text}
-                    primaryTypographyProps={{
-                      fontSize: "0.875rem",
-                      fontWeight: selectedIndex === index ? "500" : "400",
-                      letterSpacing: "0.01em",
-                    }}
-                  />
-                )}
+                <ListItemText
+                  primary={item.text}
+                  primaryTypographyProps={{
+                    fontSize: "0.875rem",
+                    fontWeight: selectedIndex === index ? "500" : "400",
+                    letterSpacing: "0.01em",
+                  }}
+                />
               </ListItemButton>
             </Tooltip>
           </ListItem>
@@ -251,20 +223,6 @@ export default function MenuContent() {
                   sx={{
                     borderRadius: 1.5,
                     py: 1,
-                    transition: "all 0.2s ease",
-                    "&:hover": {
-                      backgroundColor: "rgba(0, 0, 0, 0.04)",
-                      transform: "translateX(4px)",
-                    },
-                    "&.Mui-selected": {
-                      backgroundColor: "primary.light",
-                      borderLeft: "3px solid",
-                      borderColor: "primary.main",
-                      paddingLeft: "13px", // Compensate for the border
-                      "&:hover": {
-                        backgroundColor: "primary.light",
-                      },
-                    },
                     "&:focus-visible": {
                       outline: "2px solid",
                       outlineColor: "primary.main",

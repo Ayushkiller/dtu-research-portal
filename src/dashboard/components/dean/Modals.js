@@ -120,7 +120,7 @@ export const PaperDetailsModal = ({
             <Divider sx={{ mb: 3 }} />
 
             <Box sx={{ mb: 3 }}>
-              {selectedPaper.researchPaperData.map((data, index) => (
+              {selectedPaper?.researchPaperData?.map((data, index) => (
                 <Paper 
                   key={index} 
                   elevation={0}

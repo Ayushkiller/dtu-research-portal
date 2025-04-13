@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from "react";
-import axios from "axios";
 import {
   Typography,
   CircularProgress,
@@ -8,50 +7,56 @@ import {
   Modal,
   Paper,
   Button,
-  CssBaseline,
+  Chip,
+  Divider,
+  Alert,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import { useParams } from "react-router-dom";
 import API from "../../api/axios";
 import { DataGrid } from "@mui/x-data-grid";
-import AppTheme from "../../shared-theme/AppTheme";
-import SideMenu from "./SideMenu";
-import AppNavbar from "./AppNavbar";
-
-import {
-  chartsCustomizations,
-  dataGridCustomizations,
-  datePickersCustomizations,
-  treeViewCustomizations,
-} from "../theme/customizations";
 import { jwtDecode } from "jwt-decode";
 import Cookies from "js-cookie";
 import { useNavigate } from "react-router-dom";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import CancelIcon from "@mui/icons-material/Cancel";
+import PendingIcon from "@mui/icons-material/Pending";
+import WarningIcon from "@mui/icons-material/Warning";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import CloseIcon from "@mui/icons-material/Close";
 
-const xThemeComponents = {
-  ...chartsCustomizations,
-  ...dataGridCustomizations,
-  ...datePickersCustomizations,
-  ...treeViewCustomizations,
-};
-
-const CommitteeRejected = () => {
-  const { userId } = useParams(); // Get ID from URL params
-  const [approval, setApproval] = useState(null);
+const CommitteeRejected = ({userId}) => {
   const [loading, setLoading] = useState(true);
   const token = Cookies.get("token");
   const [me, setMe] = useState({});
   const navigate = useNavigate();
 
   const [error, setError] = useState(null);
-  const [researchPapersData, setResearchPapersData] = React.useState([]);
-  const [selectedPaper, setSelectedPaper] = React.useState(null);
-  const [openPaperModal, setOpenPaperModal] = React.useState(false);
+  const [researchPapersData, setResearchPapersData] = useState([]);
+  const [selectedPaper, setSelectedPaper] = useState(null);
+  const [openPaperModal, setOpenPaperModal] = useState(false);
+  const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
+  const [actionToConfirm, setActionToConfirm] = useState(null);
 
-  React.useEffect(() => {
+  // Modal style for consistency
+  const modalStyle = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: { xs: "90%", sm: "600px" },
+    maxHeight: "80vh",
+    bgcolor: "background.paper",
+    borderRadius: 2,
+    boxShadow: 24,
+    p: 4,
+    overflow: "auto",
+  };
+
+  useEffect(() => {
     const fetchMe = async () => {
       try {
         const response = await API.get("/user/me");
-        // console.log("-----------------",response.data);
         setMe(response.data);
       } catch (error) {
         console.error("Error fetching user:", error);
@@ -60,7 +65,7 @@ const CommitteeRejected = () => {
     fetchMe();
   }, []);
 
-  React.useEffect(() => {
+  useEffect(() => {
     if (token) {
       try {
         const decodedToken = jwtDecode(token);
@@ -78,39 +83,68 @@ const CommitteeRejected = () => {
   }, [token, navigate]);
 
   useEffect(() => {
-    const fetchApprovals = async () => {
+    const fetchRejectedPapers = async () => {
+      setLoading(true);
+      setError(null);
+
       try {
-        await API.get(`/research-paper-submission/rejected/${userId}`)
-          .then((response) => {
-            const papers = response.data.map((paper) => {
-              const paperDetails = paper.paperDetails;
-              console.log(paperDetails);
+        // Get all papers for committee and filter by status
+        const response = await API.get("/committee/research-papers/rejected");
 
-              return {
-                id: paper._id,
-                applicantName: paper.applicantName,
-                department: paper.department,
-                paperTitle: paper.paperTitle,
-                status: paper.status,
-                pubYear: paper.pubYear,
-              };
-            });
+        // Filter only rejected papers
+        const papers = response.data
+          .map((paper) => ({
+            id: paper._id,
+            applicantName: paper.applicantName,
+            department: paper.department,
+            paperTitle: paper.paperTitle,
+            status: paper.status,
+            pubYear: paper.pubYear,
+          }));
 
-            setResearchPapersData(papers);
-            setLoading(false);
-          })
-          .catch((error) => {
-            console.error("Error fetching approval data:", error);
-            setError("Failed to load approval details");
-            setLoading(false);
-          });
+        setResearchPapersData(papers);
       } catch (error) {
-        setError(error.response.data.error);
+        console.error("Error fetching rejected papers:", error);
+        setError("Failed to load rejected papers. Please try again.");
+      } finally {
         setLoading(false);
       }
     };
-    fetchApprovals();
-  }, [userId]);
+
+    fetchRejectedPapers();
+  }, []);
+
+  // Get status chip color
+  const getStatusColor = (status) => {
+    switch (status) {
+      case "approved":
+        return "success";
+      case "rejected":
+        return "error";
+      case "suspended":
+        return "warning";
+      case "underReview":
+        return "info";
+      default:
+        return "default";
+    }
+  };
+
+  // Get status icon
+  const getStatusIcon = (status) => {
+    switch (status) {
+      case "approved":
+        return <CheckCircleIcon fontSize="small" />;
+      case "rejected":
+        return <CancelIcon fontSize="small" />;
+      case "suspended":
+        return <WarningIcon fontSize="small" />;
+      case "underReview":
+        return <PendingIcon fontSize="small" />;
+      default:
+        return null;
+    }
+  };
 
   const handleResearchRowClick = (params) => {
     setSelectedPaper(params.row);
@@ -122,128 +156,323 @@ const CommitteeRejected = () => {
     setSelectedPaper(null);
   };
 
-  const handleUpdateStatus = async (status) => {
-    if (!selectedPaper) return;
-    if (me.userType !== "committeeMember") {
-      alert("You don't have permission to perform this action");
-      return;
-    }
+  const handleConfirmAction = (status) => {
+    setActionToConfirm(status);
+    setConfirmDialogOpen(true);
+  };
+
+  const handleConfirmDialogClose = () => {
+    setConfirmDialogOpen(false);
+    setActionToConfirm(null);
+  };
+
+  const handleUpdateStatus = async () => {
+    if (!selectedPaper || !actionToConfirm) return;
 
     try {
       const response = await API.put(
         `/committee/research-papers/${selectedPaper.id}/status`,
         {
-          status,
-          comments: null, // You can allow the user to add comments if needed
+          status: actionToConfirm,
+          comments: null,
         }
       );
 
-      console.log(response.data.message);
-      alert(`Research paper ${status}`);
-      setOpenPaperModal(false); // Close modal after action
+      // Update the local state to reflect the change
+      setResearchPapersData((prevData) =>
+        prevData.map((paper) =>
+          paper.id === selectedPaper.id
+            ? { ...paper, status: actionToConfirm }
+            : paper
+        )
+      );
+
+      setOpenPaperModal(false);
+      setConfirmDialogOpen(false);
+      setActionToConfirm(null);
     } catch (error) {
       console.error("Failed to update research paper status:", error);
-      alert("Failed to update status. Please try again.");
+      setError("Failed to update status. Please try again.");
+    }
+  };
+
+  const getStatusDescription = (status) => {
+    switch (status) {
+      case "approved":
+        return "approve";
+      case "rejected":
+        return "reject";
+      case "suspended":
+        return "suspend";
+      case "underReview":
+        return "set to review";
+      default:
+        return "update";
     }
   };
 
   const paperColumns = [
-    { field: "applicantName", headerName: "Applicant Name", flex: 1 },
-    { field: "paperTitle", headerName: "Paper Title", flex: 1 },
+    {
+      field: "paperTitle",
+      headerName: "Paper Title",
+      flex: 2,
+      renderCell: (params) => (
+        <Tooltip title="View details">
+          <Typography
+            sx={{
+              cursor: "pointer",
+              "&:hover": { textDecoration: "underline", color: "primary.main" },
+            }}
+          >
+            {params.value}
+          </Typography>
+        </Tooltip>
+      ),
+    },
+    { field: "applicantName", headerName: "Applicant Name", flex: 1.5 },
     { field: "department", headerName: "Department", flex: 1 },
     { field: "pubYear", headerName: "Publication Year", flex: 1 },
-    { field: "status", headerName: "Status", flex: 1 },
+    {
+      field: "status",
+      headerName: "Status",
+      flex: 1,
+      renderCell: (params) => (
+        <Chip
+          icon={getStatusIcon(params.value)}
+          label={params.value
+            .replace(/([A-Z])/g, " $1")
+            .split(" ")
+            .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+            .join(" ")}
+          color={getStatusColor(params.value)}
+          size="small"
+          variant="outlined"
+        />
+      ),
+    },
+    {
+      field: "actions",
+      headerName: "Actions",
+      flex: 0.7,
+      renderCell: (params) => (
+        <Tooltip title="View Details">
+          <IconButton
+            onClick={(e) => {
+              e.stopPropagation();
+              setSelectedPaper(params.row);
+              setOpenPaperModal(true);
+            }}
+            size="small"
+          >
+            <VisibilityIcon fontSize="small" />
+          </IconButton>
+        </Tooltip>
+      ),
+    },
   ];
 
-  if (loading) return <CircularProgress />;
-  if (error) return <Typography color="error">{error}</Typography>;
+  if (loading)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
+        <CircularProgress />
+      </Box>
+    );
+
+  if (error)
+    return (
+      <Alert
+        severity="error"
+        sx={{ mb: 3 }}
+        action={
+          <IconButton
+            aria-label="close"
+            color="inherit"
+            size="small"
+            onClick={() => setError(null)}
+          >
+            <CloseIcon fontSize="inherit" />
+          </IconButton>
+        }
+      >
+        {error}
+      </Alert>
+    );
 
   return (
-    <AppTheme themeComponents={xThemeComponents}>
-      <CssBaseline enableColorScheme />
-      <Box sx={{ display: "flex" }}>
-        <SideMenu />
-        <AppNavbar />
-        <Grid container spacing={2} columns={12}>
-          <Typography component="h2" variant="h6" sx={{ mb: 2, mt: 2 }}>
-            Research Papers
-          </Typography>
-          <Grid item xs={12} lg={9}>
-            <div style={{ height: 400, width: "700px" }}>
-              <DataGrid
-                rows={researchPapersData}
-                columns={paperColumns}
-                pageSize={5}
-                rowsPerPageOptions={[5]}
-                onRowClick={handleResearchRowClick}
-              />
-            </div>
-          </Grid>
-        </Grid>
-
-        <Modal open={openPaperModal} onClose={handleClosePaperModal}>
-          <Paper sx={{ p: 4, width: 400, mx: "auto", my: "10%" }}>
-            <Typography variant="h6" sx={{ mb: 2 }}>
-              Paper Details
-            </Typography>
-
-            {selectedPaper && (
-              <>
-                <Typography>Paper Title: {selectedPaper.paperTitle}</Typography>
-                <Typography>
-                  Applicant Name: {selectedPaper.applicantName}
-                </Typography>
-                <Typography>Department: {selectedPaper.department}</Typography>
-                <Typography>
-                  Publication Year: {selectedPaper.pubYear}
-                </Typography>
-                <Typography>
-                  Impact Factor Of Journal: {selectedPaper.impactFactor}
-                </Typography>
-            
-                {/* Approve and Reject Buttons */}
-                <Box
-                  sx={{
-                    mt: 4,
-                    display: "flex",
-                    justifyContent: "space-between",
-                  }}
-                >
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => handleUpdateStatus("suspended")}
-                  >
-                    Suspend
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => handleUpdateStatus("underReview")}
-                  >
-                    Review
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="secondary"
-                    onClick={() => handleUpdateStatus("approved")}
-                  >
-                    Approve
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="error"
-                    onClick={() => handleUpdateStatus("rejected")}
-                  >
-                    Reject
-                  </Button>
-                </Box>
-              </>
-            )}
-          </Paper>
-        </Modal>
+    <>
+      {/* Paper Data Grid */}
+      <Box sx={{ height: 400, width: "100%" }}>
+        <DataGrid
+          rows={researchPapersData}
+          columns={paperColumns}
+          pageSize={5}
+          rowsPerPageOptions={[5, 10, 25]}
+          disableSelectionOnClick
+          getRowClassName={(params) =>
+            params.row.status === "rejected" ? "row-highlight" : ""
+          }
+          sx={{
+            "& .row-highlight": {
+              backgroundColor: (theme) => theme.palette.error.lighter,
+            },
+            "& .MuiDataGrid-columnHeaders": {
+              backgroundColor: (theme) => theme.palette.primary.lighter,
+              color: (theme) => theme.palette.primary.main,
+              fontWeight: "bold",
+            },
+            border: (theme) => `1px solid ${theme.palette.divider}`,
+            borderRadius: 2,
+            "& .MuiDataGrid-cell:focus": {
+              outline: "none",
+            },
+          }}
+        />
       </Box>
-    </AppTheme>
+
+      {/* Paper Details Modal */}
+      <Modal
+        open={openPaperModal}
+        onClose={handleClosePaperModal}
+        aria-labelledby="paper-details-modal"
+      >
+        <Box sx={modalStyle}>
+          {selectedPaper && (
+            <>
+              <Typography
+                variant="h5"
+                component="h2"
+                sx={{ color: "primary.main", mb: 2 }}
+              >
+                Paper Details
+              </Typography>
+
+              <Divider sx={{ mb: 3 }} />
+
+              <Grid container spacing={2}>
+                <Grid item xs={12}>
+                  <Typography variant="h6" gutterBottom>
+                    {selectedPaper.paperTitle}
+                  </Typography>
+                  <Chip
+                    icon={getStatusIcon(selectedPaper.status)}
+                    label={selectedPaper.status
+                      .replace(/([A-Z])/g, " $1")
+                      .split(" ")
+                      .map(
+                        (word) => word.charAt(0).toUpperCase() + word.slice(1)
+                      )
+                      .join(" ")}
+                    color={getStatusColor(selectedPaper.status)}
+                    size="small"
+                    sx={{ mb: 2 }}
+                  />
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Applicant
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {selectedPaper.applicantName}
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Department
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {selectedPaper.department}
+                  </Typography>
+                </Grid>
+
+                <Grid item xs={12} sm={6}>
+                  <Typography variant="subtitle2" color="text.secondary">
+                    Publication Year
+                  </Typography>
+                  <Typography variant="body1" gutterBottom>
+                    {selectedPaper.pubYear}
+                  </Typography>
+                </Grid>
+              </Grid>
+
+              <Divider sx={{ my: 3 }} />
+
+              {/* Action Buttons */}
+              <Box
+                sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}
+              >
+                <Button
+                  variant="outlined"
+                  color="warning"
+                  onClick={() => handleConfirmAction("suspended")}
+                  startIcon={<WarningIcon />}
+                >
+                  Suspend
+                </Button>
+                <Button
+                  variant="outlined"
+                  color="info"
+                  onClick={() => handleConfirmAction("underReview")}
+                  startIcon={<PendingIcon />}
+                >
+                  Review
+                </Button>
+                <Button
+                  variant="contained"
+                  color="success"
+                  onClick={() => handleConfirmAction("approved")}
+                  startIcon={<CheckCircleIcon />}
+                >
+                  Approve
+                </Button>
+                <Button
+                  variant="contained"
+                  color="error"
+                  onClick={() => handleConfirmAction("rejected")}
+                  startIcon={<CancelIcon />}
+                >
+                  Reject
+                </Button>
+              </Box>
+            </>
+          )}
+        </Box>
+      </Modal>
+
+      {/* Confirmation Dialog */}
+      <Modal
+        open={confirmDialogOpen}
+        onClose={handleConfirmDialogClose}
+        aria-labelledby="confirm-modal-title"
+      >
+        <Box
+          sx={{
+            ...modalStyle,
+            width: { xs: "80%", sm: "400px" },
+          }}
+        >
+          <Typography id="confirm-modal-title" variant="h6" component="h2">
+            Confirm Action
+          </Typography>
+          <Typography sx={{ mt: 2 }}>
+            Are you sure you want to{" "}
+            {actionToConfirm ? getStatusDescription(actionToConfirm) : "update"}{" "}
+            this research paper?
+          </Typography>
+          <Box
+            sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}
+          >
+            <Button onClick={handleConfirmDialogClose} variant="outlined">
+              Cancel
+            </Button>
+            <Button onClick={handleUpdateStatus} variant="contained" autoFocus>
+              Confirm
+            </Button>
+          </Box>
+        </Box>
+      </Modal>
+    </>
   );
 };
 

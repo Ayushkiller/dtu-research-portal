@@ -37,6 +37,9 @@ const Card = styled(MuiCard)(({ theme }) => ({
   gap: theme.spacing(3),
   margin: "auto",
   borderRadius: theme.shape.borderRadius * 2,
+  maxHeight: "90vh",
+  overflowY: "auto",
+  overflowX: "hidden",
   [theme.breakpoints.up("sm")]: {
     maxWidth: "450px",
   },
@@ -83,24 +86,24 @@ export default function SignIn(props) {
     email: "",
     password: "",
     rememberMe: false,
-    showPassword: false
+    showPassword: false,
   });
-  
+
   const [errors, setErrors] = useState({
     email: "",
-    password: ""
+    password: "",
   });
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   const [notification, setNotification] = useState({
     open: false,
     message: "",
-    severity: "success"
+    severity: "success",
   });
-  
+
   const navigate = useNavigate();
-  
+
   // Check for existing token on mount
   useEffect(() => {
     const token = Cookies.get("token");
@@ -123,14 +126,14 @@ export default function SignIn(props) {
       navigate("/dashboard");
     }
   };
-  
+
   const handleInputChange = (e) => {
     const { name, value, checked, type } = e.target;
     setFormState({
       ...formState,
-      [name]: type === "checkbox" ? checked : value
+      [name]: type === "checkbox" ? checked : value,
     });
-    
+
     // Validate on change
     if (name === "email") {
       validateEmail(value);
@@ -138,88 +141,95 @@ export default function SignIn(props) {
       validatePassword(value);
     }
   };
-  
+
   const validateEmail = (email) => {
     if (!email) {
-      setErrors(prev => ({ ...prev, email: "Email is required" }));
+      setErrors((prev) => ({ ...prev, email: "Email is required" }));
       return false;
     } else if (!/\S+@\S+\.\S+/.test(email)) {
-      setErrors(prev => ({ ...prev, email: "Please enter a valid email address" }));
+      setErrors((prev) => ({
+        ...prev,
+        email: "Please enter a valid email address",
+      }));
       return false;
     } else {
-      setErrors(prev => ({ ...prev, email: "" }));
+      setErrors((prev) => ({ ...prev, email: "" }));
       return true;
     }
   };
-  
+
   const validatePassword = (password) => {
     if (!password) {
-      setErrors(prev => ({ ...prev, password: "Password is required" }));
+      setErrors((prev) => ({ ...prev, password: "Password is required" }));
       return false;
     } else if (password.length < 6) {
-      setErrors(prev => ({ ...prev, password: "Password must be at least 6 characters long" }));
+      setErrors((prev) => ({
+        ...prev,
+        password: "Password must be at least 6 characters long",
+      }));
       return false;
     } else {
-      setErrors(prev => ({ ...prev, password: "" }));
+      setErrors((prev) => ({ ...prev, password: "" }));
       return true;
     }
   };
-  
+
   const togglePasswordVisibility = () => {
-    setFormState(prev => ({ ...prev, showPassword: !prev.showPassword }));
+    setFormState((prev) => ({ ...prev, showPassword: !prev.showPassword }));
   };
-  
+
   const handleSubmit = async (event) => {
     event.preventDefault();
-    
+
     const isEmailValid = validateEmail(formState.email);
     const isPasswordValid = validatePassword(formState.password);
-    
+
     if (!isEmailValid || !isPasswordValid) {
       return;
     }
-    
+
     setIsLoading(true);
-    
+
     try {
       const response = await API.post("/auth/login", {
         email: formState.email,
-        password: formState.password
+        password: formState.password,
       });
-      
+
       const { token } = response.data;
-      
+
       // Set cookie expiration based on "remember me"
-      const expirationTime = formState.rememberMe ? 7 : 1/24; // 7 days or 1 hour
+      const expirationTime = formState.rememberMe ? 7 : 1 / 24; // 7 days or 1 hour
       Cookies.set("token", token, { expires: expirationTime });
-      
+
       const decodedToken = jwtDecode(token);
-      
+
       setNotification({
         open: true,
         message: "Login successful!",
-        severity: "success"
+        severity: "success",
       });
-      
+
       // Short delay before redirect for notification to be seen
       setTimeout(() => {
         redirectBasedOnUserType(decodedToken.userType);
       }, 1000);
-      
     } catch (error) {
       console.error("Login error:", error);
       setNotification({
         open: true,
-        message: error.response?.data?.message || "Login failed. Please check your credentials.",
-        severity: "error"
+        message:
+          error.response?.data?.message ||
+          "Login failed. Please check your credentials.",
+        severity: "error",
       });
     } finally {
       setIsLoading(false);
     }
   };
-  
+
   const closeNotification = () => {
-    setNotification(prev => ({ ...prev, open: false }));
+    setNotification((prev) => ({ ...prev, open: false }));
   };
 
   return (
@@ -229,30 +239,26 @@ export default function SignIn(props) {
         <ColorModeSelect
           sx={{ position: "fixed", top: "1rem", right: "1rem" }}
         />
-        
+
         <Card variant="outlined">
           <LogoContainer>
-            <img
-              src="/logo.png"
-              alt="Logo"
-              style={{ height: 64, width: 64 }}
-            />
+            <img src="/logo.png" alt="Logo" style={{ height: 64, width: 64 }} />
           </LogoContainer>
-          
+
           <Typography
             component="h1"
             variant="h4"
-            sx={{ 
-              width: "100%", 
+            sx={{
+              width: "100%",
               fontSize: "clamp(2rem, 10vw, 2.15rem)",
               fontWeight: 600,
               textAlign: "center",
-              mb: 2
+              mb: 2,
             }}
           >
             Sign in
           </Typography>
-          
+
           <Box
             component="form"
             onSubmit={handleSubmit}
@@ -265,7 +271,9 @@ export default function SignIn(props) {
             }}
           >
             <FormControl>
-              <FormLabel htmlFor="email" sx={{ mb: 1 }}>Email</FormLabel>
+              <FormLabel htmlFor="email" sx={{ mb: 1 }}>
+                Email
+              </FormLabel>
               <TextField
                 id="email"
                 name="email"
@@ -283,9 +291,11 @@ export default function SignIn(props) {
                 helperText={errors.email}
               />
             </FormControl>
-            
+
             <FormControl>
-              <FormLabel htmlFor="password" sx={{ mb: 1 }}>Password</FormLabel>
+              <FormLabel htmlFor="password" sx={{ mb: 1 }}>
+                Password
+              </FormLabel>
               <TextField
                 id="password"
                 name="password"
@@ -308,14 +318,18 @@ export default function SignIn(props) {
                         onClick={togglePasswordVisibility}
                         edge="end"
                       >
-                        {formState.showPassword ? <VisibilityOff /> : <Visibility />}
+                        {formState.showPassword ? (
+                          <VisibilityOff />
+                        ) : (
+                          <Visibility />
+                        )}
                       </IconButton>
                     </InputAdornment>
                   ),
                 }}
               />
             </FormControl>
-            
+
             <FormControlLabel
               control={
                 <Checkbox
@@ -327,37 +341,35 @@ export default function SignIn(props) {
               }
               label="Remember me"
             />
-            
+
             <Button
               type="submit"
               fullWidth
               variant="contained"
               size="large"
               disabled={isLoading}
-              sx={{ 
+              sx={{
                 py: 1.5,
                 mt: 1,
                 borderRadius: 2,
                 textTransform: "none",
-                fontSize: "1rem"
+                fontSize: "1rem",
               }}
             >
-              {isLoading ? <CircularProgress size={24} color="inherit" /> : "Sign in"}
+              {isLoading ? (
+                <CircularProgress size={24} color="inherit" />
+              ) : (
+                "Sign in"
+              )}
             </Button>
-            
+
             <Stack direction="row" justifyContent="center" spacing={1}>
-              <Typography>
-                Don't have an account?
-              </Typography>
-              <Link 
-                href="/signup" 
-                variant="body2" 
-                sx={{ fontWeight: 600 }}
-              >
+              <Typography>Don't have an account?</Typography>
+              <Link href="/signup" variant="body2" sx={{ fontWeight: 600 }}>
                 Sign up
               </Link>
             </Stack>
-            
+
             <Link
               component="button"
               type="button"
@@ -369,22 +381,22 @@ export default function SignIn(props) {
             </Link>
           </Box>
         </Card>
-        
-        <ForgotPassword 
-          open={forgotPasswordOpen} 
-          handleClose={() => setForgotPasswordOpen(false)} 
+
+        <ForgotPassword
+          open={forgotPasswordOpen}
+          handleClose={() => setForgotPasswordOpen(false)}
         />
-        
-        <Snackbar 
-          open={notification.open} 
-          autoHideDuration={6000} 
+
+        <Snackbar
+          open={notification.open}
+          autoHideDuration={6000}
           onClose={closeNotification}
-          anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+          anchorOrigin={{ vertical: "top", horizontal: "center" }}
         >
-          <Alert 
-            onClose={closeNotification} 
+          <Alert
+            onClose={closeNotification}
             severity={notification.severity}
-            sx={{ width: '100%' }}
+            sx={{ width: "100%" }}
           >
             {notification.message}
           </Alert>
