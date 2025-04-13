@@ -38,6 +38,19 @@ const CommitteeRejected = ({userId}) => {
   const [confirmDialogOpen, setConfirmDialogOpen] = useState(false);
   const [actionToConfirm, setActionToConfirm] = useState(null);
 
+
+    
+  // Permission checking functions
+  const hasPermission = (permission) => {
+    return me?.rules?.includes(permission);
+  };
+
+  const canReviewPaper = hasPermission("canReviewPaper");
+  const canRejectPaper = hasPermission("canRejectPaper");
+  const canApprovePaper = hasPermission("canApprovePaper");
+  const canSuspendPaper = hasPermission("canSuspendPaper");
+
+
   // Modal style for consistency
   const modalStyle = {
     position: "absolute",
@@ -168,7 +181,40 @@ const CommitteeRejected = ({userId}) => {
 
   const handleUpdateStatus = async () => {
     if (!selectedPaper || !actionToConfirm) return;
+    let permissionNeeded = "";
+    let actionDescription = "";
 
+    switch (actionToConfirm) {
+      case "approved":
+        permissionNeeded = "canApprovePaper";
+        actionDescription = "approve";
+        break;
+      case "rejected":
+        permissionNeeded = "canRejectPaper";
+        actionDescription = "reject";
+        break;
+      case "underReview":
+        permissionNeeded = "canReviewPaper";
+        permissionNeeded = "canReviewPaper";
+        actionDescription = "review";
+        break;
+      case "suspended":
+        permissionNeeded = "canSuspendPaper";
+        actionDescription = "suspend";
+        break;
+      default:
+        // Unexpected status
+        setError(`Unknown action: ${actionToConfirm}`);
+        return;
+    }
+
+    // Check if user has permission
+    if (!hasPermission(permissionNeeded)) {
+      setError(
+        `You don't have permission to ${actionDescription} research papers`
+      );
+      return;
+    }
     try {
       const response = await API.put(
         `/committee/research-papers/${selectedPaper.id}/status`,
@@ -402,38 +448,65 @@ const CommitteeRejected = ({userId}) => {
               <Box
                 sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}
               >
+          <Tooltip title={!canSuspendPaper ? "You need 'Suspend Paper' permission" : "Suspend paper"}>
+            <span>
                 <Button
                   variant="outlined"
                   color="warning"
+                  disabled={!canSuspendPaper || selectedPaper.status === "underReview"}
                   onClick={() => handleConfirmAction("suspended")}
                   startIcon={<WarningIcon />}
                 >
                   Suspend
                 </Button>
+
+            </span>
+          </Tooltip>
+              
+              <Tooltip title={!canReviewPaper ? "You need 'Review Paper' permission" : "Set to review"}>
+                <span>
+
                 <Button
                   variant="outlined"
                   color="info"
+                  disabled={!canReviewPaper || selectedPaper.status === "underReview"}
                   onClick={() => handleConfirmAction("underReview")}
                   startIcon={<PendingIcon />}
                 >
                   Review
                 </Button>
+                </span>
+              </Tooltip>
+
+              <Tooltip title={!canApprovePaper ? "You need 'Approve Paper' permission" : "Approve paper"}>
+                <span>
+
                 <Button
                   variant="contained"
                   color="success"
+                  disabled={!canApprovePaper || selectedPaper.status === "approved"}
                   onClick={() => handleConfirmAction("approved")}
                   startIcon={<CheckCircleIcon />}
                 >
                   Approve
                 </Button>
+                </span>
+              </Tooltip>
+
+              <Tooltip title={!canRejectPaper ? "You need 'Reject Paper' permission" : "Reject paper"}>
+                <span>
+
                 <Button
                   variant="contained"
                   color="error"
+                  disabled={!canRejectPaper || selectedPaper.status === "rejected"}
                   onClick={() => handleConfirmAction("rejected")}
                   startIcon={<CancelIcon />}
                 >
                   Reject
                 </Button>
+                </span>
+              </Tooltip>
               </Box>
             </>
           )}

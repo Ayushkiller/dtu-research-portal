@@ -77,6 +77,7 @@ export default function DeanGrid() {
         department: user.department,
         userType: user.userType,
         banned: user.isBanned,
+        rules: user.rules,
       }));
       const updatedUsers = users.filter(
         (user) => user.userType !== "competentAuthority"

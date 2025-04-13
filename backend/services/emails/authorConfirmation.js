@@ -1,6 +1,6 @@
 const Email = require("../emailService");
 const {  COPYRIGHT_YEAR, DEVELOPER_FOOTER } = require("../emailService");
-const APP_URL = "http://localhost:3000";
+const APP_URL = "https://dtu-research-portal.onrender.com";
 
 class ResearchPaperAuthorEmail extends Email {
   constructor(

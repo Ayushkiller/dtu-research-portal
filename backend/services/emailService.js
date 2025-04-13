@@ -3,7 +3,7 @@
 const nodemailer = require("nodemailer");
 const html_minfy = require("html-minifier");
 
-module.exports.APP_URL = "http://localhost:3000";
+module.exports.APP_URL = "https://dtu-research-portal.onrender.com";
 module.exports.COPYRIGHT_YEAR = new Date().getFullYear();
 module.exports.DEVELOPER_FOOTER = "Developed by : ...";
 

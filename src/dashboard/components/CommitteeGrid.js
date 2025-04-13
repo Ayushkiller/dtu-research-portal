@@ -58,6 +58,16 @@ export default function DeanGrid() {
     overflow: "auto",
   };
 
+  // Permission checking functions
+  const hasPermission = (permission) => {
+    return me?.rules?.includes(permission);
+  };
+
+  const canReviewPaper = hasPermission("canReviewPaper");
+  const canRejectPaper = hasPermission("canRejectPaper");
+  const canApprovePaper = hasPermission("canApprovePaper");
+  const canSuspendPaper = hasPermission("canSuspendPaper");
+
   // Get current user data
   React.useEffect(() => {
     const fetchMe = async () => {
@@ -89,6 +99,7 @@ export default function DeanGrid() {
           mobileNo: user.mobileNumber,
           department: user.department,
           userType: user.userType,
+          rules: user.rules || [],
         }));
         const updatedUsers = users.filter(
           (user) => user.userType !== "committeeMember"
@@ -188,15 +199,42 @@ export default function DeanGrid() {
     }
   };
 
-  // Update paper status
+  // Update paper status with permission check
   const handleUpdateStatus = async (status) => {
     if (!selectedPaper) return;
 
-    if (me.userType !== "committeeMember") {
+    // Check for appropriate permission based on the action
+    let permissionNeeded = "";
+    let actionDescription = "";
+
+    switch (status) {
+      case "approved":
+        permissionNeeded = "canApprovePaper";
+        actionDescription = "approve";
+        break;
+      case "rejected":
+        permissionNeeded = "canRejectPaper";
+        actionDescription = "reject";
+        break;
+      case "underReview":
+        permissionNeeded = "canReviewPaper";
+        permissionNeeded = "canReviewPaper";
+        actionDescription = "review";
+        break;
+      case "suspended":
+        permissionNeeded = "canSuspendPaper";
+        actionDescription = "suspend";
+        break;
+      default:
+        // Unexpected status
+        setError(`Unknown action: ${status}`);
+        return;
+    }
+
+    // Check if user has permission
+    if (!hasPermission(permissionNeeded)) {
       setError(
-        `You don't have permission to ${status
-          .replace(/([A-Z])/g, " $1")
-          .toLowerCase()} research paper`
+        `You don't have permission to ${actionDescription} research papers`
       );
       return;
     }
@@ -287,7 +325,7 @@ export default function DeanGrid() {
     {
       field: "userType",
       headerName: "User Type",
-      flex:1,
+      flex: 1,
       renderCell: (params) => (
         <Chip
           size="small"
@@ -301,6 +339,25 @@ export default function DeanGrid() {
       headerName: "Department",
       flex: 1.2,
     },
+    // {
+    //   field: "rules",
+    //   headerName: "Permissions",
+    //   flex: 1.5,
+    //   renderCell: (params) => (
+    //     <Box sx={{ display: "flex", gap: 0.5, flexWrap: "wrap" }}>
+    //       {params.value && params.value.map((rule, index) => (
+    //         <Chip
+    //           key={index}
+    //           size="small"
+    //           label={rule.replace("can", "").replace(/([A-Z])/g, " $1").trim()}
+    //           color="secondary"
+    //           variant="outlined"
+    //           sx={{ fontSize: "0.7rem" }}
+    //         />
+    //       ))}
+    //     </Box>
+    //   ),
+    // },
     {
       field: "actions",
       headerName: "View",
@@ -413,6 +470,29 @@ export default function DeanGrid() {
         <Typography variant="body1" color="text.secondary" paragraph>
           Manage users and research papers.
         </Typography>
+        {me && (
+          <Box sx={{ mt: 2 }}>
+            <Typography variant="subtitle2" color="text.secondary">
+              Your Permissions:
+            </Typography>
+            <Box sx={{ display: "flex", gap: 1, mt: 1, flexWrap: "wrap" }}>
+              {me.rules && me.rules.map((rule, index) => (
+                <Chip
+                  key={index}
+                  size="small"
+                  label={rule.replace("can", "").replace(/([A-Z])/g, " $1").trim()}
+                  color="primary"
+                  variant="outlined"
+                />
+              ))}
+              {(!me.rules || me.rules.length === 0) && (
+                <Typography variant="body2" color="error">
+                  No permissions assigned
+                </Typography>
+              )}
+            </Box>
+          </Box>
+        )}
       </Paper>
 
       <Paper elevation={2} sx={{ p: 3, mb: 4 }}>
@@ -567,6 +647,27 @@ export default function DeanGrid() {
                   sx={{ mt: 1 }}
                 />
               </Grid>
+              {/* <Grid item xs={12}>
+                <Typography variant="subtitle2" color="text.secondary" sx={{ mt: 2 }}>
+                  Permissions
+                </Typography>
+                <Box sx={{ display: "flex", gap: 1, mt: 1, flexWrap: "wrap" }}>
+                  {selectedUser.rules && selectedUser.rules.map((rule, index) => (
+                    <Chip
+                      key={index}
+                      size="small"
+                      label={rule.replace("can", "").replace(/([A-Z])/g, " $1").trim()}
+                      color="secondary"
+                      variant="outlined"
+                    />
+                  ))}
+                  {(!selectedUser.rules || selectedUser.rules.length === 0) && (
+                    <Typography variant="body2" color="error">
+                      No permissions assigned
+                    </Typography>
+                  )}
+                </Box>
+              </Grid> */}
             </Grid>
           )}
         </Paper>
@@ -671,13 +772,13 @@ export default function DeanGrid() {
                 }}
               >
                 <Box sx={{ display: "flex", gap: 2, flexGrow: 1, justifyContent: "center" }}>
-                  <Tooltip title={me?.userType !== "committeeMember" ? "You don't have permission" : "Set paper under review"}>
+                  <Tooltip title={!canReviewPaper ? "You need 'Review Paper' permission" : "Set paper under review"}>
                     <span>
                       <Button
                         variant="outlined"
                         color="info"
                         onClick={() => handleUpdateStatus("underReview")}
-                        disabled={!me?.userType === "committeeMember" || selectedPaper.status === "underReview"}
+                        disabled={!canReviewPaper || selectedPaper.status === "underReview"}
                         startIcon={<PendingIcon />}
                         fullWidth
                       >
@@ -686,13 +787,13 @@ export default function DeanGrid() {
                     </span>
                   </Tooltip>
                   
-                  <Tooltip title={me?.userType !== "committeeMember" ? "You don't have permission" : "Mark as suspended"}>
+                  <Tooltip title={!canSuspendPaper ? "You need 'Suspend Paper' permission" : "Mark as suspended"}>
                     <span>
                       <Button
                         variant="outlined"
                         color="warning"
                         onClick={() => handleUpdateStatus("suspended")}
-                        disabled={!me?.userType === "committeeMember" || selectedPaper.status === "suspended"}
+                        disabled={!canSuspendPaper || selectedPaper.status === "suspended"}
                         startIcon={<WarningIcon />}
                         fullWidth
                       >
@@ -705,13 +806,13 @@ export default function DeanGrid() {
                 <Divider flexItem sx={{ display: { xs: 'block', sm: 'none' } }} />
                 
                 <Box sx={{ display: "flex", gap: 2, flexGrow: 1, justifyContent: "center" }}>
-                  <Tooltip title={me?.userType !== "committeeMember" ? "You don't have permission" : "Approve this paper"}>
+                  <Tooltip title={!canApprovePaper ? "You need 'Approve Paper' permission" : "Approve this paper"}>
                     <span>
                       <Button
                         variant="contained"
                         color="success"
                         onClick={() => handleConfirmAction("approved")}
-                        disabled={!me?.userType === "committeeMember" || selectedPaper.status === "approved"}
+                        disabled={!canApprovePaper || selectedPaper.status === "approved"}
                         startIcon={<CheckCircleIcon />}
                         fullWidth
                       >
@@ -720,13 +821,13 @@ export default function DeanGrid() {
                     </span>
                   </Tooltip>
                   
-                  <Tooltip title={me?.userType !== "committeeMember" ? "You don't have permission" : "Reject this paper"}>
+                  <Tooltip title={!canRejectPaper ? "You need 'Reject Paper' permission" : "Reject this paper"}>
                     <span>
                       <Button
                         variant="contained"
                         color="error"
                         onClick={() => handleConfirmAction("rejected")}
-                        disabled={!me?.userType === "committeeMember" || selectedPaper.status === "rejected"}
+                        disabled={!canRejectPaper || selectedPaper.status === "rejected"}
                         startIcon={<CancelIcon />}
                         fullWidth
                       >
@@ -771,4 +872,4 @@ export default function DeanGrid() {
       <Copyright sx={{ mt: 4, pb: 4 }} />
     </Container>
   );
-}
+} 
