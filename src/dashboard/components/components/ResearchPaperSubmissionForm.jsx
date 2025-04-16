@@ -293,9 +293,23 @@ export default function ResearchPaperSubmissionForm({
         formDataToSubmit.authors[0].name === formDataToSubmit.applicantName
       ) {
         formDataToSubmit.status = "Submitted";
+        formDataToSubmit.authors[0].confirmationStatus = true;
+        formDataToSubmit.authors[0].confirmationToken.used = true;
+        try {
+          await API.post(
+            "/research-paper-submission",
+            formDataToSubmit
+          );
+          
         setSnackbarMessage("Form submitted successfully!");
         setSnackbarOpen(true);
         return;
+        }catch (error) {
+          setSnackbarMessage("Failed to submit the form.");
+          setSnackbarOpen(true);
+          return;
+        }
+        
       }
       if (
         formDataToSubmit.authors.length > 1 &&

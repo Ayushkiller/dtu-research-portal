@@ -1,6 +1,6 @@
 const Email = require("../emailService");
 const {  COPYRIGHT_YEAR, DEVELOPER_FOOTER } = require("../emailService");
-const APP_URL = "https://dtu-research-portal.onrender.com";
+const APP_URL = "https://dtu-research-portal.vercel.app";
 
 class ResearchPaperAuthorEmail extends Email {
   constructor(
