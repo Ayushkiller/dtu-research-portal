@@ -71,6 +71,9 @@ const steps = [
 
 export default function SignUp(props) {
   const [activeStep, setActiveStep] = useState(0);
+  const [otpSent , setOtpSent] = useState(false);
+  const [otpVerified, setOtpVerified] = useState(false);
+  const [otpLoading, setOtpLoading] = useState(false);
   const [formErrors, setFormErrors] = useState({
     email: { error: false, message: "" },
     password: { error: false, message: "" },
@@ -497,6 +500,10 @@ export default function SignUp(props) {
   };
 
   const handleNext = () => {
+    if(!otpVerified && activeStep === 0) {
+      alert("Please verify your Email before proceeding.");
+      return;
+    }
     if (validateInputs(activeStep)) {
       // Collect and store form data for the current step
       const newData = collectFormData();
@@ -651,7 +658,7 @@ export default function SignUp(props) {
                     </FormControl>
                   </Grid>
 
-                  <Grid item xs={12} md={6}>
+                  <Grid container spacing={2} item xs={12} md={6}>
                     <FormControl fullWidth>
                       <FormLabel htmlFor="email">Email Address *</FormLabel>
                       <TextField
@@ -667,6 +674,101 @@ export default function SignUp(props) {
                         color={formErrors.email.error ? "error" : "primary"}
                       />
                     </FormControl>
+                    {/* send OTP */}
+                    {otpSent && !otpVerified && (
+                      <>
+                        <FormControl fullWidth>
+                          <FormLabel htmlFor="otp">Enter Otp *</FormLabel>
+                        <TextField
+                          required
+                          fullWidth
+                          id="otp"
+                          name="otp"
+                          placeholder="Enter OTP"
+                          variant="standard"
+                          helperText={"123456"}
+                        />
+                        </FormControl>
+                        <Button
+                          variant="outlined"
+                          color="primary"
+                          onClick={async () => {
+                            try {
+                              setOtpLoading(true);
+                              const response = await API.post(
+                                "/auth/verify-otp",
+                                {
+                                  email: document.getElementById("email").value,
+                                  otp: document.getElementById("otp").value,
+                                }
+                              );
+                              console.log("OTP verified successfully:", response.data);
+                              setOtpVerified(true);
+                              alert("OTP verified successfully.");
+                              setOtpLoading(false);
+
+                            } catch (error) {
+                              console.error("Error verifying OTP:", error);
+                              setOtpLoading(false);
+                              alert(
+                                error.response?.data?.message || "Failed to verify OTP"
+                              );
+                            }
+                          }}
+                          sx={{ mt: 1 }}
+                        >
+                          {otpLoading ? "Verifying..." : "Verify OTP"}
+                        </Button>
+
+                        
+                      </>
+                    )
+                    }
+
+                    {!otpSent && !otpVerified && <Button
+                      variant="outlined"
+                      color="primary"
+                      onClick={async () => {
+                        const email = document.getElementById("email").value;
+                        if (!email) {
+                          alert("Please enter your email address first.");
+                          return;
+                        }
+                        if(!/\S+@dtu\.ac\.in$/.test(email)) {
+                          alert("Please enter a valid DTU email address.");
+                          return;
+                        }
+                        try {
+                          setOtpLoading(true);
+                          const response = await API.post("/auth/request-otp", {
+                            email: email
+                          });
+                          setOtpSent(true);
+                          console.log("OTP sent successfully:", response.data);
+                          
+                          alert("OTP sent to your email address.");
+                          setOtpLoading(false);
+                        } catch (error) {
+                          console.error("Error sending OTP:", error);
+                          alert(
+                            error.response?.data?.message || "Failed to send OTP"
+                          );
+                          setOtpLoading(false);
+                        }
+                      }}
+                      sx={{ mt: 1 }}
+                    >
+                     {otpLoading ? "Sending..." : "Send OTP"}
+                    </Button>}
+                    {otpVerified && (
+                      <>
+                        
+                        <Typography variant="body2" color="text.secondary">
+                          You can now proceed to fill in the rest of the form.
+                        </Typography>
+                      </>
+                    )
+                    }
                   </Grid>
 
                   <Grid item xs={12} md={6}>

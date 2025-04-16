@@ -125,16 +125,16 @@ export default function ResearchPaperSubmissionForm({
   }, []);
 
   useEffect(() => {
-    if (formData.applicantName && formData.email) {
-      const applicantExists = formData.authors.some(
-        (author) => author.email === formData.email
+    if (formData?.applicantName && formData?.email) {
+      const applicantExists = formData?.authors?.some(
+        (author) => author?.email === formData?.email
       );
       if (!applicantExists) {
         const applicantAuthor = {
-          name: formData.applicantName,
-          email: formData.email,
+          name: formData?.applicantName,
+          email: formData?.email,
           isExternal: false,
-          bankDetails: { ...formData.bankDetails },
+          bankDetails: { ...formData?.bankDetails },
           confirmationToken: {
             token: Math.random().toString(36).substring(2, 12),
           },
@@ -145,7 +145,7 @@ export default function ResearchPaperSubmissionForm({
         }));
       }
     }
-  }, [formData.applicantName, formData.email, formData.bankDetails.bankName]);
+  }, [formData?.applicantName, formData?.email, formData?.bankDetails?.bankName]);
 
   const validateStep = (step) => {
     switch (step) {
@@ -293,9 +293,23 @@ export default function ResearchPaperSubmissionForm({
         formDataToSubmit.authors[0].name === formDataToSubmit.applicantName
       ) {
         formDataToSubmit.status = "Submitted";
+        formDataToSubmit.authors[0].confirmationStatus = true;
+        formDataToSubmit.authors[0].confirmationToken.used = true;
+        try {
+          await API.post(
+            "/research-paper-submission",
+            formDataToSubmit
+          );
+          
         setSnackbarMessage("Form submitted successfully!");
         setSnackbarOpen(true);
         return;
+        }catch (error) {
+          setSnackbarMessage("Failed to submit the form.");
+          setSnackbarOpen(true);
+          return;
+        }
+        
       }
       if (
         formDataToSubmit.authors.length > 1 &&

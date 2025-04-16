@@ -8,6 +8,24 @@ const userSchema = new mongoose.Schema({
     enum: ['faculty', 'student', 'researchScholar', 'committeeMember', 'competentAuthority'], 
     required: true 
   },
+ // Enhanced rules array with structured objects instead of simple strings
+ rules: [{
+  required: true,
+  default: [
+    'canReviewPaper',
+    'canRejectPaper',
+    'canApprovePaper',
+    'canSuspendPaper',
+  ], 
+  type: String, 
+  enum: [
+    'canReviewPaper', 
+    'canRejectPaper', 
+    'canApprovePaper',
+    'canSuspendPaper',
+
+  ]
+}],
   applicantBiography: { type: String, required: false },
   applicantPhoto: { type: String, required: false },
   department: { type: String, required: true },

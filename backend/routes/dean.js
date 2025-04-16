@@ -14,6 +14,62 @@ router.get("/accounts", authorizeDean, async (req, res) => {
   }
 });
 
+// PUT /dean/accounts/rules/:id - Update committee member rules
+router.put('/accounts/rules/:id',  authorizeDean, async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const { rules } = req.body;
+    
+    // Validate input
+    if (!Array.isArray(rules)) {
+      return res.status(400).json({ message: 'Rules must be an array' });
+    }
+    
+    // Valid rules list for validation
+    const validRules = [
+      'canReviewPaper', 
+      'canRejectPaper', 
+      'canApprovePaper',
+      'canSuspendPaper',
+
+    ];
+    
+    // Validate each rule
+    for (const rule of rules) {
+      if (!validRules.includes(rule)) {
+        return res.status(400).json({ message: `Invalid rule: ${rule}` });
+      }
+    }
+    
+    // Find the user
+    const user = await User.findById(userId);
+    
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+    
+    // Check if user is a committee member
+    if (user.userType !== 'committeeMember') {
+      return res.status(400).json({ 
+        message: 'Rules can only be assigned to committee members' 
+      });
+    }
+    
+    // Update rules
+    user.rules = rules;
+    await user.save();
+    
+    res.status(200).json({ 
+      message: 'User permissions updated successfully',
+      user
+    });
+    
+  } catch (error) {
+    console.error('Error updating user rules:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // Route to ban or remove an account
 router.put("/accounts/ban/:userId", authorizeDean, async (req, res) => {
   const { userId } = req.params;
