@@ -88,6 +88,12 @@ export default function ResearchPaperSubmissionForm({
       doi: "",
       hasMorePapers: "",
       isEligible: "",
+      bankDetails: {
+        bankName: "",
+        branch: "",
+        accountNo: "",
+        ifscCode: "",
+      },
     }
   );
 
@@ -134,7 +140,11 @@ export default function ResearchPaperSubmissionForm({
           name: formData?.applicantName,
           email: formData?.email,
           isExternal: false,
+<<<<<<< Updated upstream
           bankDetails: { ...formData?.bankDetails },
+=======
+          bankDetails: { ...(formData.bankDetails || {}) },
+>>>>>>> Stashed changes
           confirmationToken: {
             token: Math.random().toString(36).substring(2, 12),
           },
@@ -145,7 +155,11 @@ export default function ResearchPaperSubmissionForm({
         }));
       }
     }
+<<<<<<< Updated upstream
   }, [formData?.applicantName, formData?.email, formData?.bankDetails?.bankName]);
+=======
+  }, [formData.applicantName, formData.email]);
+>>>>>>> Stashed changes
 
   const validateStep = (step) => {
     switch (step) {
