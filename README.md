@@ -1,5 +1,7 @@
 # DTU Research Portal
 
+> **Warning: This project is abandoned and no longer maintained.**
+
 A full-stack web application for managing research paper submissions at DTU (Delhi Technological University). This portal allows users to submit research papers, track their status, and enables committee members and deans to review and approve submissions.
 
 ## Features
@@ -81,7 +83,7 @@ A full-stack web application for managing research paper submissions at DTU (Del
 
 ## Contributing
 
-Contributions are welcome! Please fork the repository and create a pull request.
+This project is no longer accepting contributions.
 
 ## License
 
